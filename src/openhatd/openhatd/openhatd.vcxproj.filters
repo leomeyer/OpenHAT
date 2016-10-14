@@ -1,0 +1,239 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Quelldateien">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Headerdateien">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Ressourcendateien">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Headerdateien\common">
+      <UniqueIdentifier>{15b6eb6b-5c9c-49fb-9658-10708e5b2496}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Quelldateien\common">
+      <UniqueIdentifier>{fe170a8f-fe38-4ad0-9eb0-7451842f7683}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headerdateien\common\cppwrapper">
+      <UniqueIdentifier>{496d7b9c-9b05-429b-9c3c-61284749dcb7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Quelldateien\common\cppwrapper">
+      <UniqueIdentifier>{ec6597fa-f6eb-4783-94ac-6944857f7cdd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Quelldateien\libraries">
+      <UniqueIdentifier>{beece497-7f96-47e1-a2eb-4aca03b19691}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Quelldateien\libraries\libctb">
+      <UniqueIdentifier>{fc51c054-eb17-44b7-be46-90d5c9e425ec}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Ressourcendateien\webdocroot">
+      <UniqueIdentifier>{321ae4be-ff15-4696-b28e-67890965877d}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ReadMe.txt" />
+    <None Include="test_include.ini">
+      <Filter>Ressourcendateien</Filter>
+    </None>
+    <None Include="exectest.bat">
+      <Filter>Ressourcendateien</Filter>
+    </None>
+    <None Include="scene0.ini">
+      <Filter>Ressourcendateien</Filter>
+    </None>
+    <None Include="scene1.ini">
+      <Filter>Ressourcendateien</Filter>
+    </None>
+    <None Include="fileinputtest.txt">
+      <Filter>Ressourcendateien</Filter>
+    </None>
+    <None Include="webdocroot\index.html">
+      <Filter>Ressourcendateien\webdocroot</Filter>
+    </None>
+    <None Include="webdocroot\strings.js">
+      <Filter>Ressourcendateien\webdocroot</Filter>
+    </None>
+    <None Include="webdocroot\utils.js">
+      <Filter>Ressourcendateien\webdocroot</Filter>
+    </None>
+    <None Include="webdocroot\units.json">
+      <Filter>Ressourcendateien\webdocroot</Filter>
+    </None>
+    <None Include="..\doc\complex_example_1.ini">
+      <Filter>Ressourcendateien</Filter>
+    </None>
+    <None Include="..\doc\complex_example_2.ini">
+      <Filter>Ressourcendateien</Filter>
+    </None>
+    <None Include="window_test.ini">
+      <Filter>Ressourcendateien</Filter>
+    </None>
+    <None Include="webdocroot\openhatd.css" />
+    <None Include="win_openhatd.ini" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="stdafx.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="SunRiseSet.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="ExecPort.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="ExpressionPort.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="Ports.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="TimerPort.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="AbstractOpenHAT.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenHATConfigurationFile.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="WindowsOpenHAT.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="../../../../opdi_core/code/c/common\cppwrapper\OPDI.h">
+      <Filter>Headerdateien\common\cppwrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="../../../../opdi_core/code/c/common\cppwrapper\OPDI_Ports.h">
+      <Filter>Headerdateien\common\cppwrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="../../../../opdi_core/code/c/common\opdi_config.h">
+      <Filter>Headerdateien\common</Filter>
+    </ClInclude>
+    <ClInclude Include="opdi_configspecs.h">
+      <Filter>Headerdateien\common</Filter>
+    </ClInclude>
+    <ClInclude Include="../../../../opdi_core/code/c/common\opdi_constants.h">
+      <Filter>Headerdateien\common</Filter>
+    </ClInclude>
+    <ClInclude Include="../../../../opdi_core/code/c/common\opdi_message.h">
+      <Filter>Headerdateien\common</Filter>
+    </ClInclude>
+    <ClInclude Include="../../../../opdi_core/code/c/platforms\opdi_platformfuncs.h">
+      <Filter>Headerdateien\common</Filter>
+    </ClInclude>
+    <ClInclude Include="../../../../opdi_core/code/c/platforms\win32\opdi_platformtypes.h">
+      <Filter>Headerdateien\common</Filter>
+    </ClInclude>
+    <ClInclude Include="../../../../opdi_core/code/c/common\opdi_port.h">
+      <Filter>Headerdateien\common</Filter>
+    </ClInclude>
+    <ClInclude Include="../../../../opdi_core/code/c/common\opdi_protocol.h">
+      <Filter>Headerdateien\common</Filter>
+    </ClInclude>
+    <ClInclude Include="../../../../opdi_core/code/c/common\opdi_protocol_constants.h">
+      <Filter>Headerdateien\common</Filter>
+    </ClInclude>
+    <ClInclude Include="../../../../opdi_core/code/c/common\opdi_rijndael.h">
+      <Filter>Headerdateien\common</Filter>
+    </ClInclude>
+    <ClInclude Include="../../../../opdi_core/code/c/common\opdi_slave_protocol.h">
+      <Filter>Headerdateien\common</Filter>
+    </ClInclude>
+    <ClInclude Include="../../../../opdi_core/code/c/common\opdi_strings.h">
+      <Filter>Headerdateien\common</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="SunRiseSet.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="ExecPort.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="ExpressionPort.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="Ports.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="TimerPort.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="AbstractOpenHAT.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="OpenHATConfigurationFile.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="openhat_win.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="WindowsOpenHAT.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../opdi_core/code/c/common\opdi_aes.cpp">
+      <Filter>Quelldateien\common</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../opdi_core/code/c/common\opdi_message.c">
+      <Filter>Quelldateien\common</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../opdi_core/code/c/platforms\win32\opdi_platformfuncs.c">
+      <Filter>Quelldateien\common</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../opdi_core/code/c/common\opdi_port.c">
+      <Filter>Quelldateien\common</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../opdi_core/code/c/common\cppwrapper\OPDI.cpp">
+      <Filter>Quelldateien\common\cppwrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../opdi_core/code/c/common\cppwrapper\OPDI_Ports.cpp">
+      <Filter>Quelldateien\common\cppwrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../opdi_core/code/c/common\opdi_protocol.c">
+      <Filter>Quelldateien\common</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../opdi_core/code/c/common\opdi_rijndael.cpp">
+      <Filter>Quelldateien\common</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../opdi_core/code/c/common\opdi_slave_protocol.c">
+      <Filter>Quelldateien\common</Filter>
+    </ClCompile>
+    <ClCompile Include="../../../../opdi_core/code/c/common\opdi_strings.c">
+      <Filter>Quelldateien\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\opdi_core\code\c\libraries\libctb\src\fifo.cpp">
+      <Filter>Quelldateien\libraries\libctb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\opdi_core\code\c\libraries\libctb\src\iobase.cpp">
+      <Filter>Quelldateien\libraries\libctb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\opdi_core\code\c\libraries\libctb\src\kbhit.cpp">
+      <Filter>Quelldateien\libraries\libctb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\opdi_core\code\c\libraries\libctb\src\portscan.cpp">
+      <Filter>Quelldateien\libraries\libctb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\opdi_core\code\c\libraries\libctb\src\serportx.cpp">
+      <Filter>Quelldateien\libraries\libctb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\opdi_core\code\c\libraries\libctb\src\win32\getopt.cpp">
+      <Filter>Quelldateien\libraries\libctb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\opdi_core\code\c\libraries\libctb\src\win32\serport.cpp">
+      <Filter>Quelldateien\libraries\libctb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\opdi_core\code\c\libraries\libctb\src\win32\timer.cpp">
+      <Filter>Quelldateien\libraries\libctb</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

@@ -54,13 +54,13 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;WINDOWS_TEST_EXPORTS;POCO_STATIC;_WINSOCK_DEPRECATED_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../../../../../opdi_core/code/c/common;../../../../../opdi_core/code/c/platforms;../../../../../opdi_core/code/c/platforms/win32;../../../../libraries/POCO/Foundation/include;../../../../libraries/POCO/Util/include;../../../../libraries/POCO/JSON/include;../../../../libraries/Mongoose/mongoose-master;../../../../../opdi_core/code/c/common/cppwrapper;../../openhatd;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../../../../opdi_core/code/c/common;../../../../../opdi_core/code/c/platforms;../../../../../opdi_core/code/c/platforms/win32;../../../../../opdi_core/code/c/libraries/POCO/Foundation/include;../../../../../opdi_core/code/c/libraries/POCO/Util/include;../../../../../opdi_core/code/c/libraries/POCO/JSON/include;../../../../libraries/Mongoose;../../../../../opdi_core/code/c/common/cppwrapper;../../openhatd;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4297</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>../../../../libraries/POCO/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>../../../../../opdi_core/code/c/libraries/POCO/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -84,8 +84,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="../../../../../opdi_core/code/c/common\cppwrapper\OPDI_Ports.cpp" />
-    <ClCompile Include="..\..\..\..\libraries\Mongoose\mongoose-master\mongoose.c" />
     <ClCompile Include="../../../../../opdi_core/code/c/platforms\win32\opdi_platformfuncs.c" />
+    <ClCompile Include="..\..\..\..\libraries\Mongoose\mongoose.c" />
     <ClCompile Include="WebServerPlugin.cpp" />
   </ItemGroup>
   <ItemGroup>

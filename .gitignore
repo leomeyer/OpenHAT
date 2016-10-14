@@ -8,3 +8,5 @@
 *.elf
 *.eep
 .dep/
+*.db
+*.opendb

@@ -36,16 +36,16 @@
     <ClCompile Include="windows_test.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\common\cppwrapper\OPDI_Ports.cpp">
-      <Filter>Quelldateien\common\cppwrapper</Filter>
+    <ClCompile Include="../../../../../opdi_core/code/c/common\cppwrapper\OPDI_Ports.cpp">
+      <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\platforms\win32\opdi_platformfuncs.c">
-      <Filter>Quelldateien\platforms\win32</Filter>
+    <ClCompile Include="../../../../../opdi_core/code/c/platforms\win32\opdi_platformfuncs.c">
+      <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\common\cppwrapper\OPDI_Ports.h">
-      <Filter>Headerdateien\common\cppwrapper</Filter>
+    <ClInclude Include="../../../../../opdi_core/code/c/common\cppwrapper\OPDI_Ports.h">
+      <Filter>Headerdateien</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -55,13 +55,13 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;WINDOW_EXPORTS;POCO_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../../../../../../opdi_core/code/c/common;../../../../../../opdi_core/code/c/platforms;../../../../../../opdi_core/code/c/platforms/win32;../../../../../libraries/POCO/Foundation/include;../../../../../libraries/POCO/Util/include;../../../../../libraries/POCO/Net/include;../../../../../libraries/POCO/XML/include;../../../../../../opdi_core/code/c/common/cppwrapper;../../../openhatd;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../../../../../opdi_core/code/c/common;../../../../../../opdi_core/code/c/platforms;../../../../../../opdi_core/code/c/platforms/win32;../../../../../../opdi_core/code/c/libraries/POCO/Foundation/include;../../../../../../opdi_core/code/c/libraries/POCO/Util/include;../../../../../../opdi_core/code/c/libraries/POCO/Net/include;../../../../../../opdi_core/code/c/libraries/POCO/XML/include;../../../../../../opdi_core/code/c/common/cppwrapper;../../../openhatd;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4297</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>../../../../../libraries/POCO/lib;</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>../../../../../../opdi_core/code/c/libraries/POCO/lib;</AdditionalLibraryDirectories>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>

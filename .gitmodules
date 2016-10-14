@@ -4,8 +4,8 @@
 [submodule "opdi_core"]
 	path = opdi_core
 	url = https://github.com/leomeyer/opdi_core.git
-[submodule "src/libraries/Mongoose"]
-	path = src/libraries/Mongoose
+[submodule "libraries/Mongoose"]
+	path = libraries/Mongoose
 	url = https://github.com/cesanta/mongoose.git
 [submodule "libraries/exprtk"]
 	path = libraries/exprtk

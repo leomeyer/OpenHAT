@@ -1,0 +1,171 @@
+﻿{
+  "units": {
+    "string": [
+      {
+        "-name": "electricPower_mW",
+        "#text": "electricPower_mW_in_W=0;electricPower_mW_in_mW=1"
+      },
+      {
+        "-name": "electricPower_mW_in_W",
+        "#text": "layout=dial_port_row_noslider;icon=powermeter;label=Electric Power (W);formatString=%.1f W;denominator=1000"
+      },
+      {
+        "-name": "electricPower_mW_in_mW",
+        "#text": "layout=dial_port_row_noslider;icon=powermeter;label=Electric Power (mW);formatString=%.0f mW"
+      },
+      {
+        "-name": "electricPower_10mW",
+        "#text": "electricPower_10mW_in_W=0"
+      },
+      {
+        "-name": "electricPower_10mW_in_W",
+        "#text": "layout=dial_port_row_noslider;icon=powermeter;label=Electric Power (W);formatString=%.2f W;denominator=100"
+      },
+      {
+        "-name": "electricEnergy_Wh",
+        "#text": "electricEnergy_Wh_in_kWh=0"
+      },
+      {
+        "-name": "electricEnergy_Wh_in_kWh",
+        "#text": "layout=dial_port_row_noslider;icon=energymeter;formatString=%.3f Wh;denominator=10000000"
+      },
+      {
+        "-name": "electricEnergy_100nWh",
+        "#text": "electricEnergy_100nWh_in_kWh=0"
+      },
+      {
+        "-name": "electricEnergy_100nWh_in_kWh",
+        "#text": "layout=dial_port_row_noslider;icon=energymeter;formatString=%.3f kWh;denominator=10000000"
+      },
+      {
+        "-name": "temperature_degreesCelsius",
+        "#text": "temperature_DegC_in_DegC=0"
+      },
+      {
+        "-name": "temperature_DegC_in_DegC",
+        "#text": "layout=dial_port_row_noslider;icon=thermometer_celsius;label=Temperature (°C);formatString=%d °C"
+      },
+      {
+        "-name": "temperature_centiDegreesCelsius",
+        "#text": "temperature_cDegC_in_DegC=0"
+      },
+      {
+        "-name": "temperature_cDegC_in_DegC",
+        "#text": "layout=dial_port_row_noslider;icon=thermometer_celsius;label=Temperature (°C);formatString=%.1f °C;denominator=10"
+      },
+      {
+        "-name": "humidity_percent",
+        "#text": "humidity_percent_in_percent=0"
+      },
+      {
+        "-name": "humidity_percent_in_percent",
+        "-formatted": "false",
+        "#text": "layout=dial_port_row_noslider;icon=humidity_percent;label=Humidity (%);formatString=%d %%;"
+      },
+      {
+        "-name": "pressure_mbar",
+        "#text": "pressure_mbar_in_mbar=0"
+      },
+      {
+        "-name": "pressure_mbar_in_mbar",
+        "#text": "layout=dial_port_row_noslider;icon=barometer;label=Pressure (mbar);formatString=%.0f mbar"
+      },
+      {
+        "-name": "pressure_microbar",
+        "#text": "pressure_microbar_in_mbar=0"
+      },
+      {
+        "-name": "pressure_microbar_in_mbar",
+        "#text": "layout=dial_port_row_noslider;icon=barometer;label=Pressure (mbar);formatString=%.1f mbar;denominator=1000"
+      },
+      {
+        "-name": "windspeed_cmPerSecond",
+        "#text": "windspeed_in_mPerSecond=0"
+      },
+      {
+        "-name": "windspeed_in_mPerSecond",
+        "#text": "layout=dial_port_row_noslider;icon=windspeed;label=Wind (m/s);formatString=%.1f m/s;denominator=100"
+      },
+      {
+        "-name": "rainrate_mmPerHour",
+        "#text": "rainrate_in_mmPerHour=0"
+      },
+      {
+        "-name": "rainrate_in_mmPerHour",
+        "#text": "layout=dial_port_row_noslider;icon=rainfall;label=Rain Rate (mm/h);formatString=%.0f mm/h"
+      },
+      {
+        "-name": "rainrate_micromPerHour",
+        "#text": "rainrate_micromPerHour_in_mmPerHour=0"
+      },
+      {
+        "-name": "rainrate_micromPerHour_in_mmPerHour",
+        "#text": "layout=dial_port_row_noslider;icon=rainfall;label=Rain Rate (mm/h);formatString=%.1f mm/h;denominator=1000"
+      },
+      {
+        "-name": "keypadCode",
+        "#text": "keypadCode_display=0"
+      },
+      {
+        "-name": "keypadCode_display",
+        "#text": "layout=dial_port_row_noslider;icon=keypad;formatString=%d"
+      },
+      {
+        "-name": "unixTime",
+        "#text": "clocktime_unixseconds=0"
+      },
+      {
+        "-name": "clocktime_unixseconds",
+        "#text": "layout=dial_port_row_noslider_two_rows;conversion=unixSecondsLocal;icon=clock;formatString=yyyy-MM-dd\\\\nHH:mm:ss;editor=DateTimeEditor"
+      },
+      {
+        "-name": "unixTimeUTC",
+        "#text": "clocktime_unixsecondsUTC=0"
+      },
+      {
+        "-name": "clocktime_unixsecondsUTC",
+        "#text": "layout=dial_port_row_noslider_two_rows;conversion=unixSeconds;icon=clock;formatString=yyyy-MM-dd\\\\nHH:mm:ss;editor=DateTimeEditor"
+      },
+      {
+        "-name": "percent",
+        "#text": "percent_integer=0"
+      },
+      {
+        "-name": "percent_integer",
+        "#text": "layout=dial_port_row_slider_only;"
+      },
+      {
+        "-name": "gas_l",
+        "#text": "gas_l_in_m3=0"
+      },
+      {
+        "-name": "gas_l_in_m3",
+        "#text": "layout=dial_port_row_noslider;icon=energymeter;label=Gas total;formatString=%.3f m³;denominator=1000"
+      },
+      {
+        "-name": "gas_lPerTime",
+        "#text": "gas_l_in_m3_per_time=0"
+      },
+      {
+        "-name": "gas_l_in_m3_per_time",
+        "#text": "layout=dial_port_row_noslider;icon=powermeter;label=Gas rate;formatString=%.3f m³;denominator=1000"
+      },
+      {
+        "-name": "energy_100nWhPerTime",
+        "#text": "energy_100nWh_in_kWh_per_time=0"
+      },
+      {
+        "-name": "energy_100nWh_in_kWh_per_time",
+        "#text": "layout=dial_port_row_noslider;icon=powermeter;label=Electric energy rate;formatString=%.3f kWh;denominator=10000000"
+      },
+      {
+        "-name": "energy_WhPerTime",
+        "#text": "energy_Wh_in_kWh_per_time=0"
+      },
+      {
+        "-name": "energy_Wh_in_kWh_per_time",
+        "#text": "layout=dial_port_row_noslider;icon=powermeter;label=Electric energy rate;formatString=%.3f kWh;denominator=1000"
+      }
+    ]
+  }
+}

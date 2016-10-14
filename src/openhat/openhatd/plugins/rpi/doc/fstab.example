@@ -1,0 +1,16 @@
+/dev/mmcblk0p1 /boot vfat defaults 0 2
+/dev/mmcblk0p2 / ext4 errors=remount-ro,noatime 0 1
+
+# weewx ramdisk
+weewx /var/weewx tmpfs size=10M,noexec,nosuid,nodev 0 0
+
+# openhat ramdisk
+openhat /var/openhat tmpfs size=10M,noexec,nosuid,nodev 0 0
+
+# other ramdisks
+tmpfs /tmp tmpfs defaults,noatime,nosuid,size=100m 0 0
+tmpfs /var/tmp tmpfs defaults,noatime,nosuid,size=30m 0 0
+tmpfs /var/log tmpfs defaults,noatime,nosuid,mode=0755,size=100m 0 0
+tmpfs /var/run tmpfs defaults,noatime,nosuid,mode=0755,size=2m 0 0
+tmpfs /var/spool/mqueue tmpfs defaults,noatime,nosuid,mode=0700,gid=12,size=30m 0 0
+

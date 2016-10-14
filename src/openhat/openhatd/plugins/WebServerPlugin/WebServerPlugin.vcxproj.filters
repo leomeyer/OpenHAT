@@ -1,0 +1,54 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Quelldateien">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Headerdateien">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Ressourcendateien">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Headerdateien\common">
+      <UniqueIdentifier>{06d57ba1-0c1c-45ba-8316-ab59b0cb87d3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headerdateien\common\cppwrapper">
+      <UniqueIdentifier>{ef073594-45a1-4e40-8691-ebc4f2478bfc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Quelldateien\common">
+      <UniqueIdentifier>{ec462161-1b42-4c2b-a894-300c8113dc99}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Quelldateien\common\cppwrapper">
+      <UniqueIdentifier>{9b01a969-7330-43e9-99bf-cda6b2f7ab01}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Quelldateien\platforms">
+      <UniqueIdentifier>{f847e595-1cd3-4439-a311-a91fb19f8c91}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Quelldateien\platforms\win32">
+      <UniqueIdentifier>{511df7ae-a8ed-440a-b66a-c2dbe7eda0ff}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="WebServerPlugin.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\common\cppwrapper\OPDI_Ports.cpp">
+      <Filter>Quelldateien\common\cppwrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\platforms\win32\opdi_platformfuncs.c">
+      <Filter>Quelldateien\platforms\win32</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\libraries\Mongoose\mongoose-master\mongoose.c">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\..\common\cppwrapper\OPDI_Ports.h">
+      <Filter>Headerdateien\common\cppwrapper</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

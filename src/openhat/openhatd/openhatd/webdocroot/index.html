@@ -1,0 +1,1416 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+  <meta name="viewport" content="width=720"/>
+    
+<title>OpenHAT Web Access</title>
+
+<link rel="stylesheet" href="jquery-ui.min.css"/>
+<link rel="stylesheet" type="text/css" href="jquery.gridster.css"/>
+<link rel="stylesheet" type="text/css" href="contextMenu.css"/>
+<link rel="stylesheet" type="text/css" href="openhat.css"/>
+<link rel="stylesheet" type="text/css" href="jquery-ui-timepicker-addon.css"/>
+
+<script type="text/javascript" src="jquery-1.12.2.js"></script>
+<script type="text/javascript" src="jquery.jsonrpc.js"></script>
+<script type="text/javascript" src="jquery-ui.min.js"></script>
+<script type="text/javascript" src="jquery-ui.min.js"></script>
+<script type="text/javascript" src="jquery.gridster.js" charset="utf-8"></script>
+<script type="text/javascript" src="contextMenu.js"></script>
+<script type="text/javascript" src="simple-js-inheritance.js"></script>
+<script type="text/javascript" src="strings.js"></script>
+<script type="text/javascript" src="jquery.formatter.js"></script>
+<script type="text/javascript" src="jquery-ui-timepicker-addon.js"></script>
+<script type="text/javascript" src="date.js"></script>
+
+</head>
+
+<script type="text/javascript">
+<!--
+
+// *********************************************************
+// Global variables and constants
+
+var imageURLPrefix = "images/";
+var portWidgetWidth = 350;
+var portWidgetHeight = 60;
+
+// Units
+var units = {};         // a hash that maps unit names to a list of display units
+var unitsToUse = {};    // a hash that maps unit names to actual display unit settings
+
+var device = {};
+
+// port UI control list
+var ports = Array();
+
+// Global variables and constants
+// *********************************************************
+
+// *********************************************************
+// Global functions
+
+function handleError(error) {
+    if (typeof error == "object")
+        $('<div/>').html("Error " + error.code + ": " + error.message).dialog();
+    else
+        $('<div/>').html("Error: " + error).dialog();
+}
+
+function getParameterByName(name, url) {
+    if (!url) url = window.location.href;
+    name = name.replace(/[\[\]]/g, "\\$&");
+    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)", "i"),
+        results = regex.exec(url);
+    if (!results) return null;
+    if (!results[2]) return '';
+    return decodeURIComponent(results[2].replace(/\+/g, " "));
+}
+
+function removeParam(key, sourceURL) {
+    var rtn = sourceURL.split("?")[0],
+        param,
+        params_arr = [],
+        queryString = (sourceURL.indexOf("?") !== -1) ? sourceURL.split("?")[1] : "";
+    if (queryString !== "") {
+        params_arr = queryString.split("&");
+        for (var i = params_arr.length - 1; i >= 0; i -= 1) {
+            param = params_arr[i].split("=")[0];
+            if (param === key) {
+                params_arr.splice(i, 1);
+            }
+        }
+        rtn = rtn + "?" + params_arr.join("&");
+    }
+    return rtn;
+}
+
+// Global functions
+// *********************************************************
+
+// *********************************************************
+// Unit management
+
+function formatUnixSecondsLocal(timestamp) {
+    var dt = new Date(timestamp * 1000);
+    // with time zone
+    // return dt.format("yyyy-mm-dd HH:MM:ss Z", false);
+    // without time zone
+    return dt.format("yyyy-mm-dd HH:MM:ss", false);
+}
+
+function loadUnits() {
+    $.ajax({
+        url: "units.json",
+		async: false,	// make sure that units are loaded before the UI is being built
+        success: function(script, textStatus) {
+            var jsonUnits = eval(script);
+            // build easily accessible unit list
+            for (var i = 0; i < jsonUnits.units.string.length; i++) {
+                var name = jsonUnits.units.string[i]["-name"];
+                var text = jsonUnits.units.string[i]["#text"];
+                units[name] = getProperties(text);
+            }
+        },
+        fail: function(jqxhr, settings, exception) {
+            console.log("Failed to load units.json: " + exception);
+        }
+    });    
+}
+
+function getUnitSettings(unit) {
+    // checks the unitsToUse cache whether a display unit setting has already been selected
+    // if so returns it, otherwise selects the first possible display unit setting and caches it
+    if (typeof unitsToUse[unit] != "undefined")
+        return unitsToUse[unit];
+    if (typeof units[unit] == "undefined")
+        return null;
+    var possibleSettings = units[unit];
+    for (setting in possibleSettings) {
+        if (possibleSettings[setting] == "0") {
+            result = units[setting];
+			if (typeof result.format == "undefined") {
+
+                // unit formatting function
+				result.format = function(value) {
+					// conversion defined?
+					if (typeof this.conversion != "undefined") {
+						// timestamp conversions
+						if ("unixSeconds" === this.conversion) {
+							return formatUnixSeconds(value);
+						} else
+						if ("unixSecondsLocal" === this.conversion) {
+							return formatUnixSecondsLocal(value);
+						} else
+							return "Unknown conversion: " + this.conversion;
+					}
+					// value needs to be formatted
+					var formatString = "%s";    // default
+					if (typeof this.formatString != "undefined")
+						formatString = this.formatString;
+					if ((typeof this.numerator != "undefined") || (typeof this.denominator != "undefined")) {
+						var numerator = (typeof this.numerator != "undefined" ? this.numerator : 1);
+						var denominator = (typeof this.denominator != "undefined" ? this.denominator : 1);
+						// calculate value
+						if ((numerator != 1) || (denominator != 1)) {
+							value = value * numerator / denominator;
+						}
+					}
+					return sprintf(formatString, value);
+				};
+
+                // parsing input function
+                result.parseValue = function(valueStr) {
+					// conversion defined?
+					if (typeof this.conversion != "undefined") {
+						// timestamp conversions
+						if ("unixSeconds" === this.conversion) {
+                            return 0;   // TODO
+						} else
+						if ("unixSecondsLocal" === this.conversion) {
+                            // accept a date string; parse it and return the unix timestamp
+                            // uses date.js which will extend parse() and return a date object
+                            var date = Date.parse(valueStr);
+                            return date.getTime() / 1000;   // convert to seconds
+						} else
+							return "Unknown conversion: " + this.conversion;
+					}
+                    // remove non-numeric characters
+                    var str = valueStr.replace(/[^-0-9.]/g, "");
+                    var value = Number(str);
+                    if (isNaN(value))
+                        throw "Cannot convert the input to a number";
+					if ((typeof this.numerator != "undefined") || (typeof this.denominator != "undefined")) {
+						var numerator = (typeof this.numerator != "undefined" ? this.numerator : 1);
+						var denominator = (typeof this.denominator != "undefined" ? this.denominator : 1);
+						// calculate final value
+						if ((numerator != 1) || (denominator != 1)) {
+							value = value * denominator / numerator;
+						}
+					}
+                    return value;
+                };
+
+                result.getFormatterPattern = function(min, max) {
+ 					// conversion defined?
+					if (typeof this.conversion != "undefined") {
+                        throw "Conversion not yet supported";
+					}
+
+					var formatString = "%f";    // default
+					if (typeof this.formatString != "undefined")
+						formatString = this.formatString;
+                    var unit = this;
+                    return formatString
+                        .replace(/%(\.[0-9])*f/, function(match, detail) {
+                            var minLength = ("" + min).length + (min < 0 ? 1 : 0);
+                            var maxLength = ("" + max).length + (max < 0 ? 1 : 0);
+                            var totalLength = Math.max(minLength, maxLength);
+                            var decimalLength = Math.ceil(Math.log10(unit.denominator));
+                            var prefixLength = totalLength - decimalLength;
+                            return "{{" + "9".repeat(prefixLength) + "}}" + (decimalLength > 0 ? ".{{" + "9".repeat(decimalLength) + "}}" : "");
+                        })
+                        .replace(/%d/, function(match, detail) {
+                            var minLength = ("" + min).length + (min < 0 ? 1 : 0);
+                            var maxLength = ("" + max).length + (max < 0 ? 1 : 0);
+                            var totalLength = Math.max(minLength, maxLength);
+                            return "{{" + "9".repeat(totalLength) + "}}";
+                        })
+                        .replace("%%", "%");
+                };
+				
+				result.getDisplayHint = function(value) {
+					var hint = "active";	// default
+					// conversion defined?
+					if (typeof this.conversion != "undefined") {
+						// timestamp conversions
+						if ("unixSeconds" === this.conversion) {
+                            // return 0;   // TODO
+						} else
+						if ("unixSecondsLocal" === this.conversion) {
+							// the value is inactive if the current time is more recent
+							var dt = new Date(value * 1000);
+							if (dt < new Date())
+								return "inactive";
+						} else
+							hint = "Unknown conversion: " + this.conversion;
+					}
+					return hint;
+				}
+			}
+
+            unitsToUse[unit] = result;
+            return result;
+        }
+    }
+    return null;
+}
+
+// Unit management
+// *********************************************************
+
+// *********************************************************
+// Port management
+
+function findPortByID(id) {
+    for (var i = 0; i < ports.length; i++) {
+        if (ports[i].id === id)
+            return ports[i];
+    }
+    return null;
+}
+
+function findGroupByID(id) {
+    for (var i = 0; i < device.groups.length; i++) {
+        if (device.groups[i].id === id)
+            return device.groups[i];
+    }
+    return null;
+}
+
+function refreshPort(id) {
+    var port = findPortByID(id);
+    if (port != null)
+        port.refresh();
+}
+
+function refreshAll() {
+    for (var i = 0; i < ports.length; i++)
+        ports[i].refresh();
+}
+
+// *********************************************************
+// Port Classes
+
+// base class
+var Port = Class.extend({
+    init: function(port) {
+        // store port information
+        this.setPort(port);
+    },
+
+    setPort: function(port) {
+        this.port = port;
+        this.id = port.id;  // shortcut
+        this.extendedInfo = getProperties(port.extendedInfo);
+        this.unit = null;
+        if (typeof this.extendedInfo.unit != "undefined") {
+            this.unit = getUnitSettings(this.extendedInfo.unit);
+		}
+        this.groupID = this.extendedInfo.group;
+        this.extendedState = getProperties(port.extendedState);
+        this.history = null;
+        if (typeof this.extendedState.history != "undefined") {
+            this.history = getProperties(this.extendedState.history);
+        }
+    },
+
+    refresh: function() {
+        var instance = this;
+        $.jsonRPC.request('getPortInfo', {
+            params: {"portID": this.port.id},
+            success: function(response) {
+                instance.updatePort(response.result.port);
+            },
+            error: function (response) {
+                handleError(response.error);
+            }
+        });
+    },
+
+    getLabel: function() {
+        var label = this.port.label;
+        // set label from unit?
+        if ((label == "") && (this.unit != null)) {
+            if (typeof this.unit.label != "undefined")
+                label = this.unit.label;
+        }
+        return label;
+    },
+
+    createLabel: function() {
+        var label = this.getLabel();
+        // use different CSS classes for different lengths of labels
+        if (label.length < 25)
+            var labelDiv = "<div class='PortLabelShort' id='Port_" + this.port.id + "_Label'><nobr>" + label + "</div>";
+        else
+        if (label.length < 35)
+            var labelDiv = "<div class='PortLabelMedium' id='Port_" + this.port.id + "_Label'><nobr>" + label + "</div>";
+        else
+        if (label.length < 45)
+            var labelDiv = "<div class='PortLabelLonger' id='Port_" + this.port.id + "_Label'><nobr>" + label + "</div>";
+        else
+            var labelDiv = "<div class='PortLabelLong' id='Port_" + this.port.id + "_Label'><nobr>" + label + "</div>";
+        // info text from extended state
+        var text = this.extendedState.text;
+        var textDiv = "";
+        if (typeof text != "undefined")
+            textDiv = "<div class='PortText' id='Port_" + this.port.id + "_Text'>" + text + "</div>"
+        return labelDiv + textDiv;
+    },
+
+    getPortIconSrc: function() {
+        // unit icon?
+        if (this.unit != null) {
+            if (typeof this.unit.icon != "undefined")
+                return imageURLPrefix + this.unit.icon + ".png";
+        }
+        // special icon?
+        if (this.extendedInfo.icon != null) {
+            return imageURLPrefix + this.extendedInfo.icon + ".png";
+        }
+        return null;
+    },
+
+    getMaxLengthInPixels: function(values) {
+        // converts each item of the values array to a string, determines the maximum length
+        // and returns this value multiplied with a fixed constant
+        var maxlen = 0;
+        for (var i = 0; i < values.length; i++) {
+            var len = (this.unit != null ? this.unit.format(values[i]).length : ("" + values[i]).length);
+            if (len > maxlen)
+                maxlen = len;
+        }
+        return maxlen * 8;
+    },
+
+    updatePort: function(port) {
+        this.setPort(port);
+        this.updateUI();
+    },
+
+    updateUI: function() {
+        $("#Port_" + this.port.id + "_Label").html("<nobr>" + this.getLabel());
+        var text = this.extendedState.text;
+        if (typeof text != "undefined")
+            $("#Port_" + this.port.id + "_Text").html(text);
+    }
+});
+
+var DigitalPort = Port.extend({
+    OPDI_DIGITAL_MODE_UNKNOWN: -1,
+    OPDI_DIGITAL_MODE_INPUT_FLOATING: 0,
+    OPDI_DIGITAL_MODE_INPUT_PULLUP: 1,
+    OPDI_DIGITAL_MODE_INPUT_PULLDOWN: 2,
+    OPDI_DIGITAL_MODE_OUTPUT: 3,
+
+    OPDI_DIGITAL_LINE_UNKNOWN: -1,
+    OPDI_DIGITAL_LINE_LOW: 0,
+    OPDI_DIGITAL_LINE_HIGH: 1,
+
+    getPortIconSrc: function() {
+        if (this.port.state.error != null)
+            return imageURLPrefix + "digital_port_error.png";
+        var icon = this._super();
+        if (icon != null)
+            return icon;
+        if (this.port.state.mode == this.OPDI_DIGITAL_MODE_OUTPUT)
+            return imageURLPrefix + "digital_port_output.png";
+        else
+        if ((this.port.state.mode == this.OPDI_DIGITAL_MODE_INPUT_FLOATING)
+            || (this.port.state.mode == this.OPDI_DIGITAL_MODE_INPUT_PULLUP)
+            || (this.port.state.mode == this.OPDI_DIGITAL_MODE_INPUT_PULLDOWN))
+            return imageURLPrefix + "digital_port_input.png";
+        else
+            return imageURLPrefix + "digital_port.png";
+    },
+
+    getPortStateSrc: function() {
+        if (this.port.state.mode != this.OPDI_DIGITAL_MODE_OUTPUT) {
+            if (this.port.state.line == this.OPDI_DIGITAL_LINE_HIGH)
+                return imageURLPrefix + "led_green.png";
+            else
+            if (this.port.state.line == this.OPDI_DIGITAL_LINE_LOW)
+                return imageURLPrefix + "led_red.png";
+            else
+                return imageURLPrefix + "led_yellow.png";
+        } else {
+            // OPDI_DIGITAL_MODE_OUTPUT
+            if (this.port.state.line == this.OPDI_DIGITAL_LINE_HIGH)
+                return imageURLPrefix + "switch_on.png";
+            else
+                return imageURLPrefix + "switch_off.png";
+        }
+    },
+
+    createWidget: function() {
+        var widget = ["<div class='Port' id='Port_" + this.port.id + "'>"
+        + "<table class='PortWidget'><tr>"
+        + "<td class='PortIconCell'>" + "<img class='PortIcon' src='" + this.getPortIconSrc() + "' style='float:left;' id='Port_" + this.port.id + "_Icon'>" + "</td>"
+        + "<td width='5px'>&nbsp;</td>"
+        + "<td>" + this.createLabel() + "</td>"
+        + "<td class='PortState' width='1px'>" + "<img src='" + this.getPortStateSrc() + "' style='float:right;' id='Port_" + this.port.id + "_State'>" + "</td>"
+        + "</tr></table></div>", 1, 1];
+
+        return widget;
+    },
+
+    updateUI: function() {
+        this._super();
+        $("#Port_" + this.port.id + "_Icon").attr("src", this.getPortIconSrc());
+        $("#Port_" + this.port.id + "_State").attr("src", this.getPortStateSrc());
+    },
+
+    stateClicked: function() {
+        var instance = this;
+        // mode must be output
+        if (this.port.state.mode != this.OPDI_DIGITAL_MODE_OUTPUT)
+            return;
+        // check current state
+        var newLine = this.port.state.line == this.OPDI_DIGITAL_LINE_HIGH? this.OPDI_DIGITAL_LINE_LOW : this.OPDI_DIGITAL_LINE_HIGH;
+        // call server
+        $.jsonRPC.request('setDigitalState', {
+            params: {"portID": this.port.id, "line": newLine},
+            success: function(response) {
+                instance.updatePort(response.result.port);
+            },
+            error: function(response) {
+                handleError(response.error);
+            }
+        });
+    },
+
+    registerCommands: function() {
+        var instance = this;
+        $("#Port_" + this.port.id + "_Icon").click(function() {
+            instance.refresh();
+        });
+        $("#Port_" + this.port.id + "_Label").click(function() {
+            // alert("Clicked: Label of port " + instance.port.id);
+        });
+        $("#Port_" + this.port.id + "_State").click(function() {
+            instance.stateClicked();
+        });
+    }
+});
+
+var AnalogPort = Port.extend({
+
+    getPortIconSrc: function() {
+        if (this.port.state.error != null)
+            return imageURLPrefix + "analog_port_error.png";
+        var icon = this._super();
+        if (icon != null)
+            return icon;
+        return imageURLPrefix + "analog_port.png";
+    },
+
+    getMax: function() {
+        return (1 << this.port.state.resolution) - 1;
+    },
+
+    getPortValue: function() {
+        if (this.port.state.error != null || (typeof this.port.state.value == "undefined"))
+            return "";
+        else
+            return "" + this.port.state.value;
+    },
+
+    createWidget: function() {
+        var widget = ["<div class='Port' id='Port_" + this.port.id + "'>"
+        + "<table><tr>"
+        + "<td class='PortIconCell'>" + "<img class='PortIcon' src='" + this.getPortIconSrc() + "' id='Port_" + this.port.id + "_Icon'>" + "</td>"
+        + "<td width='5px'>&nbsp;</td>"
+            + "<td align='left'><table width='" + (portWidgetWidth - 100) + "px'>"
+            + "<tr><td>" + this.createLabel() + "</td></tr>"
+            + "<tr><td><div id='Port_" + this.port.id + "_Slider'></div></td>"
+            + "<td width='5px'>&nbsp;</td>"
+            + "<td width='" + this.getMaxLengthInPixels([this.getMax()]) + "'>"
+                + "<div class='AnalogPortState' id='Port_" + this.port.id + "_Value'><nobr>" + this.getPortValue() + "</div></td><tr>"
+            + "</table></td>"
+        + "</tr></table></div>", 1, 1];
+
+        return widget;
+    },
+
+    updateUI: function() {
+        this._super();
+        $("#Port_" + this.port.id + "_Icon").attr("src", this.getPortIconSrc());
+        // avoid triggering a slider change if set programmatically (refresh loop)
+        this.port.noRefresh = true;
+        $("#Port_" + this.port.id + "_Slider").slider("value", this.port.state.value);
+        this.port.noRefresh = false;
+        $("#Port_" + this.port.id + "_Value").html("<nobr>" + this.getPortValue());
+    },
+
+    sliderChanged: function() {
+        var instance = this;
+        // changed by updatePort? If so, do nothing
+        if (this.port.noRefresh)
+            return;
+        // determine new value to set
+        var newValue = $("#Port_" + this.port.id + "_Slider").slider("value");
+//        $("#Port_" + this.port.id + "_Slider").slider("disable");
+        // call server
+        $.jsonRPC.request('setAnalogValue', {
+            params: {"portID": this.port.id, "value": newValue},
+            success: function(response) {
+                instance.updatePort(response.result.port);
+//                $("#Port_" + instance.port.id + "_Slider").slider("enable");
+            },
+            error: function(response) {
+//                $("#Port_" + instance.port.id + "_Slider").slider("enable");
+                handleError(response.error);
+            }
+        });
+    },
+
+    registerCommands: function() {
+        var instance = this;
+        $("#Port_" + this.port.id + "_Icon").click(function() {
+            instance.refresh();
+        });
+        $("#Port_" + this.port.id + "_Label").click(function() {
+            // alert("Clicked: Label of port " + instance.port.id);
+        }); 
+        $("#Port_" + this.port.id + "_Slider").slider({
+            min: 0,
+            max: this.getMax(),
+            step: 1,
+            value: this.port.state.value,
+            start: function(event, ui) {
+                gridster.disable();
+            },
+            stop: function(event, ui) {
+                gridster.enable();
+            },
+            slide: function(event, ui) {
+                if (instance.port.readonly)
+                    return false;
+            },
+            change: function(event, ui) {
+                if (instance.port.readonly)
+                    return false;
+                instance.sliderChanged();
+            }
+        });
+    }
+});
+
+var DialPort = Port.extend({
+
+    init: function(port) {
+        this._super(port);
+		
+		// set defaults
+		this.showHistoryLegend = true;
+    },
+
+    getPortIconSrc: function() {
+        if (this.port.state.error != null)
+            return imageURLPrefix + "dial_port_error.png";
+        var icon = this._super();
+        if (icon != null)
+            return icon;
+        return imageURLPrefix + "dial_port.png";
+    },
+
+	getTextValue: function(value) {
+		// unit defined?
+		if (this.unit != null) {
+			// special case: for date conversions, if the value is 0, display nothing
+			if ((("unixSeconds" === this.unit.conversion) || ("unixSecondsLocal" === this.unit.conversion))
+				&& (value == 0)) {
+				return "";
+			}
+			return this.unit.format(value);
+		}
+		// no unit defined, use plain numeric value
+		return "" + value;
+    },
+	
+    getPortValue: function() {
+        if (this.port.state.error != null || (typeof this.port.state.position == "undefined"))
+            return "";
+        else {
+			var result = this.getTextValue(this.port.state.position);
+			if (this.unit != null) {
+				// get display hint from unit
+				if (this.unit.getDisplayHint(this.port.state.position) == "inactive") {
+					// inactive values are gray
+					result = "<font color='Gray'>" + result;
+				}
+			}
+			return result;
+		}
+    },
+
+    createWidget: function() {
+		var canvasWidth = portWidgetWidth - 100 - this.getMaxLengthInPixels([this.port.min, this.port.max]);
+		if (canvasWidth < 120)
+			canvasWidth = 120;
+        var widget = ["<div class='Port' id='Port_" + this.port.id + "'>"
+        + "<table><tr>"
+        + "<td class='PortIconCell'>" + "<img class='PortIcon' src='" + this.getPortIconSrc() + "' id='Port_" + this.port.id + "_Icon'>" + "</td>"
+        + "<td width='5px'>&nbsp;</td>"
+            + (this.noSlider 
+                ? 
+                    (this.twoRows 
+                        ? "<td>" + this.createLabel()
+                        // a no-slider single row uses a canvas to draw history and text (provide fallback)
+                        : "<td><canvas id='Port_" + this.port.id + "_Canvas' width='" + canvasWidth + "' height='50'>" 
+                            // fallback content
+                            + this.createLabel() + "</canvas></td><td width='5px'>&nbsp;</td><td width='"+ this.getMaxLengthInPixels([this.port.min, this.port.max]) + "'>"
+                    )
+                    + "<div class='DialPortState' id='Port_" + this.port.id + "_Value'><nobr>" + this.getPortValue() + "</div></td>"
+                // with slider, standard appearance
+                : "<td align='left'><table width='" + (portWidgetWidth - 100) + "px'>"
+                + "<tr><td>" + this.createLabel() + "</td></tr>"
+                + "<tr><td class='PortState'><div id='Port_" + this.port.id + "_Slider'></div></td>"
+                + "<td width='5px'>&nbsp;</td>"
+                + "<td width='"+ this.getMaxLengthInPixels([this.port.min, this.port.max]) + "'>"
+                    + "<div class='DialPortState' id='Port_" + this.port.id + "_Value'><nobr>" + this.getPortValue() + "</div></td><tr>"
+                + "</table></td>")
+        + "</tr></table></div>", 1, 1];
+
+        return widget;
+    },
+
+    setPort: function(port) {
+        this._super(port);
+        if (this.unit != null) {
+            this.noSlider = typeof this.unit.layout != "undefined" && (this.unit.layout == "dial_port_row_noslider" || this.unit.layout == "dial_port_row_noslider_two_rows");
+            this.twoRows = typeof this.unit.layout != "undefined" && this.unit.layout == "dial_port_row_noslider_two_rows";
+        }
+    },
+
+    updateUI: function() {
+        this._super();
+        $("#Port_" + this.port.id + "_Icon").attr("src", this.getPortIconSrc());
+        if (!this.noSlider) {
+            // avoid triggering a slider change if set programmatically (refresh loop)
+            this.port.noRefresh = true;
+            $("#Port_" + this.port.id + "_Slider").slider("value", this.port.state.position);
+            this.port.noRefresh = false;
+        } else {
+            if (!this.twoRows) {
+                // for the non-two-rows layout, draw the canvas
+                var canvas = document.getElementById("Port_" + this.port.id + "_Canvas");
+                if (canvas.getContext) {
+					var title = "";
+                    var ctx = canvas.getContext('2d');
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    // draw background if history available
+                    if ((this.history != null) && this.history.values) {
+                        ctx.globalAlpha = 0.2;
+                        var my_gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                        my_gradient.addColorStop(0, "#e6faff");
+                        my_gradient.addColorStop(1, "#4ddbff");
+                        ctx.fillStyle = my_gradient;
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    }
+                    // draw port label
+                    ctx.globalAlpha = 1;
+                    ctx.fillStyle = "black";
+                    // determine text size
+                    var label = this.getLabel();
+                    var i = -1;
+                    do {
+                        ++i;
+                        ctx.font = "" + (16 - i) + "px Verdana";
+                    } while (ctx.measureText(label).width > canvas.width);
+                    ctx.fillText(label, 0, canvas.height / 2);
+                    // draw history if available
+                    if ((this.history != null) && this.history.values) {
+                        var values = this.history.values.split(",");
+                        // determine minimum, maximum and total sum
+                        var min = Number.MAX_VALUE;
+                        var max = Number.MIN_VALUE;
+						var avg = null;
+                        var totalSum = 0;
+                        for (var i = 0; i < values.length; i++) {
+                            if (Number(values[i]) < min)
+                                min = Number(values[i]);
+                            if (Number(values[i]) > max)
+                                max = Number(values[i]);
+                            totalSum += Number(values[i]);
+                        }
+                        // history legend?
+                        if (this.showHistoryLegend) {
+                            ctx.font = "8px Verdana";
+                            var minLabelStart = canvas.width;
+                            // maximum: top right
+                            if (typeof max != "undefined") {
+                                var label = this.getTextValue(max);
+                                var labelExtent = ctx.measureText(label);
+                                var labelWidth = labelExtent.width;
+                                var labelHeight = 10;
+                                ctx.fillText(label, canvas.width - labelWidth - 1, labelHeight - 3);
+                            }
+                            // minimum: bottom right
+                            if (typeof min != "undefined") {
+                                var label = this.getTextValue(min);
+                                var labelExtent = ctx.measureText(label);
+                                var labelWidth = labelExtent.width;
+                                var labelHeight = 10;
+                                minLabelStart = canvas.width - labelWidth - 1;
+                                ctx.fillText(label, minLabelStart, canvas.height - 3);
+                            }
+                            // average: top left
+                            if (values.length > 0) {
+                                avg = totalSum / values.length;
+                                var label = "Ø " + this.getTextValue(avg);
+                                var labelHeight = 10;
+                                ctx.fillText(label, 1, labelHeight - 3);
+                            }
+                            // hourly lines
+                            var totalSeconds = this.history.interval * this.history.maxCount;
+                            var x = 4;  // first hour line to draw
+                            ctx.globalAlpha = 0.5;
+                            ctx.strokeStyle = "grey";
+                            while (x < totalSeconds / 3600) {
+                                var px = canvas.width - canvas.width / totalSeconds * x * 3600;
+                                ctx.beginPath();
+                                ctx.moveTo(px, 0);
+                                ctx.lineTo(px, canvas.height);
+                                ctx.stroke();
+                                // draw hour text?
+                                if (px < minLabelStart) {
+                                    var txt = "-" + x;
+                                    ctx.fillText(txt, px - 5 * txt.length, canvas.height - 3);
+                                }
+                                x += 4;
+                            }
+                        }
+
+						title = "Min: " + this.getTextValue(min) + "; Max: " + this.getTextValue(max) + (avg == null ? "" : "; Ø: " + this.getTextValue(avg));
+                        // draw history graph line
+                        ctx.strokeStyle = "#00ace6";
+						// the line width depends on the number of total values; less values => thicker lines
+						if (this.history.maxCount > 500)
+							ctx.lineWidth = 1;
+						else
+						if (this.history.maxCount > 100)
+							ctx.lineWidth = 2;
+						else
+						if (this.history.maxCount > 50)
+							ctx.lineWidth = 3;
+						else
+							ctx.lineWidth = 4;
+                        ctx.lineJoin = "round";
+                        ctx.globalAlpha = 0.95;
+                        ctx.beginPath();
+                        for (var i = 0; i < this.history.maxCount; i++) {
+                            if (i >= values.length)
+                                break;
+                            // start from the right
+                            var x = canvas.width - (canvas.width / (this.history.maxCount - 1)) * i;
+                            // special case: flat line (no meaningful calculation possible)
+                            var y = (min == max ? canvas.height / 2 
+                                // standard case: scaled value
+                                : -5 + canvas.height - (canvas.height - 10) * ((values[values.length - i - 1] - min) / (max - min)));
+                            if (i == 0) 
+                                ctx.moveTo(x, y);
+                            else
+                                ctx.lineTo(x, y);
+                        }
+                        ctx.stroke();
+                    }
+					canvas.title = title;
+                }
+            }
+        }
+        $("#Port_" + this.port.id + "_Value").html("<nobr>" + this.getPortValue());
+    },
+
+    setPosition: function(newPosition) {
+        var instance = this;
+        // call server
+        $.jsonRPC.request('setDialPosition', {
+            params: {"portID": this.port.id, "position": newPosition},
+            success: function(response) {
+                instance.updatePort(response.result.port);
+            },
+            error: function(response) {
+                handleError(response.error);
+            }
+        });
+    },
+
+    sliderChanged: function() {
+        // changed by updatePort? If so, do nothing
+        if (this.port.noRefresh)
+            return;
+        // determine new position to set
+        var newPosition = $("#Port_" + this.port.id + "_Slider").slider("value");
+        this.setPosition(newPosition);
+    },
+
+    editValue: function() {
+        if (this.port.readonly)
+            return true;
+        // show dialog
+        this.dialog.dialog("open");
+        // if there is a unit, apply the formatter and set the formatted value
+        if (this.unit != null) {
+            // special editor?
+            if (this.unit.editor == "DateTimeEditor") {
+                // reset select
+                $("#" + this.port.id + "_datetime_select").prop('selectedIndex', 0);
+                $('#' + this.port.id + '_Value').datetimepicker({
+                    dateFormat: "yy-mm-dd",
+                    timeFormat: "HH:mm:ss"
+                 });
+            } else {
+                // standard numeric editor with formatted pattern
+                $('#' + this.port.id + '_Value').formatter({
+                    'pattern': this.unit.getFormatterPattern(this.port.min, this.port.max),
+                    'persistent': true
+                });
+            }
+            $('#' + this.port.id + '_Value').val(this.unit.format(this.port.state.position));
+        } else
+            $('#' + this.port.id + '_Value').val(this.port.state.position);
+
+        if (this.unit.editor != "DateTimeEditor") {
+            $('#' + this.port.id + '_Value').focus();
+            $('#' + this.port.id + '_Value').select();
+        }
+    },
+
+    updateTips: function(t) {
+        var instance = this;
+        this.tips
+            .text(t)
+            .addClass("ui-state-highlight");
+        setTimeout(function() {
+            instance.tips.removeClass("ui-state-highlight", 1500);
+        }, 500);
+    },
+
+    setValue: function() {
+        $('#' + this.port.id + '_Value').removeClass("ui-state-error");
+
+        // validate input
+        var value = $('#' + this.port.id + '_Value').val();
+        if (this.unit != null) {
+            // let the unit parse the input
+            try {
+                value = this.unit.parseValue(value);
+            } catch (err) {
+                this.updateTips(err);
+                return;
+            }
+        } else {
+            value = Number(value);
+
+            if (isNaN(value)) {
+                this.updateTips("Please enter a numeric value.");
+                return;
+            }
+        }
+
+        if (value < this.port.min) {
+            var hintStr = (this.unit != null ? this.unit.format(this.port.min) : this.port.min);
+            this.updateTips("Value must be greater or equal " + hintStr);
+            return;
+        }
+        if (value > this.port.max) {
+            var hintStr = (this.unit != null ? this.unit.format(this.port.max) : this.port.max);
+            this.updateTips("Value must be less or equal " + hintStr);
+            return;
+        }
+
+        this.setPosition(value);
+        this.dialog.dialog("close");
+    },
+
+    dateTimeSelected: function(selectedIndex) {
+        // called when the selection of an active DateTimeEditor is being changed
+        if (selectedIndex < 1)
+            return;
+        var date = new Date();
+        switch (selectedIndex) {
+            case 1: date.addSeconds(30); break;
+            case 2: date.addMinutes(1); break;
+            case 3: date.addMinutes(5); break;
+            case 4: date.addMinutes(15); break;
+            case 5: date.addMinutes(30); break;
+            case 6: date.addHours(1); break;
+            case 7: date.addHours(2); break;
+            case 8: date.addHours(6); break;
+            case 9: date.addDays(1); break;
+        }
+        $('#' + this.port.id + '_Value').val(this.unit.format(date.getTime() / 1000));
+    },
+
+    toggleShowHistoryLegend: function() {
+        if (this.showHistoryLegend)
+            this.showHistoryLegend = false;
+        else
+            this.showHistoryLegend = true;
+        this.updateUI();
+    },
+
+    registerCommands: function() {
+        var instance = this;
+        $("#Port_" + this.port.id + "_Icon").click(function() {
+            instance.refresh();
+        });
+        $("#Port_" + this.port.id + "_Label").click(function() {
+            instance.editValue();
+        }); 
+        $("#Port_" + this.port.id + "_Value").click(function() {
+            instance.editValue();
+        }); 
+        if (!this.noSlider) {
+            $("#Port_" + this.port.id + "_Slider").slider({
+                min: this.port.min,
+                max: this.port.max,
+                step: this.port.step,
+                value: this.port.state.position,
+                start: function(event, ui) {
+                    gridster.disable();
+                },
+                stop: function(event, ui) {
+                    gridster.enable();
+                },
+                slide: function(event, ui) {
+                    if (instance.port.readonly)
+                        return false;
+                },
+                change: function(event, ui) {
+                    if (instance.port.readonly)
+                        return false;
+                    instance.sliderChanged();
+                }
+            });
+        }
+        $("#Port_" + this.port.id + "_Canvas").click(function() {
+            instance.toggleShowHistoryLegend();
+        }); 
+
+        // append form dialog to end of document
+        var dialogHtml = '<div id="' + this.port.id + '_dialog" title="' + this.port.label + '">'
+            + '<p id="' + this.port.id + '_validateTips">Please enter a value in range: '
+               + '<nobr>' + (this.unit != null ? this.unit.format(this.port.min) : this.port.min) + '</nobr>'
+               + '<wbr>..<wbr>' 
+               + '<nobr>' + (this.unit != null ? this.unit.format(this.port.max) : this.port.max) + '</nobr></p>'
+            + '<form>'
+            + '<fieldset><table>'
+            + '<tr><td><label for="' + this.port.id + '_Value">New value:&nbsp;&nbsp;</label></td>'
+            + '<td><input type="text" name="' + this.port.id + '_Value" id="' + this.port.id + '_Value" class="text ui-widget-content ui-corner-all"></td>'
+            + (this.unit != null && this.unit.editor == "DateTimeEditor" ? 
+                '</tr><tr><td><label for="' + this.port.id + '_datetime_select">Shortcut:&nbsp;&nbsp;</label></td>'
+                + '<td><select id="' + this.port.id + '_datetime_select" name="' + this.port.id + '_datetime_select">'
+                    + '<option>Select...</option>'
+                    + '<option>In 30 seconds</option>'
+                    + '<option>In one minute</option>'
+                    + '<option>In five minutes</option>'
+                    + '<option>In 15 minutes</option>'
+                    + '<option>In 30 minutes</option>'
+                    + '<option>In one hour</option>'
+                    + '<option>In two hours</option>'
+                    + '<option>In six hours</option>'
+                    + '<option>In one day</option>'
+                + '</select></td>'
+                : "")
+            + '</tr></table><input type="submit" tabindex="-1" style="position:absolute; top:-1000px">'
+            + '</fieldset>'
+            + '</form>'
+            + '</div>';
+ 
+        $("body").append(dialogHtml);
+
+        if (this.unit != null && this.unit.editor == "DateTimeEditor") {
+            $("#" + this.port.id + "_datetime_select").change(function(event) {
+                instance.dateTimeSelected(event.target.selectedIndex);
+            });
+        }
+
+        this.dialog = $("#" + this.port.id + "_dialog").dialog({
+            autoOpen: false,
+            height: 280,
+            width: 450,
+            modal: true,
+            buttons: {
+                "Set value": function() {
+                    instance.setValue();
+                },
+                Cancel: function() {
+                    instance.dialog.dialog("close");
+                }
+            },
+            close: function() {
+                $('#' + instance.port.id + '_Value').removeClass("ui-state-error");
+            }
+        });
+        this.tips = $("#" + this.port.id + "_validateTips");
+        this.dialog.find("form").on("submit", function(event) {
+            event.preventDefault();
+            instance.setValue();
+        });
+    }
+});
+
+var SelectPort = Port.extend({
+
+    getPortIconSrc: function() {
+        if (this.port.state.error != null)
+            return imageURLPrefix + "select_port_error.png";
+        var icon = this._super();
+        if (icon != null)
+            return icon;
+        return imageURLPrefix + "select_port.png";
+    },
+
+    getPortStateSrc: function() {
+        return "";
+    },
+
+    getPositionText: function() {
+        if (this.port.state.error != null)
+            return "";
+        return this.port.positions[this.port.state.position];
+    },
+
+    createWidget: function() {
+        var widget = ["<div class='Port' id='Port_" + this.port.id + "'>"
+        + "<table class='PortWidget'><tr>"
+        + "<td class='PortIconCell'>" + "<img class='PortIcon' src='" + this.getPortIconSrc() + "' style='float:left;' id='Port_" + this.port.id + "_Icon'>" + "</td>"
+        + "<td width='5px'>&nbsp;</td>"
+        + "<td class='SelectPort'>" + this.createLabel()
+        + "<div class='SelectPortPosition' id='Port_" + this.port.id + "_Position'><nobr>" + this.getPositionText() + "</div>"
+        + "</td>"
+        + "</tr></table></div>", 1, 1];
+
+        return widget;
+    },
+
+    updateUI: function(port) {
+        this._super(port);
+        $("#Port_" + this.port.id + "_Icon").attr("src", this.getPortIconSrc());
+        $("#Port_" + this.port.id + "_Position").html("<nobr>" + this.getPositionText());
+    },
+
+    showMenu: function(ev) {
+        if (this.port.readonly)
+            return;
+        $("#Port_" + this.port.id + "_Icon").contextMenu('open', ev);
+    },
+
+    selectPosition: function(newPosition) {
+        var instance = this;
+
+        // call server
+        $.jsonRPC.request('setSelectPosition', {
+            params: {"portID": this.port.id, "position": newPosition},
+            success: function(response) {
+                instance.updatePort(response.result.port);
+            },
+            error: function(response) {
+                handleError(response.error);
+            }
+        });
+    },
+
+    registerCommands: function() {
+        var instance = this;
+        $("#Port_" + this.port.id + "_Icon").click(function(ev) {
+            instance.showMenu(ev);
+            return false;
+        });
+        $("#Port_" + this.port.id + "_Label").click(function(ev) {
+            instance.showMenu(ev);
+            return false;
+        });
+        $("#Port_" + this.port.id + "_Position").click(function(ev) {
+            instance.showMenu(ev);
+            return false;
+        });
+
+        var menu = Array();
+        for (var i = 0; i < this.port.positions.length; i++) {
+            var item = function(index, position) {
+                return {
+                    name: position,
+                    title: position,
+                    fun: function() {
+                        instance.selectPosition(index);
+                    }
+                };
+            }(i, this.port.positions[i]);
+            menu.push(item);
+        }
+        if (!this.port.readonly) {
+            $("#Port_" + this.port.id + "_Icon").contextMenu(menu);
+            $("#Port_" + this.port.id + "_Label").contextMenu(menu);
+            $("#Port_" + this.port.id + "_Position").contextMenu(menu);
+        }
+    }
+});
+
+// Port Classes
+// *********************************************************
+
+// *********************************************************
+// UI functions
+
+var OPDI_PORTTYPE_DIGITAL = "0";
+var OPDI_PORTTYPE_ANALOG = "1";
+var OPDI_PORTTYPE_SELECT = "2";
+var OPDI_PORTTYPE_DIAL = "3";
+var OPDI_PORTTYPE_STREAMING = "4";
+
+function createPort(port) {
+    var portObject = null;
+    if (port.type == OPDI_PORTTYPE_DIGITAL) {
+        portObject = new DigitalPort(port);
+    } else
+    if (port.type == OPDI_PORTTYPE_ANALOG) {
+        portObject = new AnalogPort(port);
+    } else
+    if (port.type == OPDI_PORTTYPE_DIAL) {
+        portObject = new DialPort(port);
+    } else
+    if (port.type == OPDI_PORTTYPE_SELECT) {
+        portObject = new SelectPort(port);
+    }
+    return portObject;
+}
+
+function getParentGroup(group) {
+    if (group.parent == "")
+        return null;
+
+    for (var i = 0; i < device.groups.length; i++) {
+        if (device.groups[i].id === group.parent)
+            return device.groups[i];
+    }
+
+    return null;
+}
+
+function isPortInGroup(port, group) {
+    if (typeof port.groupID == "undefined")
+        return false;
+
+    if (port.groupID === group.id)
+        return true;
+
+    var portGroup = findGroupByID(port.groupID);
+    if (portGroup == null)
+        return false;
+    
+    // traverse parent path upwards
+    var parent = getParentGroup(portGroup);
+    while (parent != null) {
+        if (parent.id === group.id)
+            return true;
+        parent = getParentGroup(parent);
+    }
+    return false;
+}
+
+function buildPortView(group) {
+    // create port UI elements
+    for (var i = 0; i < device.ports.length; i++) {
+        var portObject = createPort(device.ports[i])
+        // group specified?
+        if (typeof group != "undefined") {
+            // check whether the port is in the group or its parents
+            if (!isPortInGroup(portObject, group))
+                continue;
+        }
+
+        if (portObject != null) {
+            ports.push(portObject);
+
+            var widget = portObject.createWidget();
+            if (widget != null)
+                gridster.add_widget.apply(gridster, widget);
+        }
+    }
+    // go through ports, register events on UI and update
+    $(ports).each(function(i, port) {
+        port.registerCommands();
+        port.updateUI();
+    });
+}
+
+function buildSubGroup(parentGroup, selectedGroup) {
+    var result = "";
+    // determine groups on this level
+    var groups = new Array();
+    for (var i = 0; i < device.groups.length; i++) {
+        var group = device.groups[i];
+        // top level? take all top level groups
+        if (parentGroup == null && group.parent == "")
+            groups.push(group);
+        else
+            // sub level? take children
+            if (parentGroup != null && parentGroup.id === group.parent)
+                groups.push(group);
+    }
+
+    // insert sub list for sub items only (not top level)
+    if (parentGroup != null)
+        result += "<ul>";
+
+    for (var i = 0; i < groups.length; i++) {
+        var group = groups[i];
+        result += "<li><a href=\"?group=" + group.id + "\">" + 
+            (typeof selectedGroup != "undefined" && selectedGroup.id === group.id ? "<b>" : "")
+            + group.label + "</b></a></li>";
+        result += buildSubGroup(group, selectedGroup);
+    }
+
+    if (parentGroup != null)
+        result += "</ul>";
+
+    return result;
+}
+
+function buildGroupView(selectedGroup) {
+    // build group tree
+    var treeHtml = "<ul>"
+        + "<li><a href=\"?group=\">" +
+            (typeof selectedGroup == "undefined" ? "<b>" : "")
+        + "All ports</b></a></li>";
+    treeHtml += buildSubGroup(null, selectedGroup);
+    treeHtml += "</ul>";
+
+    $("#groupTree").html(treeHtml);
+}
+
+function buildUI(deviceP) {
+    // store device info globally
+    device = deviceP;
+    // store info properties
+    device.info = getProperties(device.info);
+    if (typeof device.info != "undefined")
+        device.startGroup = device.info.startGroup;
+
+    window.document.title = device.name;
+    $("#deviceName").html(device.name);
+
+    // determine initial group
+    var groupID = getParameterByName("group", window.location.href);
+    if (groupID == null)
+        // fall back to optional device specification
+        groupID = device.startGroup;
+
+    var group = undefined;
+    for (var i = 0; i < deviceP.groups.length; i++)
+        if (deviceP.groups[i].id == groupID) {
+            group = deviceP.groups[i];
+            break;
+        }
+
+    buildGroupView(group);
+
+    // build ports for start group
+    buildPortView(group);
+}
+
+function setupUI() {
+    $.jsonRPC.request('getDeviceInfo', {
+        async: false,
+        params: {},
+        success: function (response) {
+            buildUI(response.result.deviceInfo);
+        },
+        error: function (response) {
+            handleError(response.error);
+        }
+    });
+    /*
+    $(function(){
+      // using default options
+      $("#groupTree").fancytree();
+    });
+    */
+}
+
+function toggleTree() {
+    $("#groupTree").toggle();
+}
+
+// UI functions
+// *********************************************************
+
+// *********************************************************
+// RPC functions
+
+function setupRPC() {
+	$.jsonRPC.setup({
+	  endPoint: '/api/jsonrpc',
+	  namespace: ''
+	});
+}
+
+function setupWebsocket() {
+
+    var ws = new WebSocket('ws://' + location.host + '/ws');
+    if (!window.console) { window.console = { log: function() {} } };
+    ws.onopen = function(ev) {};
+    ws.onerror = function(ev) {
+        // reload automatically if there's a problem with the connection
+        setTimeout(function () { location.reload(); }, 5000);
+        $('<div/>').html("WebSocket connection error, reloading automatically...").dialog();
+    };
+    ws.onclose = function (ev) {};
+    ws.onmessage = function(ev) {
+        // examine message
+        var parts = ev.data.split(" ");
+        if (parts[0] == "RefreshAll") {
+            refreshAll();
+        } else
+        if (parts[0] == "Refresh") {
+            refreshPort(parts[1]);
+        }
+    };
+}
+
+// RPC functions
+// *********************************************************
+
+// *********************************************************
+// Application
+
+function startup() {
+    loadUnits();
+    setupRPC();
+    setupUI();
+    setupWebsocket();
+}
+
+//-->
+</script>
+
+<body onload="startup()">
+
+<div id="deviceName" class="DeviceName">Unknown Device (Not Connected)</div>
+<p></p>
+
+<table width="100%">
+    <tr>
+        <td valign="top">
+            <div id="treeToggler" style="text-align: left;"><a href="javascript:toggleTree();"><img src="images/treeview.png" /></a></div>
+            <div id="groupTree" class="GroupTree">
+            <!-- Generated list items for group tree go here -->
+            </div>
+        </td>
+        <td valign="top">
+            <!-- Port grid -->
+            <div class="gridster"><ul></ul></div>
+        </td>
+    </tr>
+</table>
+<script type="text/javascript" id="code">
+<!--
+    var gridster;
+
+    $(function() {
+
+        gridster = $(".gridster > ul").gridster({
+            widget_margins: [10, 10],
+            widget_base_dimensions: [portWidgetWidth, portWidgetHeight]
+        }).data('gridster');
+
+    });
+//-->
+</script>
+</body>
+</html>

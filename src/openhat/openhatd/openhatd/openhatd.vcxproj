@@ -1,0 +1,177 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{6E43BF59-A05B-4DE9-9249-822AE3F4D42C}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>openhatd</RootNamespace>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(ProjectDir)$(Configuration)\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;POCO_STATIC;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\..\libraries\libctb\include;..\..\..\libraries\exprtk;..\..\..\libraries\POCO\Foundation\include;..\..\..\libraries\POCO\Util\include;../../../../opdi_core/code/c/common;../../../../opdi_core/code/c/platforms\win32;../../../../opdi_core/code/c/platforms;../../../../opdi_core/code/c/common\cppwrapper;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>..\..\..\libraries\POCO\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;POCO_STATIC;NOMINMAX;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\..\..\libraries\libctb\include;..\..\..\libraries\exprtk;..\..\..\libraries\POCO\Foundation\include;..\..\..\libraries\POCO\Util\include;../../../../opdi_core/code/c/common;../../../../opdi_core/code/c/platforms\win32;../../../../opdi_core/code/c/platforms;../../../../opdi_core/code/c/common\cppwrapper;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>..\..\..\libraries\POCO\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <None Include="..\doc\complex_example_1.ini" />
+    <None Include="..\doc\complex_example_2.ini" />
+    <None Include="exectest.bat" />
+    <None Include="fileinputtest.txt" />
+    <None Include="scene0.ini" />
+    <None Include="scene1.ini" />
+    <None Include="test_include.ini" />
+    <None Include="webdocroot\index.html" />
+    <None Include="webdocroot\openhatd.css" />
+    <None Include="webdocroot\strings.js" />
+    <None Include="webdocroot\units.json" />
+    <None Include="webdocroot\utils.js" />
+    <None Include="window_test.ini" />
+    <None Include="win_openhatd.ini" />
+    <None Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="../../../../opdi_core/code/c/common\cppwrapper\OPDI_Ports.h" />
+    <ClInclude Include="../../../../opdi_core/code/c/common\cppwrapper\OPDI.h" />
+    <ClInclude Include="../../../../opdi_core/code/c/common\opdi_config.h" />
+    <ClInclude Include="../../../../opdi_core/code/c/common\opdi_constants.h" />
+    <ClInclude Include="../../../../opdi_core/code/c/common\opdi_message.h" />
+    <ClInclude Include="../../../../opdi_core/code/c/common\opdi_port.h" />
+    <ClInclude Include="../../../../opdi_core/code/c/common\opdi_protocol.h" />
+    <ClInclude Include="../../../../opdi_core/code/c/common\opdi_protocol_constants.h" />
+    <ClInclude Include="../../../../opdi_core/code/c/common\opdi_rijndael.h" />
+    <ClInclude Include="../../../../opdi_core/code/c/common\opdi_slave_protocol.h" />
+    <ClInclude Include="../../../../opdi_core/code/c/common\opdi_strings.h" />
+    <ClInclude Include="..\..\..\libraries\ExprTk\exprtk.hpp" />
+    <ClInclude Include="..\..\..\libraries\libctb\include\ctb-0.16\ctb.h" />
+    <ClInclude Include="..\..\..\libraries\libctb\include\ctb-0.16\fifo.h" />
+    <ClInclude Include="..\..\..\libraries\libctb\include\ctb-0.16\getopt.h" />
+    <ClInclude Include="..\..\..\libraries\libctb\include\ctb-0.16\gpib.h" />
+    <ClInclude Include="..\..\..\libraries\libctb\include\ctb-0.16\iobase.h" />
+    <ClInclude Include="..\..\..\libraries\libctb\include\ctb-0.16\kbhit.h" />
+    <ClInclude Include="..\..\..\libraries\libctb\include\ctb-0.16\portscan.h" />
+    <ClInclude Include="..\..\..\libraries\libctb\include\ctb-0.16\serport.h" />
+    <ClInclude Include="..\..\..\libraries\libctb\include\ctb-0.16\serportx.h" />
+    <ClInclude Include="..\..\..\libraries\libctb\include\ctb-0.16\timer.h" />
+    <ClInclude Include="..\..\..\libraries\libctb\include\ctb-0.16\win32\getopt.h" />
+    <ClInclude Include="..\..\..\libraries\libctb\include\ctb-0.16\win32\gpib-32.h" />
+    <ClInclude Include="..\..\..\libraries\libctb\include\ctb-0.16\win32\serport.h" />
+    <ClInclude Include="..\..\..\libraries\libctb\include\ctb-0.16\win32\timer.h" />
+    <ClInclude Include="../../../../opdi_core/code/c/platforms\opdi_platformfuncs.h" />
+    <ClInclude Include="../../../../opdi_core/code/c/platforms\win32\opdi_platformtypes.h" />
+    <ClInclude Include="AbstractOpenHAT.h" />
+    <ClInclude Include="ExecPort.h" />
+    <ClInclude Include="ExpressionPort.h" />
+    <ClInclude Include="OpenHATConfigurationFile.h" />
+    <ClInclude Include="opdi_configspecs.h" />
+    <ClInclude Include="Ports.h" />
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="SunRiseSet.h" />
+    <ClInclude Include="targetver.h" />
+    <ClInclude Include="TimerPort.h" />
+    <ClInclude Include="WindowsOpenHAT.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="../../../../opdi_core/code/c/common\cppwrapper\OPDI_Ports.cpp" />
+    <ClCompile Include="../../../../opdi_core/code/c/common\cppwrapper\OPDI.cpp" />
+    <ClCompile Include="../../../../opdi_core/code/c/common\opdi_aes.cpp" />
+    <ClCompile Include="../../../../opdi_core/code/c/common\opdi_message.c" />
+    <ClCompile Include="../../../../opdi_core/code/c/common\opdi_port.c" />
+    <ClCompile Include="../../../../opdi_core/code/c/common\opdi_protocol.c" />
+    <ClCompile Include="../../../../opdi_core/code/c/common\opdi_rijndael.cpp" />
+    <ClCompile Include="../../../../opdi_core/code/c/common\opdi_slave_protocol.c" />
+    <ClCompile Include="../../../../opdi_core/code/c/common\opdi_strings.c" />
+    <ClCompile Include="..\..\..\libraries\libctb\src\fifo.cpp" />
+    <ClCompile Include="..\..\..\libraries\libctb\src\iobase.cpp" />
+    <ClCompile Include="..\..\..\libraries\libctb\src\kbhit.cpp" />
+    <ClCompile Include="..\..\..\libraries\libctb\src\portscan.cpp" />
+    <ClCompile Include="..\..\..\libraries\libctb\src\serportx.cpp" />
+    <ClCompile Include="..\..\..\libraries\libctb\src\win32\getopt.cpp" />
+    <ClCompile Include="..\..\..\libraries\libctb\src\win32\serport.cpp" />
+    <ClCompile Include="..\..\..\libraries\libctb\src\win32\timer.cpp" />
+    <ClCompile Include="../../../../opdi_core/code/c/platforms\win32\opdi_platformfuncs.c" />
+    <ClCompile Include="AbstractOpenHAT.cpp" />
+    <ClCompile Include="ExecPort.cpp" />
+    <ClCompile Include="ExpressionPort.cpp" />
+    <ClCompile Include="OpenHATConfigurationFile.cpp" />
+    <ClCompile Include="openhat_win.cpp" />
+    <ClCompile Include="Ports.cpp" />
+    <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="SunRiseSet.cpp" />
+    <ClCompile Include="TimerPort.cpp" />
+    <ClCompile Include="WindowsOpenHAT.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

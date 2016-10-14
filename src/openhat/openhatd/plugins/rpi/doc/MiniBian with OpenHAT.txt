@@ -1,0 +1,131 @@
+Setup Minibian for OpenHAT
+Leo Meyer, May 2015
+
+- Prepare SD card with the current Minibian edition.
+- Boot the Raspberry. SSH as "root", password "raspberry".
+- Change your root password:
+> passwd
+- Resize your SD card to the maximum. Do this before you update the system:
+> apt-get update
+> apt-get install raspi-config
+> raspi-config
+Select option 1: "Expand Filesystem". When the dialog comes back, select "<OK>", "<Finish>" and finally "<Yes>" to reboot.
+After reboot, login again and check whether the SD card has been resized:
+> df
+- Upgrade the distribution:
+> apt-get update
+> apt-get upgrade
+- Change the hostname to e.g. ohatsvr1 by editing the /etc/hostname and /etc/hosts files.
+- Adjust keyboard and timezone settings as required:
+> raspi-config
+- If you want to use the I2C bus, enable it in raspi-config.
+- Optionally, if you want a static IP address, e.g. 192.168.0.10, edit the file /etc/network/interfaces:
+auto lo
+iface lo inet loopback
+auto eth0
+#iface eth0 inet dhcp
+iface eth0 inet static
+address 192.168.0.10
+gateway 192.168.0.1
+netmask 255.255.255.0
+network 192.168.0.0
+broadcast 192.168.0.255
+
+- Change the SSH keys:
+rm /etc/ssh/ssh_host_*
+dpkg-reconfigure openssh-server
+- If you want to use the Gertboard Atmega Port Expander you should avoid Linux sending boot messages to the
+serial port as this might confuse the port expander. To do this, carefully edit /boot/cmdline.txt and remove all references
+to ttyAMA0, so that the line reads:
+dwc_otg.lpm_enable=0 console=tty1 elevator=deadline root=/dev/mmcblk0p2 rootfstype=ext4 rootwait
+
+- Configure the system to minimize SD card usage. Edit /etc/fstab to create ramdisks (see fstab.example).
+
+- Reboot:
+> shutdown -r now
+
+- Install upstart:
+> apt-get install upstart
+
+Install Weewx (weather station software):
+- Locate the current download URL on sourceforge, something like http://downloads.sourceforge.net/project/weewx/weewx_3.1.0-1_all.deb?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fweewx%2Ffiles%2F&ts=1430573304&use_mirror=heanet
+- Use wget to download the URL
+> wget <URL>
+- Install Weewx. You can configure it using a number of dialogs that will show up during installation:
+> dpkg -i weewx_<version>.deb
+- Fix missing dependencies:
+> apt-get -f install
+- Check whether Weewx started up:
+> tail -n 100 -f /var/log/syslog
+It's ok if Weewx exits if you don't have the weather station connected. After connecting it to USB, start Weewx:
+> service weewx start
+- Configure Weewx (see the instructions in the folder automation/WeatherPlugin/weewx).
+
+For more information refer to: http://lancet.mit.edu/mwall/projects/weather/weewx-plug-howto.html
+
+- Create a user for OpenHAT: 
+> adduser openhat
+- Install sudo:
+> apt-get install sudo
+- Allow the user "openhat" to sudo:
+> visudo
+Add the following line under the User privilege specification for "root":
+openhat   ALL=(ALL:ALL) ALL
+
+- Log in as user openhat
+- Build the software:
+Building OpenHAT itself on the Raspberry is not recommended. Please use a cross-compiler for that.
+Plugins, however, can be built on the raspberry.
+To build OpenHAT plugins on the Raspberry:
+- Install make:
+> sudo apt-get install make
+- Install gcc:
+> sudo apt-get install gcc
+- Install g++:
+> sudo apt-get install g++
+- Install Git:
+> sudo apt-get install git
+- Clone the OPDI repository:
+> git clone https://github.com/leomeyer/OPDI
+- Download the POCO libraries (tested with 1.6.0 but should work with more recent versions):
+> cd OPDI/code/c/libraries/POCO
+> wget http://pocoproject.org/releases/poco-1.6.0/poco-1.6.0.tar.gz
+> tar xvzf poco-1.6.0.tar.gz
+- Move files to the correct location:
+> mv poco-1.6.0/* .
+> rm -r poco-1.6.0
+- Build the POCO libraries:
+> ./configure --no-tests --no-samples
+> make -s
+This will take a while (easily an hour or so). Ignore '#pragma unknown option' warnings.
+- Install the POCO libraries:
+> sudo make -s install
+- Update the linker cache:
+> sudo ldconfig
+- Install GCC 4.8:
+> sudo apt-get install gcc-4.8
+> sudo apt-get install g++-4.8
+- To make GCC 4.8 the default compiler adjust the G++ symlinks:
+> sudo rm /usr/bin/gcc /usr/bin/g++
+> sudo ln -s /usr/bin/gcc-4.8 /usr/bin/gcc
+> sudo ln -s /usr/bin/g++-4.8 /usr/bin/g++
+- Compile the plugins:
+> cd ~/OPDI/code/c/configs/openhat/plugins/
+> make
+
+- Create the openhat directories:
+> mkdir openhat
+> mkdir plugins
+- Copy the openhatd executable (that you obtained by cross-compiling) to the openhat directory.
+- Copy the plugin shared objects to the plugins directory:
+> find ~/OPDI/code/c/configs/openhat/plugins -name "*.so" -exec cp {} ~/plugins \;
+- Copy a configuration template to the openhat directory (e. g. OPDI/code/c/configs/openhat/openhat/testconfigs/gertboard.ini)
+- Adjust the configuration file. Assume it's called "openhat_config.ini".
+- Test the configuration from the openhat directory:
+> cd openhat
+> ./openhatd -v -c openhat_config.ini
+If you want to use the Gertboard plugin, you have to start openhatd as root:
+> sudo ./openhatd -v -c openhat_config.ini
+
+- Configure Upstart for OpenHAT:
+- Copy the file upstart/openhat.conf to /etc/init/

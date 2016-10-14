@@ -1,0 +1,9 @@
+SUBDIRS = linux_test automation/WindowPlugin automation/FritzBoxPlugin automation/WeatherPlugin rpi/gertboard WebServerPlugin
+#rpi/RemoteSwitch 
+
+.PHONY: subdirs $(SUBDIRS)
+
+subdirs: $(SUBDIRS)
+
+$(SUBDIRS):
+	$(MAKE) -C $@ -f makefile-rpicc

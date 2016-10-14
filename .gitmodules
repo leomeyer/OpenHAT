@@ -1,0 +1,21 @@
+[submodule "Arducom"]
+	path = Arducom
+	url = https://github.com/leomeyer/Arducom.git
+[submodule "opdi_core"]
+	path = opdi_core
+	url = https://github.com/leomeyer/opdi_core.git
+[submodule "src/libraries/Mongoose"]
+	path = src/libraries/Mongoose
+	url = https://github.com/cesanta/mongoose.git
+[submodule "src/libraries/exprtk"]
+	path = src/libraries/exprtk
+	url = https://github.com/ArashPartow/exprtk.git
+[submodule "src/libraries/rpi/wiringPi"]
+	path = src/libraries/rpi/wiringPi
+	url = git://git.drogon.net/wiringPi
+[submodule "src/libraries/rpi/gertboard"]
+	path = src/libraries/rpi/gertboard
+	url = https://github.com/ChrisCummins/gertboard_sw.git
+[submodule "src/libraries/rpi/raspberry-remote"]
+	path = src/libraries/rpi/raspberry-remote
+	url = https://github.com/xkonni/raspberry-remote.git

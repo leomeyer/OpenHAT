@@ -1,0 +1,106 @@
+/*! OpenHAT Web Access CSS styles 
+*
+* Copyright (c) 2016 Leo Meyer, leo@leomeyer.de; Licensed MIT */
+
+.DeviceName {
+    font-family: Verdana;
+    font-size: large;
+}
+
+.GroupTree {
+    font-family: Verdana;
+}
+
+.Port {
+    font-family: Verdana;
+    margin: 2 auto;
+	border-collapse:separate;
+    border:solid gray 1px;
+    border-radius:6px;
+	background: #E0E0E0; /* For browsers that do not support gradients */
+    background: -webkit-linear-gradient(lightgray, white); /* For Safari 5.1 to 6.0 */
+    background: -o-linear-gradient(lightgray, white); /* For Opera 11.1 to 12.0 */
+    background: -moz-linear-gradient(lightgray, white); /* For Firefox 3.6 to 15 */
+    background: linear-gradient(lightgray, white); /* Standard syntax */
+	//background-color: #E0E0E0;
+    position: relative;
+}
+
+.Port > table
+{
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    transform: translate(0, -50%);
+	width: 100%;
+}
+
+.PortWidget {
+	vertical-align: middle;
+    width: 100%;
+}
+
+.PortIcon {
+    width: 48px;
+}
+
+.PortIconCell {
+    width: 48px;
+}
+
+.PortLabelShort {
+    text-align: left;
+}
+
+.PortLabelMedium {
+    text-align: left;
+    font-size: small;
+}
+
+.PortLabelLonger {
+    text-align: left;
+    font-size: x-small;
+}
+
+.PortLabelLong {
+    text-align: left;
+    font-size: xx-small;
+}
+
+.PortText {
+    text-align: left;
+    font-size: xx-small;
+}
+
+.AnalogPortState {
+    text-align: center;
+}
+
+.DialPortState {
+    text-align: right;
+}
+
+.SelectPort {
+}
+
+.SelectPortPosition {
+    text-align: left;
+    font-size: small;
+}
+
+.SelectPort>ul.list { display:none;
+	position:absolute; left:30px; top:-30px; z-index:999;
+	width:300px;
+	margin:0; padding:10px; list-style:none;
+	background:#fff; color:#333;
+	-moz-border-radius:5px; -webkit-border-radius:5px; border-radius:5px;
+	-moz-box-shadow:0 0 5px #999; -webkit-box-shadow:0 0 5px #999; box-shadow:0 0 5px #999
+}
+.SelectPort>ul.list li {
+	padding:10px;
+	border-bottom: solid 1px #ccc;
+}
+.SelectPort>ul.list li:hover {
+	background:#EC6603; color:#fff;
+}
+.SelectPort>ul.list li:last-child { border:none }

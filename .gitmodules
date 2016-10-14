@@ -10,8 +10,8 @@
 [submodule "libraries/exprtk"]
 	path = libraries/exprtk
 	url = https://github.com/ArashPartow/exprtk.git
-[submodule "src/libraries/rpi/wiringPi"]
-	path = src/libraries/rpi/wiringPi
+[submodule "libraries/rpi/wiringPi"]
+	path = libraries/rpi/wiringPi
 	url = git://git.drogon.net/wiringPi
 [submodule "libraries/rpi/gertboard"]
 	path = libraries/rpi/gertboard

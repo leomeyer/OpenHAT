@@ -16,6 +16,6 @@
 [submodule "libraries/rpi/gertboard"]
 	path = libraries/rpi/gertboard
 	url = https://github.com/ChrisCummins/gertboard_sw.git
-[submodule "src/libraries/rpi/raspberry-remote"]
-	path = src/libraries/rpi/raspberry-remote
+[submodule "libraries/rpi/raspberry-remote"]
+	path = libraries/rpi/raspberry-remote
 	url = https://github.com/xkonni/raspberry-remote.git

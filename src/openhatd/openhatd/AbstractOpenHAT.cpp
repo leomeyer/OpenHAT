@@ -193,7 +193,7 @@ void AbstractOpenHAT::showHelp(void) {
 	this->println("  --version: print version number and exit");
 	this->println("  -h or -?: print help text and exit");
 	this->println("  -q: quiet logging mode: log errors only");
-	this->println("  -v: verbose logging mode: explicit logging (recommended for testing)");
+	this->println("  -v: verbose logging mode: explicit logging (recommended for normal use)");
 	this->println("  -d: debug logging mode: more explicit; log message details");
 	this->println("  -x: extreme logging mode: produces a lot of output");
 	this->println("  -l <filename>: write log to the specified file");

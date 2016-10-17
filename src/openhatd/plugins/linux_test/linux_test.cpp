@@ -34,15 +34,15 @@ protected:
 	openhat::AbstractOpenHAT* openhat;
 
 public:
-	virtual void setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const std::string& node, Poco::Util::AbstractConfiguration* config);
+	virtual void setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, Poco::Util::AbstractConfiguration* config);
 
 	virtual void masterConnected(void) override;
 	virtual void masterDisconnected(void) override;
 };
 
 
-void LinuxTestOpenHATPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const std::string& node, Poco::Util::AbstractConfiguration* config) {
-	this->openhat = abstractOpenHAT;
+void LinuxTestOpenHATPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, Poco::Util::AbstractConfiguration* config) {
+	this->openhat = openhat;
 
 	Poco::Util::AbstractConfiguration* nodeConfig = config->createView(node);
 
@@ -52,8 +52,8 @@ void LinuxTestOpenHATPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenH
 	if (portType == "DigitalPort") {
 		// add emulated test port
 		DigitalTestPort* port = new DigitalTestPort();
-		abstractopenhat->configureDigitalPort(nodeConfig, port);
-		abstractopenhat->addPort(port);
+		openhat->configureDigitalPort(nodeConfig, port);
+		openhat->addPort(port);
 	} else
 		throw Poco::DataException("This plugin supports only node type 'DigitalPort'", portType);
 

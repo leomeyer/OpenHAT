@@ -402,7 +402,7 @@ void WebServerPlugin::sendJsonRpcError(struct mg_connection* nc, Poco::Dynamic::
 
 	this->logDebug("Sending JSON-RPC error: " + strOut);
 
-	mg_printf(nc, "HTTP/1.0 200 OK\r\nContent-Length: %d\r\n"
+	mg_printf(nc, "HTTP/1.0 200 OK\r\nContent-Length: %zu\r\n"
 		"Content-Type: application/json\r\n\r\n%s",
 		strOut.size(), strOut.c_str());
 }
@@ -477,7 +477,7 @@ void WebServerPlugin::handleEvent(struct mg_connection* nc, int ev, void* p) {
 					this->logDebug("Sending JSON-RPC response: " + strOut);
 
 					// send result
-					mg_printf(nc, "HTTP/1.0 200 OK\r\nContent-Length: %d\r\n"
+					mg_printf(nc, "HTTP/1.0 200 OK\r\nContent-Length: %zu\r\n"
 						"Content-Type: application/json\r\n\r\n%s",
 						strOut.size(), strOut.c_str());
 

@@ -1,16 +1,20 @@
 # Target file name (without extension).
-TARGET = openhatd
+TARGET = $(shell basename $(CURDIR))
 
 # OPDI platform specifier
 PLATFORM = linux
 
+APP_PATH = .
+
+OPDI_CORE_PATH = $(APP_PATH)/../../../opdi_core
+
 # Relative path to common directory (without trailing slash)
 # This also becomes an additional include directory.
-CPATH = ../../../common
+CPATH = $(OPDI_CORE_PATH)/code/c/common
 
 # Relative path to platform directory (without trailing slash)
 # This also becomes an additional include directory.
-PPATHBASE = ../../../platforms
+PPATHBASE = $(OPDI_CORE_PATH)/code/c/platforms
 PPATH = $(PPATHBASE)/$(PLATFORM)
 
 # List C source files of the configuration here.
@@ -38,23 +42,20 @@ SRC += $(CPPPATH)/OPDI.cpp $(CPPPATH)/OPDI_Ports.cpp
 # additional source files
 SRC += ./AbstractOpenHAT.cpp ./Ports.cpp ./openhat_linux.cpp
 
-# conio include path
-CONIOINCPATH = ../../../libraries/conio
-
 # POCO include path
-POCOINCPATH = ../../../libraries/POCO/Util/include ../../../libraries/POCO/Foundation/include ../../../libraries/POCO/Net/include
+POCOINCPATH = $(OPDI_CORE_PATH)/code/c/libraries/POCO/Util/include $(OPDI_CORE_PATH)/code/c/libraries/POCO/Foundation/include $(OPDI_CORE_PATH)/code/c/libraries/POCO/Net/include
 
 # POCO library path
-POCOLIBPATH = ../../../libraries/POCO/lib/Linux/x86_64
+POCOLIBPATH = $(OPDI_CORE_PATH)/code/c/libraries/POCO/lib/Linux/x86_64
 
 # POCO libraries
 POCOLIBS = -lPocoUtil -lPocoNet -lPocoFoundation -lPocoXML -lPocoJSON
 
 # ExprTk expression library path
-EXPRTK = ../../../libraries/ExprTk
+EXPRTK = ../../../libraries/exprtk
 
 # libctb serial communication library
-LIBCTB = ../../../libraries/libctb
+LIBCTB = $(OPDI_CORE_PATH)/code/c/libraries/libctb
 LIBCTBINC = $(LIBCTB)/include
 SRC += $(LIBCTB)/src/fifo.cpp $(LIBCTB)/src/getopt.cpp $(LIBCTB)/src/iobase.cpp $(LIBCTB)/src/kbhit.cpp $(LIBCTB)/src/linux/serport.cpp
 SRC += $(LIBCTB)/src/linux/timer.cpp $(LIBCTB)/src/portscan.cpp $(LIBCTB)/src/serportx.cpp

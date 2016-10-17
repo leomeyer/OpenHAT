@@ -1,5 +1,5 @@
 # Target file name (without extension).
-TARGET = linux_test
+TARGET = $(shell basename $(CURDIR))
 
 # OPDI platform specifier
 PLATFORM = linux
@@ -9,13 +9,15 @@ PLATFORM = linux
 # just to adjust this path.
 APP_PATH = ../../openhatd
 
+OPDI_CORE_PATH = $(APP_PATH)/../../../opdi_core
+
 # Relative path to common directory (without trailing slash)
 # This also becomes an additional include directory.
-CPATH = $(APP_PATH)/../../../common
+CPATH = $(OPDI_CORE_PATH)/code/c/common
 
 # Relative path to platform directory (without trailing slash)
 # This also becomes an additional include directory.
-PPATHBASE = $(APP_PATH)/../../../platforms
+PPATHBASE = $(OPDI_CORE_PATH)/code/c/platforms
 PPATH = $(PPATHBASE)/$(PLATFORM)
 
 # List source files of the plugin here.
@@ -30,14 +32,11 @@ SRC += $(CPPPATH)/OPDI_Ports.cpp
 # additional source files
 SRC += $(PPATH)/opdi_platformfuncs.c
 
-# conio include path
-CONIOINCPATH = $(APP_PATH)/../../../libraries/conio
-
 # POCO include path
-POCOINCPATH = $(APP_PATH)/../../../libraries/POCO/Util/include $(APP_PATH)/../../../libraries/POCO/Foundation/include $(APP_PATH)/../../../libraries/POCO/Net/include
+POCOINCPATH = $(OPDI_CORE_PATH)/code/c/libraries/POCO/Util/include $(OPDI_CORE_PATH)/code/c/libraries/POCO/Foundation/include $(OPDI_CORE_PATH)/code/c/libraries/POCO/Net/include
 
 # POCO library path
-POCOLIBPATH = $(APP_PATH)/../../../libraries/POCO/lib/Linux/x86_64
+POCOLIBPATH = $(OPDI_CORE_PATH)/code/c/libraries/POCO/lib/Linux/x86_64
 
 # POCO libraries
 POCOLIBS = -lPocoUtil -lPocoNet -lPocoFoundation 
@@ -50,7 +49,7 @@ CC = g++
 
 # List any extra directories to look for include files here.
 # Each directory must be separated by a space.
-EXTRAINCDIRS = $(CPATH) $(CPPPATH) $(PPATHBASE) $(PPATH) $(POCOINCPATH) $(CONIOINCPATH) $(APP_PATH) .
+EXTRAINCDIRS = $(CPATH) $(CPPPATH) $(PPATHBASE) $(PPATH) $(POCOINCPATH) $(CONIOINCPATH) $(APP_PATH) $(GERTBOARDINCPATH) .
 
 # Place -I options here
 CINCS =

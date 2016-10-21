@@ -1,4 +1,4 @@
-// Code copied from: http://read.pudn.com/downloads75/sourcecode/multimedia/277333/SunRiseSet.cpp__.htm
+// Reference: http://www.codeproject.com/Articles/645/Sunrise-Sunset-Calculations
 // Adjusted to use POCO, L. Meyer, 2015-06-12
 
 #include "math.h" 

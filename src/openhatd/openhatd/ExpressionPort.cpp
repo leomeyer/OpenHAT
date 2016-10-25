@@ -80,7 +80,7 @@ void ExpressionPort::setLine(uint8_t line, ChangeSource changeSource) {
 	}
 }
 
-bool ExpressionPort::prepareSymbols(bool duringSetup) {
+bool ExpressionPort::prepareSymbols(bool /*duringSetup*/) {
 	this->symbol_table.add_function("timestamp", this->timestampFunc);
 
 	// Adding constants leads to a memory leak; furthermore, constants are not detected as known symbols.

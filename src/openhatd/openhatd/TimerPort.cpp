@@ -276,6 +276,7 @@ void TimerPort::configure(Poco::Util::AbstractConfiguration* config, Poco::Util:
 		schedule.maxOccurrences = scheduleConfig->getInt("MaxOccurrences", -1);
 		schedule.duration = scheduleConfig->getInt("Duration", 1000);	// default duration: 1 second
 		schedule.action = SET_HIGH;										// default action
+		schedule.astroEvent = NONE;
 
 		std::string action = this->openhat->getConfigString(scheduleConfig, nodeName, "Action", "", false);
 		if (action == "SetHigh") {
@@ -593,6 +594,7 @@ Poco::Timestamp TimerPort::calculateNextOccurrence(Schedule* schedule) {
 		now.makeLocal(Poco::Timezone::tzd());
 		Poco::DateTime today(now.julianDay());
 		switch (schedule->astroEvent) {
+		case NONE: break;
 		case SUNRISE: {
 			// find today's sunrise
 			Poco::DateTime result = sunRiseSet.GetSunrise(schedule->astroLat, schedule->astroLon, today);
@@ -812,7 +814,7 @@ uint8_t TimerPort::doWork(uint8_t canSend)  {
 	return OPDI_STATUS_OK;
 }
 
-void TimerPort::recalculateSchedules(Schedule* activatingSchedule) {
+void TimerPort::recalculateSchedules(Schedule* /*activatingSchedule*/) {
 	// clear all schedules
 	this->queue.clear();
 	for (auto it = this->schedules.begin(), ite = this->schedules.end(); it != ite; ++it) {

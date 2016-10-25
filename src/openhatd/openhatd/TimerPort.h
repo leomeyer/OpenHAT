@@ -103,6 +103,7 @@ namespace openhat {
 		};
 
 		enum AstroEvent {
+			NONE,
 			SUNRISE,
 			SUNSET
 		};

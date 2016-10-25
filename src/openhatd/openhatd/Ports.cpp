@@ -938,7 +938,7 @@ uint8_t FaderPort::doWork(uint8_t canSend)  {
 	// active, or a switch off action needs to be performed?
 	if ((this->line == 1) || (this->actionToPerform != NONE)) {
 		
-		Poco::Timestamp::TimeVal elapsedMs;
+		Poco::Timestamp::TimeVal elapsedMs(0);
 
 		if (this->line == 1) {
 			if (this->durationMs < 0) {

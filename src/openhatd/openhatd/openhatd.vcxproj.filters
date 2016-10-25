@@ -34,6 +34,9 @@
     <Filter Include="Ressourcendateien\webdocroot">
       <UniqueIdentifier>{321ae4be-ff15-4696-b28e-67890965877d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Quelldateien\platform">
+      <UniqueIdentifier>{3346649b-3db5-4663-bdaa-7207353952f8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />
@@ -181,36 +184,6 @@
     <ClCompile Include="WindowsOpenHAT.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="../../../../opdi_core/code/c/common\opdi_aes.cpp">
-      <Filter>Quelldateien\common</Filter>
-    </ClCompile>
-    <ClCompile Include="../../../../opdi_core/code/c/common\opdi_message.c">
-      <Filter>Quelldateien\common</Filter>
-    </ClCompile>
-    <ClCompile Include="../../../../opdi_core/code/c/platforms\win32\opdi_platformfuncs.c">
-      <Filter>Quelldateien\common</Filter>
-    </ClCompile>
-    <ClCompile Include="../../../../opdi_core/code/c/common\opdi_port.c">
-      <Filter>Quelldateien\common</Filter>
-    </ClCompile>
-    <ClCompile Include="../../../../opdi_core/code/c/common\cppwrapper\OPDI.cpp">
-      <Filter>Quelldateien\common\cppwrapper</Filter>
-    </ClCompile>
-    <ClCompile Include="../../../../opdi_core/code/c/common\cppwrapper\OPDI_Ports.cpp">
-      <Filter>Quelldateien\common\cppwrapper</Filter>
-    </ClCompile>
-    <ClCompile Include="../../../../opdi_core/code/c/common\opdi_protocol.c">
-      <Filter>Quelldateien\common</Filter>
-    </ClCompile>
-    <ClCompile Include="../../../../opdi_core/code/c/common\opdi_rijndael.cpp">
-      <Filter>Quelldateien\common</Filter>
-    </ClCompile>
-    <ClCompile Include="../../../../opdi_core/code/c/common\opdi_slave_protocol.c">
-      <Filter>Quelldateien\common</Filter>
-    </ClCompile>
-    <ClCompile Include="../../../../opdi_core/code/c/common\opdi_strings.c">
-      <Filter>Quelldateien\common</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\opdi_core\code\c\libraries\libctb\src\fifo.cpp">
       <Filter>Quelldateien\libraries\libctb</Filter>
     </ClCompile>
@@ -234,6 +207,36 @@
     </ClCompile>
     <ClCompile Include="..\..\..\opdi_core\code\c\libraries\libctb\src\win32\timer.cpp">
       <Filter>Quelldateien\libraries\libctb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\opdi_core\code\c\common\opdi_message.c">
+      <Filter>Quelldateien\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\opdi_core\code\c\common\opdi_port.c">
+      <Filter>Quelldateien\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\opdi_core\code\c\common\opdi_protocol.c">
+      <Filter>Quelldateien\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\opdi_core\code\c\common\opdi_slave_protocol.c">
+      <Filter>Quelldateien\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\opdi_core\code\c\common\opdi_strings.c">
+      <Filter>Quelldateien\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\opdi_core\code\c\common\opdi_aes.cpp">
+      <Filter>Quelldateien\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\opdi_core\code\c\common\opdi_rijndael.cpp">
+      <Filter>Quelldateien\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\opdi_core\code\c\common\cppwrapper\OPDI.cpp">
+      <Filter>Quelldateien\common\cppwrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\opdi_core\code\c\common\cppwrapper\OPDI_Ports.cpp">
+      <Filter>Quelldateien\common\cppwrapper</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\opdi_core\code\c\platforms\win32\opdi_platformfuncs.c">
+      <Filter>Quelldateien\platform</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

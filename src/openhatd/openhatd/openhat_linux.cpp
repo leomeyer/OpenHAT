@@ -52,7 +52,8 @@ void signal_handler_abrt(int signum) {
 int main(int argc, char* argv[], char* envp[])
 {
 	Opdi = new openhat::LinuxOpenHAT();
-
+	Opdi->appName = "openhatd";
+	
 	// install Ctrl+C intercept handler
 	struct sigaction sigIntHandler;
 
@@ -117,7 +118,7 @@ int main(int argc, char* argv[], char* envp[])
 		exitcode = OPDI_DEVICE_ERROR;
 	}
 
-	Opdi->logNormal("OpenHAT exited with code " + Opdi->to_string(exitcode));
+	Opdi->logNormal(Opdi->appName + " exited with code " + Opdi->to_string(exitcode));
 
 	return exitcode;
 }

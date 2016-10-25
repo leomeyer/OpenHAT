@@ -69,6 +69,7 @@ int _tmain(int argc, _TCHAR* argv[], _TCHAR* envp[])
 	}
 
 	Opdi = new openhat::WindowsOpenHAT();
+	Opdi->appName = "openhatd";
 
 	int exitcode;
 	try
@@ -89,7 +90,7 @@ int _tmain(int argc, _TCHAR* argv[], _TCHAR* envp[])
 		exitcode = OPDI_DEVICE_ERROR;
 	}
 
-	Opdi->logNormal("OpenHAT exited with code " + Opdi->to_string(exitcode));
+	Opdi->logNormal(Opdi->appName + " exited with code " + Opdi->to_string(exitcode));
 
 	return exitcode;
 }

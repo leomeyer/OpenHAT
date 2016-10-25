@@ -105,7 +105,8 @@ protected:
 
 	virtual void logWarn(const std::string& message);
 public:
-
+	std::string appName;
+	
 	std::string timestampFormat;
 
 	Poco::BasicEvent<void> allPortsRefreshed;

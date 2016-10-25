@@ -13,7 +13,6 @@
 #include "../rpi.h"
 
 #include "LinuxOpenHAT.h"
-#include "OpenHAT_PortFunctions.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // RemoteSwitch: Plugin for remote power outlet control

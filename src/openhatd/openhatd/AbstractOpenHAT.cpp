@@ -179,7 +179,7 @@ void AbstractOpenHAT::sayHello(void) {
 	if (this->logVerbosity == opdi::LogVerbosity::QUIET)
 		return;
 
-	this->logNormal("OpenHAT version " + this->to_string(this->majorVersion) + "." + this->to_string(this->minorVersion) + "." + this->to_string(this->patchVersion) + " (c) Leo Meyer 2015", opdi::LogVerbosity::NORMAL);
+	this->logNormal(this->appName + " version " + this->to_string(this->majorVersion) + "." + this->to_string(this->minorVersion) + "." + this->to_string(this->patchVersion) + " (c) Leo Meyer 2015", opdi::LogVerbosity::NORMAL);
 	this->logVerbose("Build: " + std::string(__DATE__) + " " + std::string(__TIME__), opdi::LogVerbosity::VERBOSE);
 	this->logVerbose("Running as user: " + this->getCurrentUser(), opdi::LogVerbosity::VERBOSE);
 }

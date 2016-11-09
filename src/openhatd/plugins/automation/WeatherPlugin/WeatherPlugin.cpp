@@ -43,7 +43,7 @@ public:
 
 	virtual std::string getDataElement(void) = 0;
 
-	virtual void invalidate(void) = 0;
+// 	virtual void invalidate(void) = 0;
 
 	virtual void extract(const std::string& rawValue) = 0;
 };
@@ -61,28 +61,26 @@ class WeatherGaugePort : public opdi::DialPort, public WeatherPort {
 protected:
 	openhat::AbstractOpenHAT* openhat;
 		
-	bool isValid;
-	mutable bool lastRequestedValidState;
 	std::string dataElement;
 	std::string regexMatch;
 	std::string regexReplace;
 	std::string replaceBy;
 	int numerator;
 	int denominator;
+	int expirySeconds;
 
 	std::string rawValue;	// stores the value for in-thread processing
+
+	long lastValidTime;		// used to determine expiry 
 
 	mutable Poco::Mutex mutex;	// mutex for thread-safe accessing
 
 public:
-
 	WeatherGaugePort(openhat::AbstractOpenHAT* openhat, const char* id);
 
 	virtual std::string getDataElement(void);
 
-	virtual void configure(Poco::Util::AbstractConfiguration* nodeConfig, opdi::LogVerbosity defaultLogVerbosity);
-
-	virtual void invalidate(void);
+	virtual void configure(Poco::Util::AbstractConfiguration* nodeConfig, opdi::LogVerbosity defaultLogVerbosity, int defaultExpiry);
 
 	virtual void extract(const std::string& rawValue);
 
@@ -90,12 +88,7 @@ public:
 
 	virtual void prepare(void) override;
 
-	virtual void getState(int64_t* position) const override;
-
-	// important! Override this method and use isValid directly because
-	// the standard method will continuously query the state, thus rendering the
-	// lastRequestedValidState flag useless and cause perpetual self-refreshes!
-	virtual bool hasError(void) const override;
+// 	virtual void getState(int64_t* position) const override;
 };
 
 }	// end anonymous namespace
@@ -104,15 +97,16 @@ WeatherGaugePort::WeatherGaugePort(openhat::AbstractOpenHAT* openhat, const char
 	this->openhat = openhat;
 	this->numerator = 1;
 	this->denominator = 1;
-	this->isValid = false;
-	this->lastRequestedValidState = false;
+//	this->lastRequestedValidState = false;
+	this->expirySeconds = 0;
+	this->lastValidTime = 0;
 }
 
 std::string WeatherGaugePort::getDataElement(void){
 	return this->dataElement;
 }
 
-void WeatherGaugePort::configure(Poco::Util::AbstractConfiguration* nodeConfig, opdi::LogVerbosity defaultLogVerbosity) {
+void WeatherGaugePort::configure(Poco::Util::AbstractConfiguration* nodeConfig, opdi::LogVerbosity defaultLogVerbosity, int defaultExpiry) {
 	openhat->configureDialPort(nodeConfig, this);
 	this->logVerbosity = openhat->getConfigLogVerbosity(nodeConfig, defaultLogVerbosity);
 
@@ -122,27 +116,19 @@ void WeatherGaugePort::configure(Poco::Util::AbstractConfiguration* nodeConfig, 
 	this->replaceBy = openhat->getConfigString(nodeConfig, this->ID(), "ReplaceBy", "", false);
 	this->numerator = nodeConfig->getInt("Numerator", this->numerator);
 	this->denominator = nodeConfig->getInt("Denominator", this->denominator);
+	this->expirySeconds = nodeConfig->getInt("Expiry", defaultExpiry);
 	if (this->denominator == 0) 
 		throw Poco::InvalidArgumentException(this->ID() + ": The Denominator may not be 0");
+	// weather gauges start with an unavailable value
+	this->error = Error::VALUE_NOT_AVAILABLE;
 }
 
 void WeatherGaugePort::prepare(void) {
-	// cannot change weather parameters on the master; so better set this to readonly
 	this->setReadonly(true);
 	if (this->refreshMode == RefreshMode::REFRESH_NOT_SET)
 		// automatically refresh when the value changes
 		this->setRefreshMode(RefreshMode::REFRESH_AUTO);
 	opdi::DialPort::prepare();
-}
-
-void WeatherGaugePort::invalidate(void) {
-	Poco::Mutex::ScopedLock lock(this->mutex);
-	this->isValid = false;
-}
-
-bool WeatherGaugePort::hasError(void) const {
-	Poco::Mutex::ScopedLock lock(this->mutex);
-	return !this->isValid;
 }
 
 void WeatherGaugePort::extract(const std::string& rawValue) {
@@ -160,18 +146,24 @@ uint8_t WeatherGaugePort::doWork(uint8_t canSend) {
 	std::string rawValue = this->rawValue;
 
 	// no value to process?
-	if (rawValue == "")
+	if (rawValue == "") {
+		// expired?
+		if ((this->error == Error::VALUE_OK) && (this->expirySeconds > 0) && ((opdi_get_time_ms() - this->lastValidTime) / 1000 > this->expirySeconds)) {
+			this->logDebug("Value expired");
+			// set error, base method handles refresh
+			this->setError(Error::VALUE_EXPIRED);
+		}
+			
 		return OPDI_STATUS_OK;
+	}
 
-	// mark as invalid
-	this->isValid = false;
-
+	// copy value to process
 	std::string value = rawValue;
 	if (this->regexMatch != "") {
 		Poco::RegularExpression regex(this->regexMatch, 0, true);
 		this->logDebug("WeatherGaugePort for element " + this->dataElement + ": Matching regex against weather data: " + rawValue);
 		if (regex.extract(rawValue, value, 0) == 0) {
-		this->logDebug("WeatherGaugePort for element " + this->dataElement + ": Warning: Matching regex returned no result; weather data: " + rawValue);
+			this->logDebug("WeatherGaugePort for element " + this->dataElement + ": Warning: Matching regex returned no result; weather data: " + rawValue);
 		}
 	}
 	if (this->regexReplace != "") {
@@ -190,6 +182,8 @@ uint8_t WeatherGaugePort::doWork(uint8_t canSend) {
 		result = Poco::NumberParser::parseFloat(value);
 	} catch (Poco::Exception e) {
 		this->logDebug("WeatherGaugePort for element " + this->dataElement + ": Warning: Unable to parse weather data: " + value);
+		// set error, base method handles refresh
+		this->setError(Error::VALUE_NOT_AVAILABLE);
 		return OPDI_STATUS_OK;
 	}
 
@@ -197,8 +191,7 @@ uint8_t WeatherGaugePort::doWork(uint8_t canSend) {
 	int64_t newPos = (int64_t)(result * this->numerator / this->denominator * 1.0);
 	this->logDebug("WeatherGaugePort for element " + this->dataElement + ": Extracted value is: " + to_string(newPos));
 
-	// correct value; a standard dial port will throw exceptions
-	// but exceptions must be avoided in this threaded code because they will cause strange messages on Linux
+	// correct value if necessary
 	if (newPos < this->minValue) {
 		this->logDebug("Warning: Value too low (" + to_string(newPos) + " < " + to_string(this->minValue) + "), correcting");
 		newPos = this->minValue;
@@ -208,18 +201,12 @@ uint8_t WeatherGaugePort::doWork(uint8_t canSend) {
 		newPos = this->maxValue;
 	}
 	this->setPosition(newPos);
-
-	// mark as valid
-	this->isValid = true;
-
-	// if the master's last state is invalid, and we're now valid, we should self-refresh
-	// to update the master (except it's disabled)
-	if (!this->lastRequestedValidState && (this->refreshMode != RefreshMode::REFRESH_OFF))
-		this->refreshRequired = true;
+	this->lastValidTime = opdi_get_time_ms();
 
 	return OPDI_STATUS_OK;
 }
 
+/*
 // function that fills in the current port state
 void WeatherGaugePort::getState(int64_t* position) const {
 
@@ -228,7 +215,7 @@ void WeatherGaugePort::getState(int64_t* position) const {
 	Poco::Mutex::ScopedLock lock(mutex);
 
 	// remember whether the master has a valid state or not
-	this->lastRequestedValidState = this->isValid;
+//	this->lastRequestedValidState = this->isValid;
 
 	if (!this->isValid) {
 		throw PortError(this->ID() + ": Reading is not valid");
@@ -236,7 +223,7 @@ void WeatherGaugePort::getState(int64_t* position) const {
 
 	opdi::DialPort::getState(position);
 }
-
+*/
 ////////////////////////////////////////////////////////////////////////
 // Plugin main class
 ////////////////////////////////////////////////////////////////////////
@@ -373,7 +360,7 @@ void WeatherPlugin::setupPlugin(openhat::AbstractOpenHAT* openHAT, const std::st
 
 			WeatherGaugePort* port = new WeatherGaugePort(this->openhat, nodeName.c_str());
 			port->setGroup(group);
-			port->configure(portConfig, this->logVerbosity);
+			port->configure(portConfig, this->logVerbosity, this->dataValiditySeconds);
 			openhat->addPort(port);
 			// add port to internal list
 			this->weatherPorts.push_back(port);
@@ -430,14 +417,6 @@ static Poco::JSON::Object::Ptr GetJSONObject(Poco::JSON::Object::Ptr aoJsonObjec
 
 void WeatherPlugin::refreshData(void) {
 	try {
-		// invalidate all ports
-		auto it = this->weatherPorts.begin();
-		auto ite = this->weatherPorts.end();
-		while (it != ite) {
-			(*it)->invalidate();
-			++it;
-		}
-
 		this->openhat->logDebug(this->nodeID + ": Fetching content of URL: " + this->url, this->logVerbosity);
 
 		Poco::URI uri(this->url);

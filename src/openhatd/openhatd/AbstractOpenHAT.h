@@ -116,6 +116,8 @@ public:
 	std::string persistentConfigFile;
 	Poco::Util::PropertyFileConfiguration* persistentConfig;
 
+	opdi::LogVerbosity connectionLogVerbosity;
+
 	AbstractOpenHAT(void);
 
 	virtual ~AbstractOpenHAT(void);

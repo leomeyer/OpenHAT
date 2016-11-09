@@ -1289,6 +1289,7 @@ void AbstractOpenHAT::setupRoot(Poco::Util::AbstractConfiguration* config) {
 int AbstractOpenHAT::setupConnection(Poco::Util::AbstractConfiguration* config, bool testMode) {
 	this->logVerbose(std::string("Setting up connection for slave: ") + this->slaveName);
 	std::string connectionType = this->getConfigString(config, "Connection", "Type", "", true);
+	this->connectionLogVerbosity = this->getConfigLogVerbosity(config, this->logVerbosity);
 
 	if (connectionType == "TCP") {
 		std::string interface_ = this->getConfigString(config, "Connection", "Interface", "*", false);
@@ -1664,6 +1665,8 @@ uint8_t opdi_slave_callback(OPDIFunctionCode opdiFunctionCode, char* buffer, siz
  *
  */
 uint8_t opdi_debug_msg(const char* message, uint8_t direction) {
+	if (Opdi->connectionLogVerbosity < opdi::LogVerbosity::DEBUG)
+		return OPDI_STATUS_OK;
 	std::string dirChar = "-";
 	if (direction == OPDI_DIR_INCOMING)
 		dirChar = ">";

@@ -37,19 +37,13 @@
     <Filter Include="Quelldateien\platform">
       <UniqueIdentifier>{3346649b-3db5-4663-bdaa-7207353952f8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Ressourcendateien\testconfigs">
+      <UniqueIdentifier>{cac0db1f-a458-44d1-b349-8fe842633f92}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="ReadMe.txt" />
-    <None Include="test_include.ini">
-      <Filter>Ressourcendateien</Filter>
-    </None>
     <None Include="exectest.bat">
-      <Filter>Ressourcendateien</Filter>
-    </None>
-    <None Include="scene0.ini">
-      <Filter>Ressourcendateien</Filter>
-    </None>
-    <None Include="scene1.ini">
       <Filter>Ressourcendateien</Filter>
     </None>
     <None Include="fileinputtest.txt">
@@ -73,11 +67,29 @@
     <None Include="..\doc\complex_example_2.ini">
       <Filter>Ressourcendateien</Filter>
     </None>
-    <None Include="window_test.ini">
-      <Filter>Ressourcendateien</Filter>
-    </None>
     <None Include="webdocroot\openhatd.css" />
     <None Include="win_openhatd.ini" />
+    <None Include="testconfigs\scene0.ini">
+      <Filter>Ressourcendateien\testconfigs</Filter>
+    </None>
+    <None Include="testconfigs\scene1.ini">
+      <Filter>Ressourcendateien\testconfigs</Filter>
+    </None>
+    <None Include="testconfigs\test_include.ini">
+      <Filter>Ressourcendateien\testconfigs</Filter>
+    </None>
+    <None Include="testconfigs\testconfig.ini">
+      <Filter>Ressourcendateien\testconfigs</Filter>
+    </None>
+    <None Include="testconfigs\weather_test.ini">
+      <Filter>Ressourcendateien\testconfigs</Filter>
+    </None>
+    <None Include="testconfigs\window_test.ini">
+      <Filter>Ressourcendateien\testconfigs</Filter>
+    </None>
+    <None Include="testconfigs\windows_dev.ini">
+      <Filter>Ressourcendateien\testconfigs</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -110,46 +122,7 @@
     <ClInclude Include="WindowsOpenHAT.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
-    <ClInclude Include="../../../../opdi_core/code/c/common\cppwrapper\OPDI.h">
-      <Filter>Headerdateien\common\cppwrapper</Filter>
-    </ClInclude>
-    <ClInclude Include="../../../../opdi_core/code/c/common\cppwrapper\OPDI_Ports.h">
-      <Filter>Headerdateien\common\cppwrapper</Filter>
-    </ClInclude>
-    <ClInclude Include="../../../../opdi_core/code/c/common\opdi_config.h">
-      <Filter>Headerdateien\common</Filter>
-    </ClInclude>
     <ClInclude Include="opdi_configspecs.h">
-      <Filter>Headerdateien\common</Filter>
-    </ClInclude>
-    <ClInclude Include="../../../../opdi_core/code/c/common\opdi_constants.h">
-      <Filter>Headerdateien\common</Filter>
-    </ClInclude>
-    <ClInclude Include="../../../../opdi_core/code/c/common\opdi_message.h">
-      <Filter>Headerdateien\common</Filter>
-    </ClInclude>
-    <ClInclude Include="../../../../opdi_core/code/c/platforms\opdi_platformfuncs.h">
-      <Filter>Headerdateien\common</Filter>
-    </ClInclude>
-    <ClInclude Include="../../../../opdi_core/code/c/platforms\win32\opdi_platformtypes.h">
-      <Filter>Headerdateien\common</Filter>
-    </ClInclude>
-    <ClInclude Include="../../../../opdi_core/code/c/common\opdi_port.h">
-      <Filter>Headerdateien\common</Filter>
-    </ClInclude>
-    <ClInclude Include="../../../../opdi_core/code/c/common\opdi_protocol.h">
-      <Filter>Headerdateien\common</Filter>
-    </ClInclude>
-    <ClInclude Include="../../../../opdi_core/code/c/common\opdi_protocol_constants.h">
-      <Filter>Headerdateien\common</Filter>
-    </ClInclude>
-    <ClInclude Include="../../../../opdi_core/code/c/common\opdi_rijndael.h">
-      <Filter>Headerdateien\common</Filter>
-    </ClInclude>
-    <ClInclude Include="../../../../opdi_core/code/c/common\opdi_slave_protocol.h">
-      <Filter>Headerdateien\common</Filter>
-    </ClInclude>
-    <ClInclude Include="../../../../opdi_core/code/c/common\opdi_strings.h">
       <Filter>Headerdateien\common</Filter>
     </ClInclude>
   </ItemGroup>
@@ -238,5 +211,10 @@
     <ClCompile Include="..\..\..\opdi_core\code\c\platforms\win32\opdi_platformfuncs.c">
       <Filter>Quelldateien\platform</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="testconfigs\openhat-persistent.txt">
+      <Filter>Ressourcendateien\testconfigs</Filter>
+    </Text>
   </ItemGroup>
 </Project>

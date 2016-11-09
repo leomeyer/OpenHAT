@@ -88,32 +88,22 @@
     <None Include="..\doc\complex_example_2.ini" />
     <None Include="exectest.bat" />
     <None Include="fileinputtest.txt" />
-    <None Include="scene0.ini" />
-    <None Include="scene1.ini" />
-    <None Include="test_include.ini" />
+    <None Include="testconfigs\scene0.ini" />
+    <None Include="testconfigs\scene1.ini" />
+    <None Include="testconfigs\testconfig.ini" />
+    <None Include="testconfigs\test_include.ini" />
+    <None Include="testconfigs\weather_test.ini" />
+    <None Include="testconfigs\windows_dev.ini" />
+    <None Include="testconfigs\window_test.ini" />
     <None Include="webdocroot\index.html" />
     <None Include="webdocroot\openhatd.css" />
     <None Include="webdocroot\strings.js" />
     <None Include="webdocroot\units.json" />
     <None Include="webdocroot\utils.js" />
-    <None Include="window_test.ini" />
     <None Include="win_openhatd.ini" />
     <None Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="../../../../opdi_core/code/c/common\cppwrapper\OPDI_Ports.h" />
-    <ClInclude Include="../../../../opdi_core/code/c/common\cppwrapper\OPDI.h" />
-    <ClInclude Include="../../../../opdi_core/code/c/common\opdi_config.h" />
-    <ClInclude Include="../../../../opdi_core/code/c/common\opdi_constants.h" />
-    <ClInclude Include="../../../../opdi_core/code/c/common\opdi_message.h" />
-    <ClInclude Include="../../../../opdi_core/code/c/common\opdi_port.h" />
-    <ClInclude Include="../../../../opdi_core/code/c/common\opdi_protocol.h" />
-    <ClInclude Include="../../../../opdi_core/code/c/common\opdi_protocol_constants.h" />
-    <ClInclude Include="../../../../opdi_core/code/c/common\opdi_rijndael.h" />
-    <ClInclude Include="../../../../opdi_core/code/c/common\opdi_slave_protocol.h" />
-    <ClInclude Include="../../../../opdi_core/code/c/common\opdi_strings.h" />
-    <ClInclude Include="../../../../opdi_core/code/c/platforms\opdi_platformfuncs.h" />
-    <ClInclude Include="../../../../opdi_core/code/c/platforms\win32\opdi_platformtypes.h" />
     <ClInclude Include="AbstractOpenHAT.h" />
     <ClInclude Include="ExecPort.h" />
     <ClInclude Include="ExpressionPort.h" />
@@ -155,6 +145,9 @@
     <ClCompile Include="SunRiseSet.cpp" />
     <ClCompile Include="TimerPort.cpp" />
     <ClCompile Include="WindowsOpenHAT.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="testconfigs\openhat-persistent.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

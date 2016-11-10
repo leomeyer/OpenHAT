@@ -67,11 +67,11 @@ protected:
 	std::string replaceBy;
 	int numerator;
 	int denominator;
-	int expirySeconds;
+	uint32_t expirySeconds;
 
 	std::string rawValue;	// stores the value for in-thread processing
 
-	long lastValidTime;		// used to determine expiry 
+	uint64_t lastValidTime;		// used to determine expiry 
 
 	mutable Poco::Mutex mutex;	// mutex for thread-safe accessing
 

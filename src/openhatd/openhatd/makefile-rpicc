@@ -1,5 +1,8 @@
-# Target file name (without extension).
-TARGET = $(shell basename $(CURDIR))
+# Program file name
+BASENAME = $(shell basename $(CURDIR))
+
+# Target file name (without extension). For intermediate binary and tar file
+TARGET = $(BASENAME)-rpi
 
 # OPDI platform specifier
 PLATFORM = linux
@@ -112,7 +115,7 @@ plugins:
 
 tar:
 	mkdir $(TARFOLDER)
-	cp $(TARGET) $(TARFOLDER)
+	cp $(TARGET) $(TARFOLDER)/$(BASENAME)
 	cp -r webdocroot $(TARFOLDER)
 	mkdir $(TARFOLDER)/plugins
 	find ../plugins/ -name '*.so' -exec cp {} $(TARFOLDER)/plugins \;

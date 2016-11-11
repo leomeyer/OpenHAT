@@ -198,7 +198,7 @@ uint8_t ExecPort::doWork(uint8_t canSend)  {
 
 					this->logVerbose("Started program '" + this->programName + "' with PID " + this->to_string(this->processPID));
 				} catch (Poco::Exception &e) {
-					this->logNormal("ERROR: Unable to start program '" + this->programName + "': " + e.message());
+					this->logNormal("ERROR: Unable to start program '" + this->programName + "': " + this->openhat->getExceptionMessage(e));
 				}
 			}		// not blocked by wait time
 		}		// stateChanged

@@ -60,6 +60,7 @@ AbstractOpenHAT::AbstractOpenHAT(void) {
 	this->majorVersion = OPENHAT_MAJOR_VERSION;
 	this->minorVersion = OPENHAT_MINOR_VERSION;
 	this->patchVersion = OPENHAT_PATCH_VERSION;
+	this->prepared = false;
 
 	this->logVerbosity = opdi::LogVerbosity::UNKNOWN;
 	this->persistentConfig = nullptr;
@@ -382,6 +383,8 @@ int AbstractOpenHAT::startup(const std::vector<std::string>& args, const std::ma
 
 	this->sortPorts();
 	this->preparePorts();
+
+	this->prepared = true;
 
 	// startup has been done using the process owner
 	// if specified, change process privileges to a different user
@@ -755,7 +758,7 @@ void AbstractOpenHAT::configurePort(Poco::Util::AbstractConfiguration* portConfi
 		port->setGroup(group);
 	}
 
-	port->tag = this->getConfigString(portConfig, port->ID(), "Tag", "", false);
+	port->tags = this->getConfigString(portConfig, port->ID(), "Tags", "", false);
 
 	port->orderID = portConfig->getInt("OrderID", -1);
 
@@ -1126,6 +1129,15 @@ void AbstractOpenHAT::setupCounterPort(Poco::Util::AbstractConfiguration* portCo
 	this->addPort(cPort);
 }
 
+void AbstractOpenHAT::setupInfluxDBPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port) {
+	this->logVerbose("Setting up InfluxDB logger: " + port);
+
+	InfluxDBPort* iPort = new InfluxDBPort(this, port.c_str());
+	iPort->configure(portConfig);
+
+	this->addPort(iPort);
+}
+
 void AbstractOpenHAT::setupNode(Poco::Util::AbstractConfiguration* config, const std::string& node) {
 	this->logVerbose("Setting up node: " + node);
 
@@ -1230,9 +1242,12 @@ void AbstractOpenHAT::setupNode(Poco::Util::AbstractConfiguration* config, const
 	} else
 	if (nodeType == "Counter") {
 		this->setupCounterPort(nodeConfig, node);
+	} else
+	if (nodeType == "InfluxDB") {
+		this->setupInfluxDBPort(nodeConfig, node);
 	}
 	else
-		throw Poco::DataException("Invalid configuration: Unknown node type", nodeType);
+		throw Poco::DataException("Invalid configuration: Unknown node type: " + nodeType);
 }
 
 void AbstractOpenHAT::setupRoot(Poco::Util::AbstractConfiguration* config) {
@@ -1324,7 +1339,8 @@ void AbstractOpenHAT::warnIfPluginMoreRecent(const std::string& driver) {
 		// convert build time to UTC
 		buildTime.makeUTC(Poco::Timezone::tzd());
 		// assume both files have been built in the same time zone (getLastModified also returns UTC)
-		if ((driverFile.getLastModified() < buildTime.timestamp()))
+		// allow some grace period (five minutes)
+		if (buildTime.timestamp() - driverFile.getLastModified() > 5 * 60 * 1000000)	// microseconds
 			this->logNormal("Warning: Plugin module " + driver + " is older than the main binary; possible ABI conflict! In case of strange errors please recompile the plugin!");
 	}
 }
@@ -1344,7 +1360,7 @@ uint8_t AbstractOpenHAT::waiting(uint8_t canSend) {
 	try {
 		result = OPDI::waiting(canSend);
 	} catch (Poco::Exception &pe) {
-		this->logError(std::string("Unhandled exception while housekeeping: ") + pe.message());
+		this->logError(std::string("Unhandled exception while housekeeping: ") + this->getExceptionMessage(pe));
 		result = OPDI_DEVICE_ERROR;
 	} catch (std::exception &e) {
 		this->logError(std::string("Unhandled exception while housekeeping: ") + e.what());
@@ -1551,8 +1567,8 @@ void AbstractOpenHAT::persist(opdi::Port* port) {
 			this->logDebug("Unable to persist port state for: " + port->ID() + "; unknown port type: " + port->getType());
 			return;
 		}
-	} catch (Poco::Exception &e) {
-		this->logWarning("Unable to persist state of port " + port->ID() + ": " + e.message());
+	} catch (Poco::Exception& e) {
+		this->logWarning("Unable to persist state of port " + port->ID() + ": " + this->getExceptionMessage(e));
 		return;
 	}
 	// save configuration only if not already shutting down
@@ -1599,6 +1615,11 @@ std::string AbstractOpenHAT::getDeviceInfo(void) {
 
 void AbstractOpenHAT::getEnvironment(std::map<std::string, std::string>& mapToFill) {
 	mapToFill.insert(this->environment.begin(), this->environment.end());
+}
+
+std::string AbstractOpenHAT::getExceptionMessage(Poco::Exception & e) {
+	std::string what(e.what());
+	return e.className() + (e.message().empty() ? "" : ": " + e.message()) + (what.empty() ? "" : " " + what);
 }
 
 }		// namespace openhat

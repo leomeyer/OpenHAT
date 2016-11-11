@@ -679,7 +679,7 @@ void TimerPort::setOutputs(int8_t outputLine) {
 			// set output line
 			(*it)->setLine(outputLine);
 		} catch (Poco::Exception &e) {
-			this->logNormal("Error setting output port state: " + (*it)->ID() + ": " + e.message());
+			this->logNormal("Error setting output port state: " + (*it)->ID() + ": " + this->openhat->getExceptionMessage(e));
 		}
 		++it;
 	}
@@ -783,7 +783,7 @@ uint8_t TimerPort::doWork(uint8_t canSend)  {
 
 			this->setOutputs(outputLine);
 		} catch (Poco::Exception &e) {
-			this->logNormal("Error processing timer schedule: " + e.message());
+			this->logNormal("Error processing timer schedule: " + this->openhat->getExceptionMessage(e));
 		}
 	}
 

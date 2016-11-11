@@ -58,6 +58,8 @@ protected:
 
 	bool allowHiddenPorts;
 
+	bool prepared;
+
 	// user and password for master authentication (set from the configuration)
 	std::string loginUser;
 	std::string loginPassword;
@@ -121,6 +123,8 @@ public:
 	AbstractOpenHAT(void);
 
 	virtual ~AbstractOpenHAT(void);
+
+	inline bool isPrepared() { return this->prepared; };
 
 	virtual void protocolCallback(uint8_t protState);
 
@@ -250,6 +254,8 @@ public:
 
 	virtual void setupCounterPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port);
 
+	virtual void setupInfluxDBPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port);
+
 	/** Configures the specified node. */
 	virtual void setupNode(Poco::Util::AbstractConfiguration* config, const std::string& node);
 
@@ -289,6 +295,8 @@ public:
 	virtual std::string getDeviceInfo(void);
 
 	virtual void getEnvironment(std::map<std::string, std::string>& mapToFill);
+
+	virtual std::string getExceptionMessage(Poco::Exception& e);
 };
 
 }		// namespace openhat

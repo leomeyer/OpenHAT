@@ -120,11 +120,11 @@ bool ExpressionPort::prepareVariables(bool duringSetup) {
 			// we make a difference here
 			if (duringSetup) {
 				// emit a warning
-				this->logWarning("Failed to resolve value of port " + port->ID() + ": " + e.message());
+				this->logWarning("Failed to resolve value of port " + port->ID() + ": " + this->openhat->getExceptionMessage(e));
 				this->portValues.push_back(0.0f);
 			} else {
 				// warn in extreme logging mode only
-				this->logExtreme("Failed to resolve value of port " + port->ID() + ": " + e.message());
+				this->logExtreme("Failed to resolve value of port " + port->ID() + ": " + this->openhat->getExceptionMessage(e));
 				// the expression cannot be evaluated if there is an error
 				return false;
 			}
@@ -208,7 +208,7 @@ void ExpressionPort::setOutputPorts(double value) {
 							throw PortError("");
 		}
 		catch (Poco::Exception &e) {
-			this->logNormal("Error setting output port value of port " + (*it)->ID() + ": " + e.message());
+			this->logNormal("Error setting output port value of port " + (*it)->ID() + ": " + this->openhat->getExceptionMessage(e));
 		}
 
 		++it;

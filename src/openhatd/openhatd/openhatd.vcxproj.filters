@@ -90,6 +90,12 @@
     <None Include="testconfigs\windows_dev.ini">
       <Filter>Ressourcendateien\testconfigs</Filter>
     </None>
+    <None Include="testconfigs\current.json">
+      <Filter>Ressourcendateien\testconfigs</Filter>
+    </None>
+    <None Include="testconfigs\influxdb_test.ini">
+      <Filter>Ressourcendateien\testconfigs</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -124,6 +130,12 @@
     </ClInclude>
     <ClInclude Include="opdi_configspecs.h">
       <Filter>Headerdateien\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\opdi_core\code\c\common\cppwrapper\OPDI.h">
+      <Filter>Headerdateien\common\cppwrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\opdi_core\code\c\common\cppwrapper\OPDI_Ports.h">
+      <Filter>Headerdateien\common\cppwrapper</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -1,0 +1,49 @@
+{
+  "title":"Current Values",
+  "location":"opdidsrv1",
+  "time":"11/11/2016 11:24:00",
+  "lat":"47&deg; 39.68' N",
+  "lon":"008&deg; 53.32' E",
+  "alt":"450",
+  "hardware":"TFA Sinus",
+  "uptime":"2, 1, 39",
+  "serverUptime":"2, 1, 39",
+  "weewxVersion":"3.1.0",
+  "stats": {
+    "current": {
+      "inTemp":"17.0",
+      "inHumidity":"55",
+      "outTemp":"6.3",
+      "outHumidity":"72",
+      "dewpoint":"1.6",
+      "heatIndex":"6.3",
+      "barometer":"1002.6",
+      "pressure":"947.9",
+      "windSpeed":"0.0",
+      "windchill":"4.7",
+      "windDir":"   N/A",
+      "windDirText":"N/A",
+      "windGust":"0.0",
+      "windGustDir":"   N/A",
+      "rainRate":"0.0",
+      "extraTemp1":"17.7",
+      "extraHumid1":"49",
+      "extraTemp2":"   N/A",
+      "extraHumid2":"   N/A",
+      "extraTemp3":"   N/A",
+      "extraHumid3":"?'extraHumid3'?",
+      "extraTemp4":"?'extraTemp4'?",
+      "extraHumid4":"?'extraHumid4'?",
+      "txBatteryStatus":"1.000000",
+      "windBatteryStatus":"1.000000",
+      "rainBatteryStatus":"1.000000",
+      "outTempBatteryStatus":"1.000000",
+      "extraBatteryStatus1":"?'extraBatteryStatus1'?",
+      "extraBatteryStatus2":"?'extraBatteryStatus2'?",
+      "extraBatteryStatus3":"?'extraBatteryStatus3'?",
+      "extraBatteryStatus4":"?'extraBatteryStatus4'?"
+
+    }
+  }
+}
+

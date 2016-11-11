@@ -191,12 +191,12 @@ void WindowsOpenHAT::println(const char* text) {
 
 void WindowsOpenHAT::printe(const char* text) {
 	// text is treated as UTF8. Convert to wide character
-	std::wcerr << utf8_decode(std::string(text));
+	std::wcout << utf8_decode(std::string(text));
 }
 
 void WindowsOpenHAT::printlne(const char* text) {
 	// text is treated as UTF8. Convert to wide character
-	std::wcerr << utf8_decode(std::string(text)) << std::endl;
+	std::wcout << utf8_decode(std::string(text)) << std::endl;
 }
 
 /** This method handles an incoming TCP connection. It blocks until the connection is closed.
@@ -349,7 +349,46 @@ IOpenHATPlugin* WindowsOpenHAT::getPlugin(std::string driver) {
 
 
 std::string WindowsOpenHAT::getCurrentUser(void) {
-	return "<unknown>";
+#define COUNTOF(x)  (sizeof(x)/sizeof(x[0]))
+
+#pragma comment(lib, "advapi32")
+#pragma comment(lib, "user32")
+
+	std::wstring result = L"<unknown>";
+
+	HWND hwndProgman = FindWindow(L"Progman", NULL);
+
+	if (hwndProgman)
+	{
+		DWORD dwProcId;
+		GetWindowThreadProcessId(hwndProgman, &dwProcId);
+		HANDLE hProc = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, dwProcId);
+		HANDLE hTok = NULL;
+
+		PTOKEN_USER ptu = NULL;
+
+		if (hProc && OpenProcessToken(hProc, TOKEN_QUERY, &hTok))
+		{
+			DWORD dwNeeded;
+			GetTokenInformation(hTok, TokenUser, NULL, 0, &dwNeeded);
+			ptu = (PTOKEN_USER)LocalAlloc(LPTR, dwNeeded);
+			GetTokenInformation(hTok, TokenUser, ptu, dwNeeded, &dwNeeded);
+			PSID psid = ptu->User.Sid;
+			WCHAR szUser[48];
+			WCHAR szDomain[17];
+			DWORD cchUser = COUNTOF(szUser), cchDomain = COUNTOF(szDomain);
+			SID_NAME_USE use;
+			BOOL bRes = LookupAccountSid(NULL, psid, szUser, &cchUser, szDomain, &cchDomain, &use);
+			if (bRes)
+				result = std::wstring(L"User: ") + szDomain + L"\\" + szUser;
+			
+			LocalFree(ptu);
+		}
+		CloseHandle(hTok);
+		CloseHandle(hProc);
+	}
+
+	return utf8_encode(result);
 }
 
 void WindowsOpenHAT::switchToUser(std::string newUser) {

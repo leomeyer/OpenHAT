@@ -670,4 +670,51 @@ public:
 	virtual void setLine(uint8_t newLine, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 };
 
+/** An InfluxDB port is a DigitalPort that, when High, sends data to an InfluxDB instance
+*   in regular intervals. Data is sent via HTTP using the InfluxDB API documented at
+*   https://docs.influxdata.com/influxdb/v1.0/guides/writing_data/
+*   The host must be specified. Default port is 8086.
+*   You have to specify a database that must exist on the InfluxDB instance. You can 
+*   specify an optional list of tags in format tag=value[,...]. You have to specify
+*   a measurement and at least the ID of one port that is to be logged. The port IDs can
+*   be specified using the port specification syntax (see findPortIDs).
+*   The retention point is optional.
+*   A port that returns an error while querying its value is omitted.
+*   The timestamp sent is the current OPDI time in nanoseconds (with milliseconds precision).
+*   You can specify an interval and a timeout. The interval must be greater than the
+*   timeout.
+*   An optional name for a fallback file can be specified that is written to in case of errors.
+*   The content of this file can later be sent to InfluxDB to complete the missing data points.
+*/
+class InfluxDBPort : public opdi::DigitalPort, Poco::Runnable {
+protected:
+	openhat::AbstractOpenHAT* openhat;
+
+	uint64_t intervalMs;	// milliseconds
+	uint64_t timeoutMs;		// milliseconds
+	std::string host;
+	uint16_t tcpPort;
+	std::string database;
+	std::string retentionPoint;
+	std::string measurement;
+	std::string tags;		// InfluxDB tags, not port tags
+	std::string portStr;	// specification for the findPortIDs function
+	std::string fallbackFile;
+
+	uint64_t lastLogTime;
+	opdi::PortList ports;
+	std::string dbData;		// the data to send asynchronously
+	Poco::Thread postThread;
+
+	virtual uint8_t doWork(uint8_t canSend) override;
+
+	virtual void run();
+public:
+	InfluxDBPort(AbstractOpenHAT* openhat, const char* id);
+
+	virtual void configure(Poco::Util::AbstractConfiguration* portConfig);
+
+	virtual void prepare() override;
+};
+
 }		// namespace openhat

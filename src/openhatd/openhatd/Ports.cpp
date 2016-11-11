@@ -17,6 +17,9 @@
 #include "Poco/Delegate.h"
 #include "Poco/ScopedLock.h"
 #include "Poco/FileStream.h"
+#include "Poco/Net/HTTPRequest.h"
+#include "Poco/Net/HTTPResponse.h"
+#include "Poco/Net/HTTPClientSession.h"
 
 #include "opdi_platformfuncs.h"
 
@@ -137,7 +140,7 @@ uint8_t LogicPort::doWork(uint8_t canSend)  {
 		try {
 			(*it)->getState(&mode, &line);
 		} catch (Poco::Exception &e) {
-			this->logNormal(std::string("Error querying port ") + (*it)->getID() + ": " + e.message());
+			this->logNormal(std::string("Error querying port ") + (*it)->getID() + ": " + this->openhat->getExceptionMessage(e));
 		}
 		highCount += line;
 		++it;
@@ -191,7 +194,7 @@ uint8_t LogicPort::doWork(uint8_t canSend)  {
 					(*it)->setLine(newLine);
 				}
 			} catch (Poco::Exception &e) {
-				this->logNormal(std::string("Error changing port ") + (*it)->ID() + ": " + e.message());
+				this->logNormal(std::string("Error changing port ") + (*it)->ID() + ": " + this->openhat->getExceptionMessage(e));
 			}
 			++it;
 		}
@@ -210,7 +213,7 @@ uint8_t LogicPort::doWork(uint8_t canSend)  {
 					(*it)->setLine((newLine == 0 ? 1 : 0));
 				}
 			} catch (Poco::Exception &e) {
-				this->logNormal("Error changing port " + (*it)->ID() + ": " + e.message());
+				this->logNormal("Error changing port " + (*it)->ID() + ": " + this->openhat->getExceptionMessage(e));
 			}
 			++it;
 		}
@@ -317,7 +320,7 @@ uint8_t PulsePort::doWork(uint8_t canSend)  {
 			try {
 				(*it)->getState(&mode, &line);
 			} catch (Poco::Exception &e) {
-				this->logNormal("Error querying port " + (*it)->ID() + ": " + e.message());
+				this->logNormal("Error querying port " + (*it)->ID() + ": " + this->openhat->getExceptionMessage(e));
 			}
 			highCount += line;
 			++it;
@@ -386,7 +389,7 @@ uint8_t PulsePort::doWork(uint8_t canSend)  {
 			try {
 				(*it)->setLine(newState);
 			} catch (Poco::Exception &e) {
-				this->logNormal("Error setting output port state: " + (*it)->ID() + ": " + e.message());
+				this->logNormal("Error setting output port state: " + (*it)->ID() + ": " + this->openhat->getExceptionMessage(e));
 			}
 			++it;
 		}
@@ -397,7 +400,7 @@ uint8_t PulsePort::doWork(uint8_t canSend)  {
 			try {
 				(*it)->setLine((newState == 0 ? 1 : 0));
 			} catch (Poco::Exception &e) {
-				this->logNormal("Error setting inverse output port state: " + (*it)->ID() + ": " + e.message());
+				this->logNormal("Error setting inverse output port state: " + (*it)->ID() + ": " + this->openhat->getExceptionMessage(e));
 			}
 			++it;
 		}
@@ -966,7 +969,7 @@ uint8_t FaderPort::doWork(uint8_t canSend)  {
 						this->logDebug("Setting line of end switch port " + (*it)->ID() + " to High");
 						(*it)->setLine(1);
 					} catch (Poco::Exception &e) {
-						this->logWarning("Error changing port " + (*it)->ID() + ": " + e.message());
+						this->logWarning("Error changing port " + (*it)->ID() + ": " + this->openhat->getExceptionMessage(e));
 					}
 					++it;
 				}
@@ -1033,7 +1036,7 @@ uint8_t FaderPort::doWork(uint8_t canSend)  {
 				} else
 					throw Poco::Exception("The port " + (*it)->ID() + " is neither an AnalogPort nor a DialPort");
 			} catch (Poco::Exception& e) {
-				this->logNormal("Error changing port " + (*it)->ID() + ": " + e.message());
+				this->logNormal("Error changing port " + (*it)->ID() + ": " + this->openhat->getExceptionMessage(e));
 			}
 			++it;
 		}
@@ -1202,7 +1205,7 @@ uint8_t SceneSelectPort::doWork(uint8_t canSend)  {
 					} else
 						this->logWarning("In scene file " + sceneFile + ": Port with ID " + (*it) + " has an unknown type");
 				} catch (Poco::Exception &e) {
-					this->logWarning("In scene file " + sceneFile + ": Error configuring port " + (*it) + ": " + e.message());
+					this->logWarning("In scene file " + sceneFile + ": Error configuring port " + (*it) + ": " + this->openhat->getExceptionMessage(e));
 				}
 			}
 		}
@@ -1340,7 +1343,7 @@ uint8_t FilePort::doWork(uint8_t canSend) {
 				throw Poco::ApplicationException("Port type is unknown or not supported");
 			}
 		} catch (Poco::Exception &e) {
-			this->logWarning("Error setting port state from file '" + this->filePath + "': " + e.message());
+			this->logWarning("Error setting port state from file '" + this->filePath + "': " + this->openhat->getExceptionMessage(e));
 		}
 		if (this->deleteAfterRead) {
 			Poco::File file(this->filePath);
@@ -1349,7 +1352,7 @@ uint8_t FilePort::doWork(uint8_t canSend) {
 				file.remove();
 			}
 			catch (Poco::Exception &e) {
-				this->logWarning("Unable to delete file '" + this->filePath + "': " + e.message());
+				this->logWarning("Unable to delete file '" + this->filePath + "': " + this->openhat->getExceptionMessage(e));
 			}
 		}
 	}
@@ -1409,7 +1412,7 @@ void FilePort::writeContent() {
 		}
 	}
 	catch (Poco::Exception &e) {
-		this->logWarning("Error getting port state to write to file '" + this->filePath + "': " + e.message());
+		this->logWarning("Error getting port state to write to file '" + this->filePath + "': " + this->openhat->getExceptionMessage(e));
 	}
 
 	// write content to file
@@ -1657,7 +1660,7 @@ void AggregatorPort::persist() {
 				this->openhat->savePersistentConfig();
 		}
 		catch (Poco::Exception& e) {
-			this->logWarning("Error persisting aggregator values: " + e.message());
+			this->logWarning("Error persisting aggregator values: " + this->openhat->getExceptionMessage(e));
 		}
 		catch (std::exception& e) {
 			this->logWarning(std::string("Error persisting aggregator values: ") + e.what());
@@ -1736,7 +1739,7 @@ uint8_t AggregatorPort::doWork(uint8_t canSend) {
 					catch (Poco::Exception& e) {
 						// any error causes a reset and aborts processing
 						this->lastQueryTime = 0;
-						this->resetValues("An error occurred deserializing persisted values: " + e.message(), opdi::LogVerbosity::NORMAL);
+						this->resetValues("An error occurred deserializing persisted values: " + this->openhat->getExceptionMessage(e), opdi::LogVerbosity::NORMAL);
 						break;
 					}
 				}	// read values
@@ -1760,7 +1763,7 @@ uint8_t AggregatorPort::doWork(uint8_t canSend) {
 			this->errors = 0;
 		}
 		catch (Poco::Exception &e) {
-			this->logDebug("Error querying source port " + this->sourcePort->ID() + ": " + e.message());
+			this->logDebug("Error querying source port " + this->sourcePort->ID() + ": " + this->openhat->getExceptionMessage(e));
 			// error occurred; check whether there's a last value and an error tolerance
 			if ((this->values.size() > 0) && (this->allowedErrors > 0) && (this->errors < this->allowedErrors)) {
 				++errors;
@@ -1771,7 +1774,7 @@ uint8_t AggregatorPort::doWork(uint8_t canSend) {
 			else {
 				// avoid logging too many messages
 				if (this->values.size() > 0) {
-					this->resetValues("Querying the source port " + this->sourcePort->ID() + " resulted in an error: " + e.message(), opdi::LogVerbosity::VERBOSE);
+					this->resetValues("Querying the source port " + this->sourcePort->ID() + " resulted in an error: " + this->openhat->getExceptionMessage(e), opdi::LogVerbosity::VERBOSE);
 				}
 				return OPDI_STATUS_OK;
 			}
@@ -2190,7 +2193,7 @@ uint8_t TriggerPort::doWork(uint8_t canSend)  {
 					(*it)->setLine(line == 1 ? 0 : 1);
 				}
 			} catch (Poco::Exception &e) {
-				this->logNormal(std::string("Error changing port ") + (*it)->getID() + ": " + e.message());
+				this->logNormal(std::string("Error changing port ") + (*it)->getID() + ": " + this->openhat->getExceptionMessage(e));
 			}
 			++it;
 		}
@@ -2213,7 +2216,7 @@ uint8_t TriggerPort::doWork(uint8_t canSend)  {
 					(*it)->setLine(line == 1 ? 0 : 1);
 				}
 			} catch (Poco::Exception &e) {
-				this->logNormal(std::string("Error changing port ") + (*it)->getID() + ": " + e.message());
+				this->logNormal(std::string("Error changing port ") + (*it)->getID() + ": " + this->openhat->getExceptionMessage(e));
 			}
 			++it;
 		}
@@ -2223,6 +2226,149 @@ uint8_t TriggerPort::doWork(uint8_t canSend)  {
 	}
 
 	return OPDI_STATUS_OK;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// InfluxDBPort
+///////////////////////////////////////////////////////////////////////////////
+
+InfluxDBPort::InfluxDBPort(AbstractOpenHAT * openhat, const char * id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0) {
+	this->openhat = openhat;
+
+	opdi::DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
+	this->line = 1;	// default: active
+
+	this->tcpPort = 8086;
+	this->intervalMs = 60000;	// default: once a minute
+	this->timeoutMs = 5000;		// default: five seconds
+	this->lastLogTime = 0;
+}
+
+uint8_t InfluxDBPort::doWork(uint8_t canSend) {
+
+	// need to log data?
+	if (!this->postThread.isRunning() && (opdi_get_time_ms() - this->lastLogTime > this->intervalMs)) {
+		this->logDebug("Preparing InfluxDB data write");
+
+		// build data string
+		this->dbData.clear();
+
+		this->dbData.append(this->measurement);
+		if (!this->tags.empty())
+			this->dbData.append("," + this->tags);
+		this->dbData.append(" ");
+
+		bool hasFields = false;
+		auto ite = this->ports.cend();
+		for (auto it = this->ports.cbegin(); it != ite; ++it) {
+			try {
+				double value = this->openhat->getPortValue(*it);
+				this->dbData.append((*it)->ID() + "=" + this->to_string(value));
+				if (it + 1 != ite)
+					this->dbData.append(",");
+				hasFields = true;
+			} catch (Poco::Exception& e) {
+				this->logDebug("Error querying value of port " + (*it)->ID() + ": " + this->openhat->getExceptionMessage(e));
+			}
+		}
+		if (!hasFields)
+			// add dummy field (required by influxDB)
+			this->dbData.append("@@dummy@@=1");
+
+		// append timestamp (nanoseconds)
+		this->dbData.append(" ");
+		this->dbData.append(this->to_string(Poco::Timestamp().epochMicroseconds() * 1000));
+
+		// data is complete, start thread to post data to the InfluxDB instance
+		this->postThread.start(*this);
+
+		this->lastLogTime = opdi_get_time_ms();
+	}
+
+	return OPDI_STATUS_OK;
+}
+
+void InfluxDBPort::run() {
+	// runs in separate thread
+
+	try {
+		Poco::Net::HTTPClientSession session(this->host, this->tcpPort);
+		session.setTimeout(Poco::Timespan(this->timeoutMs * 1000));
+
+		// build the HTTP post
+		std::string postUrl = "/write?db=" + this->database + (this->retentionPoint.empty() ? "" : "&rp=" + this->retentionPoint);
+		Poco::Net::HTTPRequest request(Poco::Net::HTTPRequest::HTTP_POST, postUrl);
+		request.setContentLength(this->dbData.length());
+
+		if (this->logVerbosity >= opdi::LogVerbosity::DEBUG) {
+			std::string fullUrl = "http://" + this->host + ":" + this->to_string(this->tcpPort) + postUrl;
+			this->logDebug("Sending InfluxDB data via POST to: " + fullUrl);
+			this->logDebug("InfluxDB data: " + this->dbData);
+		}
+		std::ostream& myOStream = session.sendRequest(request);
+		myOStream << this->dbData;
+
+		Poco::Net::HTTPResponse res;
+		std::istream& iStr = session.receiveResponse(res);
+		std::stringstream ss;
+		ss << iStr.rdbuf();
+
+		if (res.getStatus() >= 500)
+			throw Poco::Exception(this->to_string(res.getStatus()) + " Internal server error: " + ss.str());
+		if (res.getStatus() == 404)
+			throw Poco::Exception(this->to_string(res.getStatus()) + " Not found");
+		if (res.getStatus() >= 400)
+			throw Poco::Exception(this->to_string(res.getStatus()) + " The server did not understand the request: " + ss.str());
+		if (res.getStatus() != 204) {
+			throw Poco::Exception(this->to_string(res.getStatus()) + " Unable to process the request: " + ss.str());
+		}
+
+		this->logDebug("204 InfluxDB POST successful");
+
+		return;
+	} catch (Poco::Exception& e) {
+		this->openhat->logError(this->ID() + ": Error sending data to " + this->host + ": " + this->openhat->getExceptionMessage(e));
+	}
+	
+	// error case
+	// fallback filename specified?
+	if (!this->fallbackFile.empty()) {
+		try {
+			// open the stream in append mode
+			Poco::FileOutputStream fos(this->fallbackFile, std::ios_base::app);
+			fos.write(this->dbData.c_str(), this->dbData.length());
+			fos.write("\n", 1);	// InfluxDB line separator, not platform dependent
+			fos.close();
+		} catch (Poco::Exception& e) {
+			this->openhat->logError(this->ID() + ": Error writing to fallback file " + this->fallbackFile + ": " + this->openhat->getExceptionMessage(e));
+		}
+	}
+}
+
+void InfluxDBPort::configure(Poco::Util::AbstractConfiguration * portConfig) {
+	this->openhat->configureDigitalPort(portConfig, this);
+
+	this->host = openhat->getConfigString(portConfig, this->ID(), "Host", "", true);
+	this->tcpPort = (uint16_t)portConfig->getInt("TCPPort", this->tcpPort);
+	this->database = openhat->getConfigString(portConfig, this->ID(), "Database", "", true);
+	this->measurement = openhat->getConfigString(portConfig, this->ID(), "Measurement", "", true);
+	this->retentionPoint = openhat->getConfigString(portConfig, this->ID(), "RetentionPoint", "", false);
+	this->fallbackFile = openhat->getConfigString(portConfig, this->ID(), "FallbackFile", "", false);
+
+	this->intervalMs = portConfig->getInt64("Interval", this->intervalMs);
+	if (this->intervalMs < 1000)
+		throw Poco::InvalidArgumentException(this->ID() + ": Please specify an interval in milliseconds, at least 1000");
+	this->timeoutMs = portConfig->getInt64("Timeout", this->timeoutMs);
+	if (this->timeoutMs > this->intervalMs)
+		throw Poco::InvalidArgumentException(this->ID() + ": Timeout may not exceed log interval of " + this->to_string(this->intervalMs) + " ms: " + this->to_string(this->timeoutMs));
+
+	this->portStr = openhat->getConfigString(portConfig, this->ID(), "Ports", "", true);
+}
+
+void InfluxDBPort::prepare() {
+	this->lastLogTime = opdi_get_time_ms();
+
+	this->openhat->findPorts(this->ID(), "Ports", this->portStr, this->ports);
 }
 
 }		// namespace openhat

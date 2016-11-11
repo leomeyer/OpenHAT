@@ -69,10 +69,10 @@ void LinuxTestOpenHATPlugin::masterDisconnected() {
 }
 
 extern "C" IOpenHATPlugin* GetOpenHATPluginInstance(int majorVersion, int minorVersion, int patchVersion) {
-
 	// check whether the version is supported
-	if ((majorVersion > 0) || (minorVersion > 1))
-		throw Poco::Exception("This version of the LinuxTestOPDIPlugin supports only OpenHAT versions up to 0.1");
+	if ((majorVersion != OPENHAT_MAJOR_VERSION) || (minorVersion != OPENHAT_MINOR_VERSION))
+		throw Poco::Exception("This plugin requires OpenHAT version "
+			OPDI_QUOTE(OPENHAT_MAJOR_VERSION) "." OPDI_QUOTE(OPENHAT_MINOR_VERSION));
 
 	// return a new instance of this plugin
 	return new LinuxTestOpenHATPlugin();

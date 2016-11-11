@@ -242,7 +242,7 @@ protected:
 	std::string provider;
 
 	std::string xpath;
-	int64_t dataValiditySeconds;
+	int32_t dataValiditySeconds;
 
 	int refreshTime;
 
@@ -300,7 +300,7 @@ void WeatherPlugin::setupPlugin(openhat::AbstractOpenHAT* openHAT, const std::st
 	if (this->refreshTime > 600)
 		throw Poco::DataException(node + ": Please do not specify more than 10 minutes RefreshTime");
 
-	this->dataValiditySeconds = nodeConfig->getInt64("DataValidity", this->dataValiditySeconds);
+	this->dataValiditySeconds = nodeConfig->getInt("DataValidity", this->dataValiditySeconds);
 	if (this->dataValiditySeconds <= 0)
 		throw Poco::DataException(node + ": Please specify a non-negative meaningful DataValidity in seconds");
 
@@ -544,13 +544,13 @@ void WeatherPlugin::refreshData(void) {
 		}
 
 	} catch (Poco::FileNotFoundException &fnfe) {
-		this->openhat->logVerbose(this->nodeID + ": The file was not found: " + fnfe.message(), this->logVerbosity);
+		this->openhat->logVerbose(this->nodeID + ": The file was not found: " + this->openhat->getExceptionMessage(fnfe), this->logVerbosity);
 	} catch (Poco::Net::NetException &ne) {
-		this->openhat->logVerbose(this->nodeID + ": Network problem: " + ne.className() + ": " + ne.message(), this->logVerbosity);
+		this->openhat->logVerbose(this->nodeID + ": Network problem: " + this->openhat->getExceptionMessage(ne), this->logVerbosity);
 	} catch (Poco::UnknownURISchemeException &uuse) {
-		this->openhat->logVerbose(this->nodeID + ": Unknown URI scheme: " + uuse.message(), this->logVerbosity);
+		this->openhat->logVerbose(this->nodeID + ": Unknown URI scheme: " + this->openhat->getExceptionMessage(uuse), this->logVerbosity);
 	} catch (Poco::Exception &e) {
-		this->openhat->logVerbose(this->nodeID + ": " + e.className() + ": " + e.message(), this->logVerbosity);
+		this->openhat->logVerbose(this->nodeID + ": " + e.className() + ": " + this->openhat->getExceptionMessage(e), this->logVerbosity);
 	}
 }
 
@@ -563,10 +563,11 @@ void WeatherPlugin::run(void) {
 
 	while (!this->openhat->shutdownRequested) {
 		try {
-			this->refreshData();
-
+			// do not refresh until the instance has been fully prepared
+			if (this->openhat->isPrepared())
+				this->refreshData();
 		} catch (Poco::Exception &e) {
-			this->openhat->logNormal(this->nodeID + ": Unhandled exception in worker thread: " + e.message(), this->logVerbosity);
+			this->openhat->logNormal(this->nodeID + ": Unhandled exception in worker thread: " + this->openhat->getExceptionMessage(e), this->logVerbosity);
 		}
 
 		// sleep for the specified refresh time (milliseconds)
@@ -591,8 +592,8 @@ extern "C" IOpenHATPlugin* GetPluginInstance(int majorVersion, int minorVersion,
 #endif
 {
 	// check whether the version is supported
-	if ((majorVersion > OPENHAT_MAJOR_VERSION) || (minorVersion > OPENHAT_MINOR_VERSION))
-		throw Poco::Exception("This plugin supports only OpenHAT versions up to "
+	if ((majorVersion != OPENHAT_MAJOR_VERSION) || (minorVersion != OPENHAT_MINOR_VERSION))
+		throw Poco::Exception("This plugin requires OpenHAT version "
 			OPDI_QUOTE(OPENHAT_MAJOR_VERSION) "." OPDI_QUOTE(OPENHAT_MINOR_VERSION));
 
 	// return a new instance of this plugin

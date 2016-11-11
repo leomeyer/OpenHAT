@@ -506,7 +506,7 @@ std::string FritzBoxPlugin::httpGet(const std::string& url) {
 
 		return ss.str().erase(ss.str().find_last_not_of("\n") + 1);
 	} catch (Poco::Exception &e) {
-		this->errorOccurred(this->nodeID + ": Error during HTTP GET for " + uri.toString() + ": " + e.message());
+		this->errorOccurred(this->nodeID + ": Error during HTTP GET for " + uri.toString() + ": " + this->openhat->getExceptionMessage(e));
 	}
 
 	return "";
@@ -885,7 +885,7 @@ void FritzBoxPlugin::run(void) {
 				}
 			}
 		} catch (Poco::Exception &e) {
-			this->openhat->logNormal(this->nodeID + ": Unhandled exception in worker thread: " + e.message(), this->logVerbosity);
+			this->openhat->logNormal(this->nodeID + ": Unhandled exception in worker thread: " + this->openhat->getExceptionMessage(e), this->logVerbosity);
 		}
 	}
 
@@ -907,8 +907,8 @@ extern "C" IOpenHATPlugin* GetPluginInstance(int majorVersion, int minorVersion,
 #endif
 {
 	// check whether the version is supported
-	if ((majorVersion > OPENHAT_MAJOR_VERSION) || (minorVersion > OPENHAT_MINOR_VERSION))
-		throw Poco::Exception("This plugin supports only OpenHAT versions up to "
+	if ((majorVersion != OPENHAT_MAJOR_VERSION) || (minorVersion != OPENHAT_MINOR_VERSION))
+		throw Poco::Exception("This plugin requires OpenHAT version "
 			OPDI_QUOTE(OPENHAT_MAJOR_VERSION) "." OPDI_QUOTE(OPENHAT_MINOR_VERSION));
 
 	// return a new instance of this plugin

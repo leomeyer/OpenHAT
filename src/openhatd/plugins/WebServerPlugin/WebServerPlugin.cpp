@@ -683,8 +683,8 @@ extern "C" IOpenHATPlugin* GetPluginInstance(int majorVersion, int minorVersion,
 #endif
 {
 	// check whether the version is supported
-	if ((majorVersion > OPENHAT_MAJOR_VERSION) || (minorVersion > OPENHAT_MINOR_VERSION))
-		throw Poco::Exception("This plugin supports only OpenHAT versions up to "
+	if ((majorVersion != OPENHAT_MAJOR_VERSION) || (minorVersion != OPENHAT_MINOR_VERSION))
+		throw Poco::Exception("This plugin requires OpenHAT version "
 			OPDI_QUOTE(OPENHAT_MAJOR_VERSION) "." OPDI_QUOTE(OPENHAT_MINOR_VERSION));
 
 	// return a new instance of this plugin

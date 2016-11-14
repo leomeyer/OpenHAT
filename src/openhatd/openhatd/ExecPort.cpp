@@ -27,7 +27,7 @@ ExecPort::ExecPort(AbstractOpenHAT* openhat, const char* id) : opdi::DigitalPort
 ExecPort::~ExecPort() {
 }
 
-void ExecPort::configure(Poco::Util::AbstractConfiguration* config) {
+void ExecPort::configure(ConfigurationView* config) {
 	this->openhat->configurePort(config, this, 0);
 	this->logVerbosity = this->openhat->getConfigLogVerbosity(config, opdi::LogVerbosity::UNKNOWN);
 

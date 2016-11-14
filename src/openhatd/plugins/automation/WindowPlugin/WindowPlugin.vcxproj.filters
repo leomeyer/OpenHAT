@@ -24,6 +24,9 @@
     <ClCompile Include="..\..\..\..\..\opdi_core\code\c\common\cppwrapper\OPDI_Ports.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\openhatd\Configuration.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="readme.txt">

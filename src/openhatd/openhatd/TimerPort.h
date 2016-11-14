@@ -215,7 +215,7 @@ namespace openhat {
 
 		virtual ~TimerPort();
 
-		virtual void configure(Poco::Util::AbstractConfiguration* config, Poco::Util::AbstractConfiguration* parentConfig);
+		virtual void configure(ConfigurationView* config, ConfigurationView* parentConfig);
 
 		virtual void setDirCaps(const char* dirCaps) override;
 

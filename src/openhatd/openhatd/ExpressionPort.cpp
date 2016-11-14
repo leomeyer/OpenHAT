@@ -29,7 +29,7 @@ ExpressionPort::ExpressionPort(AbstractOpenHAT* openhat, const char* id) : opdi:
 ExpressionPort::~ExpressionPort() {
 }
 
-void ExpressionPort::configure(Poco::Util::AbstractConfiguration* config) {
+void ExpressionPort::configure(ConfigurationView* config) {
 	this->openhat->configurePort(config, this, 0);
 	this->logVerbosity = this->openhat->getConfigLogVerbosity(config, opdi::LogVerbosity::UNKNOWN);
 

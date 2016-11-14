@@ -45,7 +45,7 @@ LogicPort::LogicPort(AbstractOpenHAT* openhat, const char* id) : opdi::DigitalPo
 LogicPort::~LogicPort() {
 }
 
-void LogicPort::configure(Poco::Util::AbstractConfiguration* config) {
+void LogicPort::configure(ConfigurationView* config) {
 	this->openhat->configurePort(config, this, 0);
 	this->logVerbosity = this->openhat->getConfigLogVerbosity(config, opdi::LogVerbosity::UNKNOWN);
 
@@ -243,7 +243,7 @@ PulsePort::PulsePort(AbstractOpenHAT* openhat, const char* id) : opdi::DigitalPo
 PulsePort::~PulsePort() {
 }
 
-void PulsePort::configure(Poco::Util::AbstractConfiguration* config) {
+void PulsePort::configure(ConfigurationView* config) {
 	this->openhat->configurePort(config, this, 0);
 	this->logVerbosity = this->openhat->getConfigLogVerbosity(config, opdi::LogVerbosity::UNKNOWN);
 
@@ -424,7 +424,7 @@ SelectorPort::SelectorPort(AbstractOpenHAT* openhat, const char* id) : opdi::Dig
 SelectorPort::~SelectorPort() {
 }
 
-void SelectorPort::configure(Poco::Util::AbstractConfiguration* config) {
+void SelectorPort::configure(ConfigurationView* config) {
 	this->openhat->configurePort(config, this, 0);
 	this->logVerbosity = this->openhat->getConfigLogVerbosity(config, opdi::LogVerbosity::UNKNOWN);
 
@@ -528,7 +528,7 @@ ErrorDetectorPort::ErrorDetectorPort(AbstractOpenHAT* openhat, const char* id) :
 ErrorDetectorPort::~ErrorDetectorPort() {
 }
 
-void ErrorDetectorPort::configure(Poco::Util::AbstractConfiguration* config) {
+void ErrorDetectorPort::configure(ConfigurationView* config) {
 	this->openhat->configureDigitalPort(config, this);	
 	this->logVerbosity = this->openhat->getConfigLogVerbosity(config, opdi::LogVerbosity::UNKNOWN);
 
@@ -618,7 +618,7 @@ uint8_t SerialStreamingPort::doWork(uint8_t canSend)  {
 	return OPDI_STATUS_OK;
 }
 
-void SerialStreamingPort::configure(Poco::Util::AbstractConfiguration* config) {
+void SerialStreamingPort::configure(ConfigurationView* config) {
 	this->openhat->configureStreamingPort(config, this);
 	this->logVerbosity = this->openhat->getConfigLogVerbosity(config, opdi::LogVerbosity::UNKNOWN);
 
@@ -772,7 +772,7 @@ uint8_t LoggerPort::doWork(uint8_t canSend)  {
 	return OPDI_STATUS_OK;
 }
 
-void LoggerPort::configure(Poco::Util::AbstractConfiguration* config) {
+void LoggerPort::configure(ConfigurationView* config) {
 	this->openhat->configureStreamingPort(config, this);
 	this->logVerbosity = this->openhat->getConfigLogVerbosity(config, opdi::LogVerbosity::UNKNOWN);
 
@@ -835,11 +835,11 @@ FaderPort::FaderPort(AbstractOpenHAT* openhat, const char* id) : opdi::DigitalPo
 FaderPort::~FaderPort() {
 }
 
-void FaderPort::configure(Poco::Util::AbstractConfiguration* config) {
+void FaderPort::configure(ConfigurationView* config) {
 	this->logVerbosity = this->openhat->getConfigLogVerbosity(config, opdi::LogVerbosity::UNKNOWN);
 
-	std::string modeStr = config->getString("FadeMode", "");
-	if (modeStr == "Linear") 
+	std::string modeStr = openhat->getConfigString(config, this->ID(), "FadeMode", "", true);
+	if (modeStr == "Linear")
 		this->mode = LINEAR;
 	else if (modeStr == "Exponential")
 		this->mode = EXPONENTIAL;
@@ -1059,17 +1059,18 @@ SceneSelectPort::SceneSelectPort(AbstractOpenHAT* openhat, const char* id) : opd
 SceneSelectPort::~SceneSelectPort() {
 }
 
-void SceneSelectPort::configure(Poco::Util::AbstractConfiguration* config, Poco::Util::AbstractConfiguration* parentConfig) {
+void SceneSelectPort::configure(ConfigurationView* config, ConfigurationView* parentConfig) {
 	this->logVerbosity = this->openhat->getConfigLogVerbosity(config, opdi::LogVerbosity::UNKNOWN);
 
 	// remember configuration file path (scene files are always relative to the configuration file)
 	this->configFilePath = config->getString(OPENHAT_CONFIG_FILE_SETTING);
 
 	// the scene select port requires a prefix or section "<portID>.Scenes"
-	Poco::AutoPtr<Poco::Util::AbstractConfiguration> portItems = parentConfig->createView(this->ID() + ".Scenes");
+	Poco::AutoPtr<ConfigurationView> portItems = this->openhat->createConfigView(config, "Scenes");
+	config->addUsedKey("Scenes");
 
 	// get ordered list of items
-	Poco::Util::AbstractConfiguration::Keys itemKeys;
+	ConfigurationView::Keys itemKeys;
 	portItems->keys("", itemKeys);
 
 	typedef Poco::Tuple<int, std::string> Item;
@@ -1167,10 +1168,10 @@ uint8_t SceneSelectPort::doWork(uint8_t canSend)  {
 		}
 
 		// open the config file
-		OpenHATConfigurationFile config(sceneFile, parameters);
+		ConfigurationView config(this->openhat, new OpenHATConfigurationFile(sceneFile, parameters), "", false);
 
 		// go through sections of the scene file
-		Poco::Util::AbstractConfiguration::Keys sectionKeys;
+		ConfigurationView::Keys sectionKeys;
 		config.keys("", sectionKeys);
 
 		if (sectionKeys.size() == 0)
@@ -1187,7 +1188,7 @@ uint8_t SceneSelectPort::doWork(uint8_t canSend)  {
 				this->logDebug("Applying settings to port: " + *it);
 
 				// configure port according to settings 
-				Poco::AutoPtr<Poco::Util::AbstractConfiguration> portConfig = config.createView(*it);
+				Poco::AutoPtr<ConfigurationView> portConfig = this->openhat->createConfigView(&config, *it);
 
 				// configure only state - not the general setup
 				try {
@@ -1445,14 +1446,14 @@ FilePort::~FilePort() {
 		delete this->directoryWatcher;
 }
 
-void FilePort::configure(Poco::Util::AbstractConfiguration* config, Poco::Util::AbstractConfiguration* parentConfig) {
+void FilePort::configure(ConfigurationView* config, ConfigurationView* parentConfig) {
 	this->openhat->configureDigitalPort(config, this);
 
 	this->filePath = openhat->getConfigString(config, this->ID(), "File", "", true);
 
 	// read port node, create configuration view and setup the port according to the specified type
 	std::string portNode = openhat->getConfigString(config, this->ID(), "PortNode", "", true);
-	Poco::AutoPtr<Poco::Util::AbstractConfiguration> nodeConfig = parentConfig->createView(portNode);
+	Poco::AutoPtr<ConfigurationView> nodeConfig = this->openhat->createConfigView(parentConfig, portNode);
 	std::string portType = openhat->getConfigString(nodeConfig, this->ID(), "Type", "", true);
 	if (portType == "DigitalPort") {
 		this->portType = DIGITAL_PORT;
@@ -1857,7 +1858,7 @@ AggregatorPort::AggregatorPort(AbstractOpenHAT* openhat, const char* id) : opdi:
 AggregatorPort::~AggregatorPort() {
 }
 
-void AggregatorPort::configure(Poco::Util::AbstractConfiguration* config, Poco::Util::AbstractConfiguration* parentConfig) {
+void AggregatorPort::configure(ConfigurationView* config, ConfigurationView* parentConfig) {
 	this->openhat->configureDigitalPort(config, this);
 
 	this->sourcePortID = this->openhat->getConfigString(config, this->ID(), "SourcePort", "", true);
@@ -1883,10 +1884,11 @@ void AggregatorPort::configure(Poco::Util::AbstractConfiguration* config, Poco::
 	// enumerate calculations
 	this->logVerbose(std::string("Enumerating Aggregator calculations: ") + this->ID() + ".Calculations");
 
-	Poco::AutoPtr<Poco::Util::AbstractConfiguration> nodes = config->createView("Calculations");
+	Poco::AutoPtr<ConfigurationView> nodes = this->openhat->createConfigView(config, "Calculations");
+	config->addUsedKey("Calculations");
 
 	// get list of calculations
-	Poco::Util::AbstractConfiguration::Keys calculations;
+	ConfigurationView::Keys calculations;
 	nodes->keys("", calculations);
 
 	typedef Poco::Tuple<int, std::string> Item;
@@ -1925,7 +1927,7 @@ void AggregatorPort::configure(Poco::Util::AbstractConfiguration* config, Poco::
 		this->logVerbose("Setting up aggregator calculation for node: " + nodeName);
 
 		// get calculation section from the configuration
-		Poco::AutoPtr<Poco::Util::AbstractConfiguration> calculationConfig = parentConfig->createView(nodeName);
+		Poco::AutoPtr<ConfigurationView> calculationConfig = this->openhat->createConfigView(parentConfig, nodeName);
 
 		// get type (required)
 		std::string type = this->openhat->getConfigString(calculationConfig, nodeName, "Type", "", true);
@@ -2010,7 +2012,7 @@ CounterPort::CounterPort(AbstractOpenHAT* openhat, const char* id) : opdi::DialP
 	this->lastActionTime = 0;
 }
 
-void CounterPort::configure(Poco::Util::AbstractConfiguration* nodeConfig) {
+void CounterPort::configure(ConfigurationView* nodeConfig) {
 	this->openhat->configureDialPort(nodeConfig, this);
 
 	this->increment.initialize(this, "Increment", nodeConfig->getString("Increment", this->to_string(this->increment.value())));
@@ -2055,7 +2057,7 @@ TriggerPort::TriggerPort(AbstractOpenHAT* openhat, const char* id) : opdi::Digit
 	this->counterPort = nullptr;
 }
 
-void TriggerPort::configure(Poco::Util::AbstractConfiguration* config) {
+void TriggerPort::configure(ConfigurationView* config) {
 	this->openhat->configurePort(config, this, 0);
 	this->logVerbosity = this->openhat->getConfigLogVerbosity(config, opdi::LogVerbosity::UNKNOWN);
 
@@ -2345,7 +2347,7 @@ void InfluxDBPort::run() {
 	}
 }
 
-void InfluxDBPort::configure(Poco::Util::AbstractConfiguration * portConfig) {
+void InfluxDBPort::configure(ConfigurationView * portConfig) {
 	this->openhat->configureDigitalPort(portConfig, this);
 
 	this->host = openhat->getConfigString(portConfig, this->ID(), "Host", "", true);

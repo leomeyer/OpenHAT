@@ -76,7 +76,7 @@ public:
 
 	virtual ~LogicPort();
 
-	virtual void configure(Poco::Util::AbstractConfiguration* config);
+	virtual void configure(ConfigurationView* config);
 
 	virtual void setDirCaps(const char* dirCaps) override;
 
@@ -126,7 +126,7 @@ public:
 
 	virtual ~PulsePort();
 
-	virtual void configure(Poco::Util::AbstractConfiguration* config);
+	virtual void configure(ConfigurationView* config);
 
 	virtual void setDirCaps(const char* dirCaps) override;
 
@@ -159,7 +159,7 @@ public:
 
 	virtual ~SelectorPort();
 
-	virtual void configure(Poco::Util::AbstractConfiguration* config);
+	virtual void configure(ConfigurationView* config);
 
 	virtual void setDirCaps(const char* dirCaps) override;
 
@@ -193,7 +193,7 @@ public:
 
 	virtual ~ErrorDetectorPort();
 
-	virtual void configure(Poco::Util::AbstractConfiguration* config);
+	virtual void configure(ConfigurationView* config);
 
 	virtual void setDirCaps(const char* dirCaps) override;
 
@@ -231,7 +231,7 @@ public:
 
 	virtual ~SerialStreamingPort();
 
-	virtual void configure(Poco::Util::AbstractConfiguration* config);
+	virtual void configure(ConfigurationView* config);
 
 	virtual int write(char* bytes, size_t length) override;
 
@@ -276,7 +276,7 @@ public:
 
 	virtual ~LoggerPort();
 
-	virtual void configure(Poco::Util::AbstractConfiguration* config);
+	virtual void configure(ConfigurationView* config);
 
 	virtual void prepare() override;
 
@@ -347,7 +347,7 @@ public:
 
 	virtual ~FaderPort();
 
-	virtual void configure(Poco::Util::AbstractConfiguration* config);
+	virtual void configure(ConfigurationView* config);
 
 	virtual void setDirCaps(const char* dirCaps) override;
 
@@ -385,7 +385,7 @@ public:
 
 	virtual ~SceneSelectPort();
 
-	virtual void configure(Poco::Util::AbstractConfiguration* config, Poco::Util::AbstractConfiguration* parentConfig);
+	virtual void configure(ConfigurationView* config, ConfigurationView* parentConfig);
 
 	virtual void setPosition(uint16_t position, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 
@@ -473,7 +473,7 @@ public:
 
 	virtual ~FilePort();
 
-	virtual void configure(Poco::Util::AbstractConfiguration* config, Poco::Util::AbstractConfiguration* parentConfig);
+	virtual void configure(ConfigurationView* config, ConfigurationView* parentConfig);
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -568,7 +568,7 @@ public:
 
 	~AggregatorPort();
 
-	virtual void configure(Poco::Util::AbstractConfiguration* portConfig, Poco::Util::AbstractConfiguration* parentConfig);
+	virtual void configure(ConfigurationView* portConfig, ConfigurationView* parentConfig);
 
 	virtual void prepare() override;
 
@@ -596,7 +596,7 @@ public:
 
 	CounterPort(AbstractOpenHAT* openhat, const char* id);
 
-	virtual void configure(Poco::Util::AbstractConfiguration* nodeConfig);
+	virtual void configure(ConfigurationView* nodeConfig);
 
 	virtual void prepare() override;
 
@@ -663,7 +663,7 @@ protected:
 public:
 	TriggerPort(AbstractOpenHAT* openhat, const char* id);
 
-	virtual void configure(Poco::Util::AbstractConfiguration* portConfig);
+	virtual void configure(ConfigurationView* portConfig);
 
 	virtual void prepare() override;
 
@@ -712,7 +712,7 @@ protected:
 public:
 	InfluxDBPort(AbstractOpenHAT* openhat, const char* id);
 
-	virtual void configure(Poco::Util::AbstractConfiguration* portConfig);
+	virtual void configure(ConfigurationView* portConfig);
 
 	virtual void prepare() override;
 };

@@ -69,7 +69,7 @@ public:
 		this->nc = nullptr;
 	};
 
-	virtual void setupPlugin(openhat::AbstractOpenHAT* openHAT, const std::string& node, Poco::Util::AbstractConfiguration* nodeConfig) override;
+	virtual void setupPlugin(openhat::AbstractOpenHAT* openHAT, const std::string& node, openhat::ConfigurationView* nodeConfig) override;
 
 	void handleEvent(struct mg_connection* nc, int ev, void* p);
 
@@ -564,7 +564,7 @@ void WebServerPlugin::onPortRefreshed(const void* /*pSender*/, opdi::Port*& port
 	}
 }
 
-void WebServerPlugin::setupPlugin(openhat::AbstractOpenHAT* openHAT, const std::string& node, Poco::Util::AbstractConfiguration* config) {
+void WebServerPlugin::setupPlugin(openhat::AbstractOpenHAT* openHAT, const std::string& node, openhat::ConfigurationView* config) {
 	this->opdi = openHAT;
 	this->openhat = openHAT;
 	this->setID(node.c_str());
@@ -574,7 +574,10 @@ void WebServerPlugin::setupPlugin(openhat::AbstractOpenHAT* openHAT, const std::
 	response.stringify(sOut);
 	std::cout << sOut.str() << std::endl;
 	
-	Poco::AutoPtr<Poco::Util::AbstractConfiguration> nodeConfig = config->createView(node);
+	Poco::AutoPtr<openhat::ConfigurationView> nodeConfig = this->openhat->createConfigView(config, node);
+	// avoid check for unused plugin keys
+	nodeConfig->addUsedKey("Type");
+	nodeConfig->addUsedKey("Driver");
 
 	openHAT->configureDigitalPort(nodeConfig, this, false);
 	this->logVerbosity = openHAT->getConfigLogVerbosity(nodeConfig, opdi::LogVerbosity::UNKNOWN);

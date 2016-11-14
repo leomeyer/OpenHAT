@@ -725,7 +725,7 @@ void GertboardPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::
 	this->nodeID = node;
 	this->expanderInitialized = false;
 
-	Poco::Util::AbstractConfiguration* nodeConfig = config->createView(node);
+	Poco::Util::AbstractConfiguration* nodeConfig = this->openhat->createConfigViewconfig, node);
 
 	this->logVerbosity = openhat->getConfigLogVerbosity(nodeConfig, opdi::LogVerbosity::UNKNOWN);
 
@@ -794,7 +794,7 @@ void GertboardPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::
 	// enumerate keys of the plugin's nodes (in specified order)
 	this->openhat->logVerbose(node + ": Enumerating Gertboard nodes: " + node + ".Nodes");
 
-	Poco::Util::AbstractConfiguration* nodes = config->createView(node + ".Nodes");
+	Poco::Util::AbstractConfiguration* nodes = this->openhat->createConfigViewconfig, node + ".Nodes");
 
 	// get ordered list of ports
 	Poco::Util::AbstractConfiguration::Keys portKeys;
@@ -835,7 +835,7 @@ void GertboardPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::
 		this->openhat->logVerbose(node + ": Setting up Gertboard port(s) for node: " + nodeName);
 
 		// get port section from the configuration
-		Poco::Util::AbstractConfiguration* portConfig = config->createView(nodeName);
+		Poco::Util::AbstractConfiguration* portConfig = this->openhat->createConfigViewconfig, nodeName);
 
 		// get port type (required)
 		std::string portType = openhat->getConfigString(portConfig, nodeName, "Type", "", true);

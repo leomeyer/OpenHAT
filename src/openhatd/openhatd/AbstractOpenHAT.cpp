@@ -213,13 +213,14 @@ std::string AbstractOpenHAT::getOPDIResult(uint8_t code) {
 	return it->second;
 }
 
-Poco::Util::AbstractConfiguration* AbstractOpenHAT::readConfiguration(const std::string& filename, const std::map<std::string, std::string>& parameters) {
+ConfigurationView* AbstractOpenHAT::readConfiguration(const std::string& filename, const std::map<std::string, std::string>& parameters) {
 	// will throw an exception if something goes wrong
-	Poco::Util::AbstractConfiguration* result = new OpenHATConfigurationFile(filename, parameters);
+	OpenHATConfigurationFile* fileConfig = new OpenHATConfigurationFile(filename, parameters);
 	// remember config file location
 	Poco::Path filePath(filename);
-	result->setString(OPENHAT_CONFIG_FILE_SETTING, filePath.absolute().toString());
+	fileConfig->setString(OPENHAT_CONFIG_FILE_SETTING, filePath.absolute().toString());
 
+	ConfigurationView* result = new ConfigurationView(this, fileConfig, "", false);
 	return result;
 }
 
@@ -276,7 +277,7 @@ void AbstractOpenHAT::logWarn(const std::string& message) {
 
 int AbstractOpenHAT::startup(const std::vector<std::string>& args, const std::map<std::string, std::string>& environment) {
 	this->environment = environment;
-	Poco::AutoPtr<Poco::Util::AbstractConfiguration> configuration = nullptr;
+	Poco::AutoPtr<ConfigurationView> configuration = nullptr;
 
 	bool testMode = false;
 
@@ -374,8 +375,8 @@ int AbstractOpenHAT::startup(const std::vector<std::string>& args, const std::ma
 	}
 
 	// create view to "General" section
-	Poco::AutoPtr<Poco::Util::AbstractConfiguration> general = configuration->createView("General");
-	this->setGeneralConfiguration(general);
+	Poco::AutoPtr<ConfigurationView> general = this->createConfigView(configuration, "General");
+	this->setGeneralConfiguration(general, configuration);
 
 	this->setupRoot(configuration);
 
@@ -393,7 +394,7 @@ int AbstractOpenHAT::startup(const std::vector<std::string>& args, const std::ma
 	}
 
 	// create view to "Connection" section
-	Poco::AutoPtr<Poco::Util::AbstractConfiguration> connection = configuration->createView("Connection");
+	Poco::AutoPtr<ConfigurationView> connection = this->createConfigView(configuration, "Connection");
 
 	int result = this->setupConnection(connection, testMode);
 
@@ -415,7 +416,7 @@ void AbstractOpenHAT::lockResource(const std::string& resourceID, const std::str
 	this->lockedResources[resourceID] = lockerID;
 }
 
-opdi::LogVerbosity AbstractOpenHAT::getConfigLogVerbosity(Poco::Util::AbstractConfiguration* config, opdi::LogVerbosity defaultVerbosity) {
+opdi::LogVerbosity AbstractOpenHAT::getConfigLogVerbosity(ConfigurationView* config, opdi::LogVerbosity defaultVerbosity) {
 	std::string logVerbosityStr = config->getString("LogVerbosity", "");
 
 	if ((logVerbosityStr != "")) {
@@ -439,7 +440,11 @@ opdi::LogVerbosity AbstractOpenHAT::getConfigLogVerbosity(Poco::Util::AbstractCo
 	return defaultVerbosity;
 }
 
-Poco::Util::AbstractConfiguration* AbstractOpenHAT::getConfigForState(Poco::Util::AbstractConfiguration* baseConfig, const std::string& viewName) {
+Poco::AutoPtr<ConfigurationView> AbstractOpenHAT::createConfigView(Poco::Util::AbstractConfiguration* baseConfig, const std::string& viewName) {
+	return new ConfigurationView(this, baseConfig->createView(viewName), viewName);
+}
+
+Poco::Util::AbstractConfiguration* AbstractOpenHAT::getConfigForState(ConfigurationView* baseConfig, const std::string& viewName) {
 	// replace configuration with a layered configuration that uses the persistent
 	// configuration with higher priority
 	// thus, port states will be pulled from the persistent configuration if they are present
@@ -450,7 +455,7 @@ Poco::Util::AbstractConfiguration* AbstractOpenHAT::getConfigForState(Poco::Util
 		if (viewName == "")
 			newConfig->add(this->persistentConfig, 0);
 		else {
-			Poco::AutoPtr<Poco::Util::AbstractConfiguration> configView = this->persistentConfig->createView(viewName);
+			Poco::AutoPtr<ConfigurationView> configView = this->createConfigView(persistentConfig, viewName);
 			newConfig->add(configView);
 		}
 	}
@@ -460,7 +465,14 @@ Poco::Util::AbstractConfiguration* AbstractOpenHAT::getConfigForState(Poco::Util
 	return newConfig;
 }
 
-void AbstractOpenHAT::setGeneralConfiguration(Poco::Util::AbstractConfiguration* general) {
+void AbstractOpenHAT::unusedConfigKeysDetected(const std::string & viewName, const std::vector<std::string>& unusedKeys) {
+	auto ite = unusedKeys.cend();
+	for (auto it = unusedKeys.cbegin(); it != ite; ++it) {
+		this->logWarning("Unused configuration parameter in node " + viewName + ": " + *it);
+	}
+}
+
+void AbstractOpenHAT::setGeneralConfiguration(ConfigurationView* general, ConfigurationView* mainConfig) {
 	this->logVerbose("Setting up general configuration");
 
 	// set log verbosity only if it's not already set
@@ -512,14 +524,14 @@ void AbstractOpenHAT::setGeneralConfiguration(Poco::Util::AbstractConfiguration*
 	// encryption defined?
 	std::string encryptionNode = general->getString("Encryption", "");
 	if (encryptionNode != "") {
-		Poco::AutoPtr<Poco::Util::AbstractConfiguration> encryptionConfig = general->createView(encryptionNode);
+		Poco::AutoPtr<ConfigurationView> encryptionConfig = this->createConfigView(mainConfig, encryptionNode);
 		this->configureEncryption(encryptionConfig);
 	}
 
 	// authentication defined?
 	std::string authenticationNode = general->getString("Authentication", "");
 	if (authenticationNode != "") {
-		Poco::AutoPtr<Poco::Util::AbstractConfiguration> authenticationConfig = general->createView(authenticationNode);
+		Poco::AutoPtr<ConfigurationView> authenticationConfig = this->createConfigView(mainConfig, authenticationNode);
 		this->configureAuthentication(authenticationConfig);
 	}
 
@@ -527,7 +539,7 @@ void AbstractOpenHAT::setGeneralConfiguration(Poco::Util::AbstractConfiguration*
 	this->setup(slaveName.c_str(), idleTimeout);
 }
 
-void AbstractOpenHAT::configureEncryption(Poco::Util::AbstractConfiguration* config) {
+void AbstractOpenHAT::configureEncryption(ConfigurationView* config) {
 	this->logVerbose("Configuring encryption");
 
 	std::string type = config->getString("Type", "");
@@ -542,7 +554,7 @@ void AbstractOpenHAT::configureEncryption(Poco::Util::AbstractConfiguration* con
 		throw Poco::DataException("Encryption type not supported, expected 'AES': " + type);
 }
 
-void AbstractOpenHAT::configureAuthentication(Poco::Util::AbstractConfiguration* config) {
+void AbstractOpenHAT::configureAuthentication(ConfigurationView* config) {
 	this->logVerbose("Configuring authentication");
 
 	std::string type = config->getString("Type", "");
@@ -561,7 +573,7 @@ void AbstractOpenHAT::configureAuthentication(Poco::Util::AbstractConfiguration*
 }
 
 /** Reads common properties from the configuration and configures the port group. */
-void AbstractOpenHAT::configureGroup(Poco::Util::AbstractConfiguration* groupConfig, opdi::PortGroup* group, int defaultFlags) {
+void AbstractOpenHAT::configureGroup(ConfigurationView* groupConfig, opdi::PortGroup* group, int defaultFlags) {
 	// the default label is the port ID
 	std::string portLabel = this->getConfigString(groupConfig, group->getID(), "Label", group->getID(), false);
 	group->setLabel(portLabel.c_str());
@@ -586,7 +598,7 @@ void AbstractOpenHAT::configureGroup(Poco::Util::AbstractConfiguration* groupCon
 	}
 }
 
-void AbstractOpenHAT::setupGroup(Poco::Util::AbstractConfiguration* groupConfig, const std::string& group) {
+void AbstractOpenHAT::setupGroup(ConfigurationView* groupConfig, const std::string& group) {
 	this->logDebug("Setting up group: " + group);
 
 	opdi::PortGroup* portGroup = new opdi::PortGroup(group.c_str());
@@ -595,7 +607,7 @@ void AbstractOpenHAT::setupGroup(Poco::Util::AbstractConfiguration* groupConfig,
 	this->addPortGroup(portGroup);
 }
 
-std::string AbstractOpenHAT::resolveRelativePath(Poco::Util::AbstractConfiguration* config, const std::string& source, const std::string& path, const std::string defaultValue) {
+std::string AbstractOpenHAT::resolveRelativePath(ConfigurationView* config, const std::string& source, const std::string& path, const std::string defaultValue) {
 	// determine path type
 	std::string relativeTo = this->getConfigString(config, source, "RelativeTo", defaultValue, false);
 
@@ -635,7 +647,7 @@ std::string AbstractOpenHAT::resolveRelativePath(Poco::Util::AbstractConfigurati
     throw Poco::DataException("Unknown RelativeTo property specified; expected 'CWD' or 'Config'", relativeTo);
 }
 
-void AbstractOpenHAT::setupInclude(Poco::Util::AbstractConfiguration* config, Poco::Util::AbstractConfiguration* parentConfig, const std::string& node) {
+void AbstractOpenHAT::setupInclude(ConfigurationView* config, ConfigurationView* parentConfig, const std::string& node) {
 	this->logVerbose("Setting up include: " + node);
 
 	// filename must be present; include files are by default relative to the current configuration file
@@ -648,10 +660,10 @@ void AbstractOpenHAT::setupInclude(Poco::Util::AbstractConfiguration* config, Po
 	// the include node requires a section "<node>.Parameters"
 	this->logVerbose(node + ": Evaluating include parameters section: " + node + ".Parameters");
 
-	Poco::AutoPtr<Poco::Util::AbstractConfiguration> paramConfig = parentConfig->createView(node + ".Parameters");
+	Poco::AutoPtr<ConfigurationView> paramConfig = this->createConfigView(parentConfig, node + ".Parameters");
 
 	// get list of parameters
-	Poco::Util::AbstractConfiguration::Keys paramKeys;
+	ConfigurationView::Keys paramKeys;
 	paramConfig->keys("", paramKeys);
 
 	for (auto it = paramKeys.begin(), ite = paramKeys.end(); it != ite; ++it) {
@@ -675,7 +687,7 @@ void AbstractOpenHAT::setupInclude(Poco::Util::AbstractConfiguration* config, Po
 			++it;
 		}
 	}
-	Poco::Util::AbstractConfiguration* includeConfig = this->readConfiguration(filename, parameters);
+	ConfigurationView* includeConfig = this->readConfiguration(filename, parameters);
 
 	// setup the root node of the included configuration
 	this->setupRoot(includeConfig);
@@ -688,7 +700,7 @@ void AbstractOpenHAT::setupInclude(Poco::Util::AbstractConfiguration* config, Po
 	}
 }
 
-void AbstractOpenHAT::configurePort(Poco::Util::AbstractConfiguration* portConfig, opdi::Port* port, int defaultFlags) {
+void AbstractOpenHAT::configurePort(ConfigurationView* portConfig, opdi::Port* port, int defaultFlags) {
 	// ports can be hidden if allowed
 	if (this->allowHiddenPorts)
 		port->setHidden(portConfig->getBool("Hidden", false));
@@ -768,7 +780,7 @@ void AbstractOpenHAT::configurePort(Poco::Util::AbstractConfiguration* portConfi
 	port->setLogVerbosity(this->getConfigLogVerbosity(portConfig, this->logVerbosity));
 }
 
-void AbstractOpenHAT::configureDigitalPort(Poco::Util::AbstractConfiguration* portConfig, opdi::DigitalPort* port, bool stateOnly) {
+void AbstractOpenHAT::configureDigitalPort(ConfigurationView* portConfig, opdi::DigitalPort* port, bool stateOnly) {
 	if (!stateOnly)
 		this->configurePort(portConfig, port, 0);
 
@@ -795,7 +807,7 @@ void AbstractOpenHAT::configureDigitalPort(Poco::Util::AbstractConfiguration* po
 		throw Poco::DataException("Unknown Line specified; expected 'Low' or 'High'", portLine);
 }
 
-void AbstractOpenHAT::setupEmulatedDigitalPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port) {
+void AbstractOpenHAT::setupEmulatedDigitalPort(ConfigurationView* portConfig, const std::string& port) {
 	this->logDebug("Setting up emulated digital port: " + port);
 
 	opdi::DigitalPort* digPort = new opdi::DigitalPort(port.c_str());
@@ -804,7 +816,7 @@ void AbstractOpenHAT::setupEmulatedDigitalPort(Poco::Util::AbstractConfiguration
 	this->addPort(digPort);
 }
 
-void AbstractOpenHAT::configureAnalogPort(Poco::Util::AbstractConfiguration* portConfig, opdi::AnalogPort* port, bool stateOnly) {
+void AbstractOpenHAT::configureAnalogPort(ConfigurationView* portConfig, opdi::AnalogPort* port, bool stateOnly) {
 	if (!stateOnly)
 		this->configurePort(portConfig, port,
 			// default flags: assume everything is supported
@@ -840,7 +852,7 @@ void AbstractOpenHAT::configureAnalogPort(Poco::Util::AbstractConfiguration* por
 	}
 }
 
-void AbstractOpenHAT::setupEmulatedAnalogPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port) {
+void AbstractOpenHAT::setupEmulatedAnalogPort(ConfigurationView* portConfig, const std::string& port) {
 	this->logDebug("Setting up emulated analog port: " + port);
 
 	opdi::AnalogPort* anaPort = new opdi::AnalogPort(port.c_str());
@@ -849,15 +861,16 @@ void AbstractOpenHAT::setupEmulatedAnalogPort(Poco::Util::AbstractConfiguration*
 	this->addPort(anaPort);
 }
 
-void AbstractOpenHAT::configureSelectPort(Poco::Util::AbstractConfiguration* portConfig, Poco::Util::AbstractConfiguration* parentConfig, opdi::SelectPort* port, bool stateOnly) {
+void AbstractOpenHAT::configureSelectPort(ConfigurationView* portConfig, ConfigurationView* parentConfig, opdi::SelectPort* port, bool stateOnly) {
 	if (!stateOnly) {
 		this->configurePort(portConfig, port, 0);
 
 		// the select port requires a prefix or section "<portID>.Items"
-		Poco::AutoPtr<Poco::Util::AbstractConfiguration> portItems = parentConfig->createView(std::string(port->ID()) + ".Items");
+		Poco::AutoPtr<ConfigurationView> portItems = this->createConfigView(portConfig, "Items");
+		portConfig->addUsedKey("Items");
 
 		// get ordered list of items
-		Poco::Util::AbstractConfiguration::Keys itemKeys;
+		ConfigurationView::Keys itemKeys;
 		portItems->keys("", itemKeys);
 
 		typedef Poco::Tuple<int, std::string> Item;
@@ -910,7 +923,7 @@ void AbstractOpenHAT::configureSelectPort(Poco::Util::AbstractConfiguration* por
 	}
 }
 
-void AbstractOpenHAT::setupEmulatedSelectPort(Poco::Util::AbstractConfiguration* portConfig, Poco::Util::AbstractConfiguration* parentConfig, const std::string& port) {
+void AbstractOpenHAT::setupEmulatedSelectPort(ConfigurationView* portConfig, ConfigurationView* parentConfig, const std::string& port) {
 	this->logDebug("Setting up emulated select port: " + port);
 
 	opdi::SelectPort* selPort = new opdi::SelectPort(port.c_str());
@@ -919,7 +932,7 @@ void AbstractOpenHAT::setupEmulatedSelectPort(Poco::Util::AbstractConfiguration*
 	this->addPort(selPort);
 }
 
-void AbstractOpenHAT::configureDialPort(Poco::Util::AbstractConfiguration* portConfig, opdi::DialPort* port, bool stateOnly) {
+void AbstractOpenHAT::configureDialPort(ConfigurationView* portConfig, opdi::DialPort* port, bool stateOnly) {
 	if (!stateOnly) {
 		this->configurePort(portConfig, port, 0);
 
@@ -979,7 +992,7 @@ void AbstractOpenHAT::configureDialPort(Poco::Util::AbstractConfiguration* portC
 		port->setPosition(position);
 }
 
-void AbstractOpenHAT::setupEmulatedDialPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port) {
+void AbstractOpenHAT::setupEmulatedDialPort(ConfigurationView* portConfig, const std::string& port) {
 	this->logDebug("Setting up emulated dial port: " + port);
 
 	opdi::DialPort* dialPort = new opdi::DialPort(port.c_str());
@@ -988,11 +1001,11 @@ void AbstractOpenHAT::setupEmulatedDialPort(Poco::Util::AbstractConfiguration* p
 	this->addPort(dialPort);
 }
 
-void AbstractOpenHAT::configureStreamingPort(Poco::Util::AbstractConfiguration* portConfig, opdi::StreamingPort* port) {
+void AbstractOpenHAT::configureStreamingPort(ConfigurationView* portConfig, opdi::StreamingPort* port) {
 	this->configurePort(portConfig, port, 0);
 }
 
-void AbstractOpenHAT::setupSerialStreamingPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port) {
+void AbstractOpenHAT::setupSerialStreamingPort(ConfigurationView* portConfig, const std::string& port) {
 	this->logDebug("Setting up serial streaming port: " + port);
 
 	SerialStreamingPort* ssPort = new SerialStreamingPort(this, port.c_str());
@@ -1003,7 +1016,7 @@ void AbstractOpenHAT::setupSerialStreamingPort(Poco::Util::AbstractConfiguration
 
 
 template <typename PortType>
-void AbstractOpenHAT::setupPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& portID) {
+void AbstractOpenHAT::setupPort(ConfigurationView* portConfig, const std::string& portID) {
 	this->logDebug("Setting up port: " + portID + " of type: " + typeid(PortType).name());
 
 	PortType* port = new PortType(this, portID.c_str());
@@ -1013,7 +1026,7 @@ void AbstractOpenHAT::setupPort(Poco::Util::AbstractConfiguration* portConfig, c
 }
 
 template <typename PortType>
-void AbstractOpenHAT::setupPortEx(Poco::Util::AbstractConfiguration* portConfig, Poco::Util::AbstractConfiguration* parentConfig, const std::string& portID) {
+void AbstractOpenHAT::setupPortEx(ConfigurationView* portConfig, ConfigurationView* parentConfig, const std::string& portID) {
 	this->logDebug("Setting up port: " + portID + " of type: " + typeid(PortType).name());
 
 	PortType* port = new PortType(this, portID.c_str());
@@ -1022,7 +1035,7 @@ void AbstractOpenHAT::setupPortEx(Poco::Util::AbstractConfiguration* portConfig,
 	this->addPort(port);
 }
 
-void AbstractOpenHAT::setupNode(Poco::Util::AbstractConfiguration* config, const std::string& node) {
+void AbstractOpenHAT::setupNode(ConfigurationView* config, const std::string& node) {
 	this->logVerbose("Setting up node: " + node);
 
 	// emit warnings if node IDs deviate from best practices
@@ -1039,7 +1052,7 @@ void AbstractOpenHAT::setupNode(Poco::Util::AbstractConfiguration* config, const
 	}
 
 	// create node section view
-	Poco::AutoPtr<Poco::Util::AbstractConfiguration> nodeConfig = config->createView(node);
+	Poco::AutoPtr<ConfigurationView> nodeConfig = this->createConfigView(config, node);
 
 	std::string nodeType = this->getConfigString(nodeConfig, node, "Type", "", true);
 	if (nodeType == "Plugin") {
@@ -1055,6 +1068,10 @@ void AbstractOpenHAT::setupNode(Poco::Util::AbstractConfiguration* config, const
 
 		// add plugin to internal list (avoids memory leaks)
 		this->pluginList.push_back(plugin);
+
+		// plugins check their own settings usage, so the nodeConfig does not need to
+		// check for unused keys
+		nodeConfig->setCheckUnused(false);
 
 		// init the plugin
 		plugin->setupPlugin(this, node, config);
@@ -1134,12 +1151,12 @@ void AbstractOpenHAT::setupNode(Poco::Util::AbstractConfiguration* config, const
 		throw Poco::DataException("Invalid configuration: Unknown node type: " + nodeType);
 }
 
-void AbstractOpenHAT::setupRoot(Poco::Util::AbstractConfiguration* config) {
+void AbstractOpenHAT::setupRoot(ConfigurationView* config) {
 	// enumerate section "Root"
-	Poco::AutoPtr<Poco::Util::AbstractConfiguration> nodes = config->createView("Root");
+	Poco::AutoPtr<ConfigurationView> nodes = this->createConfigView(config, "Root");
 	this->logVerbose("Setting up root nodes");
 
-	Poco::Util::AbstractConfiguration::Keys nodeKeys;
+	ConfigurationView::Keys nodeKeys;
 	nodes->keys("", nodeKeys);
 
 	typedef Poco::Tuple<int, std::string> Node;
@@ -1185,7 +1202,7 @@ void AbstractOpenHAT::setupRoot(Poco::Util::AbstractConfiguration* config) {
 	// TODO check group hierarchy
 }
 
-int AbstractOpenHAT::setupConnection(Poco::Util::AbstractConfiguration* config, bool testMode) {
+int AbstractOpenHAT::setupConnection(ConfigurationView* config, bool testMode) {
 	this->logVerbose(std::string("Setting up connection for slave: ") + this->slaveName);
 	std::string connectionType = this->getConfigString(config, "Connection", "Type", "", true);
 	this->connectionLogVerbosity = this->getConfigLogVerbosity(config, this->logVerbosity);

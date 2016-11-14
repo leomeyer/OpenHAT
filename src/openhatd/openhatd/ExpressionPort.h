@@ -112,7 +112,7 @@ public:
 
 	virtual ~ExpressionPort();
 
-	virtual void configure(Poco::Util::AbstractConfiguration* config);
+	virtual void configure(ConfigurationView* config);
 
 	virtual void setDirCaps(const char* dirCaps) override;
 

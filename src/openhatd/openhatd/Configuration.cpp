@@ -1,8 +1,13 @@
 #include "Configuration.h"
+#include "AbstractOpenHAT.h"
 
 #include <sstream>
 
 #include "Poco/FileStream.h"
+
+namespace openhat {
+
+// OpenHATConfigurationFile
 
 bool OpenHATConfigurationFile::getRaw(const std::string & key, std::string & value) const {
 	bool result = Poco::Util::IniFileConfiguration::getRaw(key, value);
@@ -22,7 +27,7 @@ OpenHATConfigurationFile::OpenHATConfigurationFile(const std::string& path, std:
 
 	if (!istr.good())
 		throw Poco::OpenFileException(path);
-	
+
 	std::string content;
 	std::string line;
 	while (std::getline(istr, line)) {
@@ -45,4 +50,57 @@ OpenHATConfigurationFile::OpenHATConfigurationFile(const std::string& path, std:
 	std::stringstream newContent;
 	newContent.str(content);
 	this->load(newContent);
+}
+
+// ConfigurationView
+
+ConfigurationView::ConfigurationView(AbstractOpenHAT* openhat, Poco::AutoPtr<Poco::Util::AbstractConfiguration> config, const std::string& section, bool checkUnused) {
+	this->openhat = openhat;
+	this->section = section;
+	this->checkUnused = checkUnused;
+	this->innerConfig = config;
+	this->add(this->innerConfig);
+}
+
+ConfigurationView::~ConfigurationView()
+{
+	if (!checkUnused)
+		return;
+
+	std::vector<std::string> unusedKeys;
+	this->getUnusedKeys(unusedKeys);
+
+	if (unusedKeys.size() > 0)
+		this->openhat->unusedConfigKeysDetected(this->section, unusedKeys);
+}
+
+void ConfigurationView::addUsedKey(const std::string & key) {
+	this->usedKeys.insert(key);
+}
+
+bool ConfigurationView::getRaw(const std::string& key, std::string& value) const
+{
+	Poco::Util::LayeredConfiguration::getRaw(key, value);
+	if (this->innerConfig->has(key)) {
+		this->usedKeys.insert(key);
+		return true;
+	}
+	return false;
+}
+
+void ConfigurationView::getUnusedKeys(std::vector<std::string>& unusedKeys) {
+	unusedKeys.clear();
+	std::vector<std::string> keys;
+	this->innerConfig->keys(keys);
+	// add all keys except used ones
+	auto ite = keys.cend();
+	for (auto it = keys.cbegin(); it != ite; ++it)
+		if (this->usedKeys.find(*it) == this->usedKeys.end())
+			unusedKeys.push_back(*it);
+}
+
+void ConfigurationView::setCheckUnused(bool check) {
+	this->checkUnused = check;
+}
+
 }

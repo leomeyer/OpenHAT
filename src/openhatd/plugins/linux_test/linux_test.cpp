@@ -44,7 +44,7 @@ public:
 void LinuxTestOpenHATPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, Poco::Util::AbstractConfiguration* config) {
 	this->openhat = openhat;
 
-	Poco::Util::AbstractConfiguration* nodeConfig = config->createView(node);
+	Poco::Util::AbstractConfiguration* nodeConfig = this->openhat->createConfigViewconfig, node);
 
 	// get port type
 	std::string portType = nodeConfig->getString("Type", "");

@@ -80,7 +80,7 @@ public:
 
 	virtual std::string getDataElement(void);
 
-	virtual void configure(Poco::Util::AbstractConfiguration* nodeConfig, opdi::LogVerbosity defaultLogVerbosity, int defaultExpiry);
+	virtual void configure(openhat::ConfigurationView* nodeConfig, opdi::LogVerbosity defaultLogVerbosity, int defaultExpiry);
 
 	virtual void extract(const std::string& rawValue);
 
@@ -106,7 +106,7 @@ std::string WeatherGaugePort::getDataElement(void){
 	return this->dataElement;
 }
 
-void WeatherGaugePort::configure(Poco::Util::AbstractConfiguration* nodeConfig, opdi::LogVerbosity defaultLogVerbosity, int defaultExpiry) {
+void WeatherGaugePort::configure(openhat::ConfigurationView* nodeConfig, opdi::LogVerbosity defaultLogVerbosity, int defaultExpiry) {
 	openhat->configureDialPort(nodeConfig, this);
 	this->logVerbosity = openhat->getConfigLogVerbosity(nodeConfig, defaultLogVerbosity);
 
@@ -264,17 +264,17 @@ public:
 	// weather data collection thread method
 	virtual void run(void);
 
-	virtual void setupPlugin(openhat::AbstractOpenHAT* openHAT, const std::string& node, Poco::Util::AbstractConfiguration* config) override;
+	virtual void setupPlugin(openhat::AbstractOpenHAT* openHAT, const std::string& node, openhat::ConfigurationView* config) override;
 };
 
-void WeatherPlugin::setupPlugin(openhat::AbstractOpenHAT* openHAT, const std::string& node, Poco::Util::AbstractConfiguration* config) {
+void WeatherPlugin::setupPlugin(openhat::AbstractOpenHAT* openHAT, const std::string& node, openhat::ConfigurationView* config) {
 	this->openhat = openHAT;
 	this->nodeID = node;
 	this->timeoutSeconds = 10;
 	this->refreshTime = 30;	// default: 30 seconds
 	this->dataValiditySeconds = 120;	// default: two minutes (JSON skin time resolution does not include seconds, allow extra time)
 
-	Poco::AutoPtr<Poco::Util::AbstractConfiguration> nodeConfig = config->createView(node);
+	Poco::AutoPtr<openhat::ConfigurationView> nodeConfig = this->openhat->createConfigView(config, node);
 
 	this->logVerbosity = openhat->getConfigLogVerbosity(nodeConfig, opdi::LogVerbosity::UNKNOWN);
 
@@ -307,10 +307,10 @@ void WeatherPlugin::setupPlugin(openhat::AbstractOpenHAT* openHAT, const std::st
 	// enumerate keys of the plugin's nodes (in specified order)
 	this->openhat->logVerbose(node + ": Enumerating Weather nodes: " + node + ".Nodes", this->logVerbosity);
 
-	Poco::AutoPtr<Poco::Util::AbstractConfiguration> nodes = config->createView(node + ".Nodes");
+	Poco::AutoPtr<openhat::ConfigurationView> nodes = this->openhat->createConfigView(config, node + ".Nodes");
 
 	// get ordered list of ports
-	Poco::Util::AbstractConfiguration::Keys portKeys;
+	openhat::ConfigurationView::Keys portKeys;
 	nodes->keys("", portKeys);
 
 	typedef Poco::Tuple<int, std::string> Item;
@@ -351,7 +351,7 @@ void WeatherPlugin::setupPlugin(openhat::AbstractOpenHAT* openHAT, const std::st
 		this->openhat->logVerbose("Setting up Weather port(s) for node: " + nodeName, this->logVerbosity);
 
 		// get port section from the configuration
-		Poco::Util::AbstractConfiguration* portConfig = config->createView(nodeName);
+		Poco::AutoPtr<openhat::ConfigurationView> portConfig = this->openhat->createConfigView(config, nodeName);
 
 		// get port type (required)
 		std::string portType = openHAT->getConfigString(portConfig, nodeName, "Type", "", true);

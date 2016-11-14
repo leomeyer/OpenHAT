@@ -32,7 +32,7 @@ protected:
 	openhat::AbstractOpenHAT* openhat;
 
 public:
-	virtual void setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const std::string& node, Poco::Util::AbstractConfiguration* config) override;
+	virtual void setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const std::string& node, openhat::ConfigurationView* config) override;
 
 	virtual void masterConnected(void) override;
 	virtual void masterDisconnected(void) override;
@@ -41,10 +41,10 @@ public:
 }	// end anonymous namespace
 
 
-void WindowsTestPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const std::string& node, Poco::Util::AbstractConfiguration* config) {
+void WindowsTestPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const std::string& node, openhat::ConfigurationView* config) {
 	this->openhat = abstractOpenHAT;
 
-	Poco::AutoPtr<Poco::Util::AbstractConfiguration> nodeConfig = config->createView(node);
+	Poco::AutoPtr<openhat::ConfigurationView> nodeConfig = this->openhat->createConfigView(config, node);
 
 	// get port type
 	std::string portType = nodeConfig->getString("Type", "");

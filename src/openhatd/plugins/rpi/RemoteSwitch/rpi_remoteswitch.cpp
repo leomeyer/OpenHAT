@@ -96,7 +96,7 @@ void RemoteSwitchPlugin::setupPlugin(AbstractOpenHAT* openhat, std::string node,
 	this->openhat = openhat;
 	this->nodeID = node;
 
-	Poco::Util::AbstractConfiguration* nodeConfig = config->createView(node);
+	Poco::Util::AbstractConfiguration* nodeConfig = this->openhat->createConfigViewconfig, node);
 
 	int pin = nodeConfig->getInt("Pin", -1);
 	if (pin < 0)
@@ -118,7 +118,7 @@ void RemoteSwitchPlugin::setupPlugin(AbstractOpenHAT* openhat, std::string node,
 	// enumerate keys of the plugin's nodes (in specified order)
 	this->openhat->logVerbose("Enumerating RemoteSwitch nodes: " + node + ".Nodes");
 
-	Poco::Util::AbstractConfiguration* nodes = config->createView(node + ".Nodes");
+	Poco::Util::AbstractConfiguration* nodes = this->openhat->createConfigViewconfig, node + ".Nodes");
 
 	// store main node's group (will become the default of ports)
 	std::string group = nodeConfig->getString("Group", "");
@@ -162,7 +162,7 @@ void RemoteSwitchPlugin::setupPlugin(AbstractOpenHAT* openhat, std::string node,
 		this->openhat->logVerbose("Setting up RemoteSwitchPlugin port for node: " + nodeName);
 
 		// get port section from the configuration
-		Poco::Util::AbstractConfiguration* portConfig = config->createView(nodeName);
+		Poco::Util::AbstractConfiguration* portConfig = this->openhat->createConfigViewconfig, nodeName);
 
 		// get port type (required)
 		std::string portType = openhat->getConfigString(portConfig, "Type", "", true);

@@ -27,6 +27,9 @@
     <ClCompile Include="..\..\..\..\libraries\Mongoose\mongoose.c">
       <Filter>Quelldateien</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\openhatd\Configuration.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="../../../../opdi_core/code/c/common\cppwrapper\OPDI_Ports.h">

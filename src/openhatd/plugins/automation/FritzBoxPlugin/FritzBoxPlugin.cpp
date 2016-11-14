@@ -131,7 +131,7 @@ public:
 
 	virtual void run(void);
 
-	virtual void setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const std::string& node, Poco::Util::AbstractConfiguration* nodeConfig) override;
+	virtual void setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const std::string& node, openhat::ConfigurationView* nodeConfig) override;
 };
 
 ////////////////////////////////////////////////////////////////////////
@@ -152,7 +152,7 @@ protected:
 public:
 	FritzDECT200Switch(FritzBoxPlugin* plugin, const char* id);
 
-	virtual void configure(Poco::Util::AbstractConfiguration* portConfig);
+	virtual void configure(openhat::ConfigurationView* portConfig);
 
 	virtual void query() override;
 
@@ -175,7 +175,7 @@ protected:
 public:
 	FritzDECT200Power(FritzBoxPlugin* plugin, const char* id);
 
-	virtual void configure(Poco::Util::AbstractConfiguration* portConfig);
+	virtual void configure(openhat::ConfigurationView* portConfig);
 
 	virtual void query() override;
 
@@ -199,7 +199,7 @@ protected:
 public:
 	FritzDECT200Energy(FritzBoxPlugin* plugin, const char* id);
 
-	virtual void configure(Poco::Util::AbstractConfiguration* portConfig);
+	virtual void configure(openhat::ConfigurationView* portConfig);
 
 	virtual void query() override;
 
@@ -220,7 +220,7 @@ FritzDECT200Switch::FritzDECT200Switch(FritzBoxPlugin* plugin, const char* id) :
 	this->setIcon("powersocket");
 }
 
-void FritzDECT200Switch::configure(Poco::Util::AbstractConfiguration* portConfig) {
+void FritzDECT200Switch::configure(openhat::ConfigurationView* portConfig) {
 	this->plugin->openhat->configureDigitalPort(portConfig, this);
 
 	// get actor identification number (required)
@@ -281,7 +281,7 @@ FritzDECT200Power::FritzDECT200Power(FritzBoxPlugin* plugin, const char* id) : o
 	this->setReadonly(true);
 }
 
-void FritzDECT200Power::configure(Poco::Util::AbstractConfiguration* portConfig) {
+void FritzDECT200Power::configure(openhat::ConfigurationView* portConfig) {
 	// get actor identification number (required)
 	this->ain = plugin->openhat->getConfigString(portConfig, this->ID(), "AIN", "", true);
 
@@ -362,7 +362,7 @@ FritzDECT200Energy::FritzDECT200Energy(FritzBoxPlugin* plugin, const char* id) :
 	this->setReadonly(true);
 }
 
-void FritzDECT200Energy::configure(Poco::Util::AbstractConfiguration* portConfig) {
+void FritzDECT200Energy::configure(openhat::ConfigurationView* portConfig) {
 	// get actor identification number (required)
 	this->ain = plugin->openhat->getConfigString(portConfig, this->ID(), "AIN", "", true);
 
@@ -732,7 +732,7 @@ void FritzBoxPlugin::getSwitchPower(FritzPort* port) {
 	powerPort->setPower(power);
 }
 
-void FritzBoxPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const std::string& node, Poco::Util::AbstractConfiguration* config) {
+void FritzBoxPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const std::string& node, openhat::ConfigurationView* config) {
 	this->openhat = abstractOpenHAT;
 	this->nodeID = node;
 	this->sid = INVALID_SID;			// default; means not connected
@@ -740,7 +740,10 @@ void FritzBoxPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, cons
 
 	this->errorCount = 0;
 
-	Poco::AutoPtr<Poco::Util::AbstractConfiguration> nodeConfig = config->createView(node);
+	Poco::AutoPtr<openhat::ConfigurationView> nodeConfig = this->openhat->createConfigView(config, node);
+	// avoid check for unused plugin keys
+	nodeConfig->addUsedKey("Type");
+	nodeConfig->addUsedKey("Driver");
 
 	// test case for response calculation (see documentation: http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/AVM_Technical_Note_-_Session_ID.pdf)
 	// abstractOpenHAT->log("Test Response: " + this->getResponse("1234567z", "äbc"));
@@ -761,10 +764,11 @@ void FritzBoxPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, cons
 	// enumerate keys of the plugin's nodes (in specified order)
 	this->openhat->logVerbose("Enumerating FritzBox devices: " + node + ".Devices", this->logVerbosity);
 
-	Poco::AutoPtr<Poco::Util::AbstractConfiguration> nodes = config->createView(node + ".Devices");
+	Poco::AutoPtr<openhat::ConfigurationView> nodes = this->openhat->createConfigView(nodeConfig, "Devices");
+	nodeConfig->addUsedKey("Devices");
 
 	// get ordered list of ports
-	Poco::Util::AbstractConfiguration::Keys portKeys;
+	openhat::ConfigurationView::Keys portKeys;
 	nodes->keys("", portKeys);
 
 	typedef Poco::Tuple<int, std::string> Item;
@@ -804,8 +808,8 @@ void FritzBoxPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, cons
 
 		this->openhat->logVerbose("Setting up FritzBox port(s) for device: " + nodeName, this->logVerbosity);
 
-		// get port section from the configuration
-		Poco::Util::AbstractConfiguration* portConfig = config->createView(nodeName);
+		// get port section from the configuration>
+		Poco::AutoPtr<openhat::ConfigurationView> portConfig = this->openhat->createConfigView(config, nodeName);
 
 		// get port type (required)
 		std::string portType = abstractOpenHAT->getConfigString(portConfig, nodeName, "Type", "", true);

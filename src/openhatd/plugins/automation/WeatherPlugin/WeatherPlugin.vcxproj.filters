@@ -29,6 +29,9 @@
     <ClCompile Include="../../../../../opdi_core/code/c/platforms\win32\opdi_platformfuncs.c">
       <Filter>Quelldateien</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\openhatd\Configuration.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="readme.txt">

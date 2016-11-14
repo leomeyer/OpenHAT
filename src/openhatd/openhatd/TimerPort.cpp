@@ -210,7 +210,7 @@ TimerPort::TimerPort(AbstractOpenHAT* openhat, const char* id) : DigitalPort(id,
 TimerPort::~TimerPort() {
 }
 
-void TimerPort::configure(Poco::Util::AbstractConfiguration* config, Poco::Util::AbstractConfiguration* parentConfig) {
+void TimerPort::configure(ConfigurationView* config, ConfigurationView* parentConfig) {
 	this->openhat->configureDigitalPort(config, this);
 	this->logVerbosity = this->openhat->getConfigLogVerbosity(config, opdi::LogVerbosity::UNKNOWN);
 
@@ -224,10 +224,11 @@ void TimerPort::configure(Poco::Util::AbstractConfiguration* config, Poco::Util:
 	// enumerate schedules of the <timer>.Schedules node
 	this->logVerbose(std::string("Enumerating Timer schedules: ") + this->ID() + ".Schedules");
 
-	Poco::AutoPtr<Poco::Util::AbstractConfiguration> nodes = config->createView("Schedules");
+	Poco::AutoPtr<ConfigurationView> nodes = this->openhat->createConfigView(config, "Schedules");
+	config->addUsedKey("Schedules");
 
 	// get ordered list of schedules
-	Poco::Util::AbstractConfiguration::Keys scheduleKeys;
+	ConfigurationView::Keys scheduleKeys;
 	nodes->keys("", scheduleKeys);
 
 	typedef Poco::Tuple<int, std::string> Item;
@@ -268,7 +269,7 @@ void TimerPort::configure(Poco::Util::AbstractConfiguration* config, Poco::Util:
 		this->logVerbose("Setting up timer schedule for node: " + nodeName);
 
 		// get schedule section from the configuration
-		Poco::AutoPtr<Poco::Util::AbstractConfiguration> scheduleConfig = parentConfig->createView(nodeName);
+		Poco::AutoPtr<ConfigurationView> scheduleConfig = this->openhat->createConfigView(parentConfig, nodeName);
 
 		Schedule schedule;
 		schedule.nodeName = nodeName;
@@ -379,7 +380,7 @@ void TimerPort::configure(Poco::Util::AbstractConfiguration* config, Poco::Util:
 
 			std::string nodeID = this->openhat->getConfigString(scheduleConfig, nodeName, "NodeID", "", true);
 
-			Poco::AutoPtr<Poco::Util::AbstractConfiguration> manualPortNode = parentConfig->createView(nodeID);
+			Poco::AutoPtr<ConfigurationView> manualPortNode = this->openhat->createConfigView(parentConfig, nodeID);
 
 			// port must be of type "DialPort"
 			if (this->openhat->getConfigString(manualPortNode, nodeName, "Type", "", true) != "DialPort")

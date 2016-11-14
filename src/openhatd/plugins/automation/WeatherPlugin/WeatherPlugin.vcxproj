@@ -89,6 +89,7 @@
   <ItemGroup>
     <ClCompile Include="../../../../../opdi_core/code/c/common\cppwrapper\OPDI_Ports.cpp" />
     <ClCompile Include="../../../../../opdi_core/code/c/platforms\win32\opdi_platformfuncs.c" />
+    <ClCompile Include="..\..\..\openhatd\Configuration.cpp" />
     <ClCompile Include="WeatherPlugin.cpp" />
   </ItemGroup>
   <ItemGroup>

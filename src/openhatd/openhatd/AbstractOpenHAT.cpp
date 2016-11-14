@@ -587,7 +587,7 @@ void AbstractOpenHAT::configureGroup(Poco::Util::AbstractConfiguration* groupCon
 }
 
 void AbstractOpenHAT::setupGroup(Poco::Util::AbstractConfiguration* groupConfig, const std::string& group) {
-	this->logVerbose("Setting up group: " + group);
+	this->logDebug("Setting up group: " + group);
 
 	opdi::PortGroup* portGroup = new opdi::PortGroup(group.c_str());
 	this->configureGroup(groupConfig, portGroup, 0);
@@ -796,7 +796,7 @@ void AbstractOpenHAT::configureDigitalPort(Poco::Util::AbstractConfiguration* po
 }
 
 void AbstractOpenHAT::setupEmulatedDigitalPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port) {
-	this->logVerbose("Setting up emulated digital port: " + port);
+	this->logDebug("Setting up emulated digital port: " + port);
 
 	opdi::DigitalPort* digPort = new opdi::DigitalPort(port.c_str());
 	this->configureDigitalPort(portConfig, digPort);
@@ -841,7 +841,7 @@ void AbstractOpenHAT::configureAnalogPort(Poco::Util::AbstractConfiguration* por
 }
 
 void AbstractOpenHAT::setupEmulatedAnalogPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port) {
-	this->logVerbose("Setting up emulated analog port: " + port);
+	this->logDebug("Setting up emulated analog port: " + port);
 
 	opdi::AnalogPort* anaPort = new opdi::AnalogPort(port.c_str());
 	this->configureAnalogPort(portConfig, anaPort);
@@ -911,7 +911,7 @@ void AbstractOpenHAT::configureSelectPort(Poco::Util::AbstractConfiguration* por
 }
 
 void AbstractOpenHAT::setupEmulatedSelectPort(Poco::Util::AbstractConfiguration* portConfig, Poco::Util::AbstractConfiguration* parentConfig, const std::string& port) {
-	this->logVerbose("Setting up emulated select port: " + port);
+	this->logDebug("Setting up emulated select port: " + port);
 
 	opdi::SelectPort* selPort = new opdi::SelectPort(port.c_str());
 	this->configureSelectPort(portConfig, parentConfig, selPort);
@@ -980,7 +980,7 @@ void AbstractOpenHAT::configureDialPort(Poco::Util::AbstractConfiguration* portC
 }
 
 void AbstractOpenHAT::setupEmulatedDialPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port) {
-	this->logVerbose("Setting up emulated dial port: " + port);
+	this->logDebug("Setting up emulated dial port: " + port);
 
 	opdi::DialPort* dialPort = new opdi::DialPort(port.c_str());
 	this->configureDialPort(portConfig, dialPort);
@@ -993,7 +993,7 @@ void AbstractOpenHAT::configureStreamingPort(Poco::Util::AbstractConfiguration* 
 }
 
 void AbstractOpenHAT::setupSerialStreamingPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port) {
-	this->logVerbose("Setting up serial streaming port: " + port);
+	this->logDebug("Setting up serial streaming port: " + port);
 
 	SerialStreamingPort* ssPort = new SerialStreamingPort(this, port.c_str());
 	ssPort->configure(portConfig);
@@ -1001,141 +1001,25 @@ void AbstractOpenHAT::setupSerialStreamingPort(Poco::Util::AbstractConfiguration
 	this->addPort(ssPort);
 }
 
-void AbstractOpenHAT::setupLoggerPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port) {
-	this->logVerbose("Setting up Logger port: " + port);
 
-	LoggerPort* logPort = new LoggerPort(this, port.c_str());
-	logPort->configure(portConfig);
+template <typename PortType>
+void AbstractOpenHAT::setupPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& portID) {
+	this->logDebug("Setting up port: " + portID + " of type: " + typeid(PortType).name());
 
-	this->addPort(logPort);
+	PortType* port = new PortType(this, portID.c_str());
+	port->configure(portConfig);
+
+	this->addPort(port);
 }
 
-void AbstractOpenHAT::setupLogicPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port) {
-	this->logVerbose("Setting up LogicPort: " + port);
+template <typename PortType>
+void AbstractOpenHAT::setupPortEx(Poco::Util::AbstractConfiguration* portConfig, Poco::Util::AbstractConfiguration* parentConfig, const std::string& portID) {
+	this->logDebug("Setting up port: " + portID + " of type: " + typeid(PortType).name());
 
-	LogicPort* dlPort = new LogicPort(this, port.c_str());
-	dlPort->configure(portConfig);
+	PortType* port = new PortType(this, portID.c_str());
+	port->configure(portConfig, parentConfig);
 
-	this->addPort(dlPort);
-}
-
-void AbstractOpenHAT::setupFaderPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port) {
-	this->logVerbose("Setting up FaderPort: " + port);
-
-	FaderPort* fPort = new FaderPort(this, port.c_str());
-	fPort->configure(portConfig);
-
-	this->addPort(fPort);
-}
-
-void AbstractOpenHAT::setupExecPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port) {
-	this->logVerbose("Setting up ExecPort: " + port);
-
-	ExecPort* ePort = new ExecPort(this, port.c_str());
-	ePort->configure(portConfig);
-
-	this->addPort(ePort);
-}
-
-void AbstractOpenHAT::setupPulsePort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port) {
-	this->logVerbose("Setting up PulsePort: " + port);
-
-	PulsePort* pulsePort = new PulsePort(this, port.c_str());
-	pulsePort->configure(portConfig);
-
-	this->addPort(pulsePort);
-}
-
-void AbstractOpenHAT::setupSelectorPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port) {
-	this->logVerbose("Setting up SelectorPort: " + port);
-
-	SelectorPort* selectorPort = new SelectorPort(this, port.c_str());
-	selectorPort->configure(portConfig);
-
-	this->addPort(selectorPort);
-}
-
-#ifdef OPENHAT_USE_EXPRTK
-void AbstractOpenHAT::setupExpressionPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port) {
-	this->logVerbose("Setting up Expression: " + port);
-
-	ExpressionPort* expressionPort = new ExpressionPort(this, port.c_str());
-	expressionPort->configure(portConfig);
-
-	this->addPort(expressionPort);
-}
-#endif	// def OPENHAT_USE_EXPRTK
-
-void AbstractOpenHAT::setupTimerPort(Poco::Util::AbstractConfiguration* portConfig, Poco::Util::AbstractConfiguration* parentConfig, const std::string& port) {
-	this->logVerbose("Setting up Timer: " + port);
-
-	TimerPort* timerPort = new TimerPort(this, port.c_str());
-	timerPort->configure(portConfig, parentConfig);
-
-	this->addPort(timerPort);
-}
-
-void AbstractOpenHAT::setupErrorDetectorPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port) {
-	this->logVerbose("Setting up ErrorDetector: " + port);
-
-	ErrorDetectorPort* edPort = new ErrorDetectorPort(this, port.c_str());
-	edPort->configure(portConfig);
-
-	this->addPort(edPort);
-}
-
-void AbstractOpenHAT::setupSceneSelectPort(Poco::Util::AbstractConfiguration* portConfig, Poco::Util::AbstractConfiguration* parentConfig, const std::string& port) {
-	this->logVerbose("Setting up SceneSelect: " + port);
-
-	SceneSelectPort* ssPort = new SceneSelectPort(this, port.c_str());
-	ssPort->configure(portConfig, parentConfig);
-
-	this->addPort(ssPort);
-}
-
-void AbstractOpenHAT::setupFilePort(Poco::Util::AbstractConfiguration* portConfig, Poco::Util::AbstractConfiguration* parentConfig, const std::string& port) {
-	this->logVerbose("Setting up File: " + port);
-
-	FilePort* fiPort = new FilePort(this, port.c_str());
-	fiPort->configure(portConfig, parentConfig);
-
-	this->addPort(fiPort);
-}
-
-void AbstractOpenHAT::setupAggregatorPort(Poco::Util::AbstractConfiguration* portConfig, Poco::Util::AbstractConfiguration* parentConfig, const std::string& port) {
-	this->logVerbose("Setting up Aggregator: " + port);
-
-	AggregatorPort* agPort = new AggregatorPort(this, port.c_str());
-	agPort->configure(portConfig, parentConfig);
-
-	this->addPort(agPort);
-}
-
-void AbstractOpenHAT::setupTriggerPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port) {
-	this->logVerbose("Setting up Trigger: " + port);
-
-	TriggerPort* tPort = new TriggerPort(this, port.c_str());
-	tPort->configure(portConfig);
-
-	this->addPort(tPort);
-}
-
-void AbstractOpenHAT::setupCounterPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port) {
-	this->logVerbose("Setting up Counter: " + port);
-
-	CounterPort* cPort = new CounterPort(this, port.c_str());
-	cPort->configure(portConfig);
-
-	this->addPort(cPort);
-}
-
-void AbstractOpenHAT::setupInfluxDBPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port) {
-	this->logVerbose("Setting up InfluxDB logger: " + port);
-
-	InfluxDBPort* iPort = new InfluxDBPort(this, port.c_str());
-	iPort->configure(portConfig);
-
-	this->addPort(iPort);
+	this->addPort(port);
 }
 
 void AbstractOpenHAT::setupNode(Poco::Util::AbstractConfiguration* config, const std::string& node) {
@@ -1198,53 +1082,53 @@ void AbstractOpenHAT::setupNode(Poco::Util::AbstractConfiguration* config, const
 		this->setupSerialStreamingPort(nodeConfig, node);
 	} else
 	if (nodeType == "Logger") {
-		this->setupLoggerPort(nodeConfig, node);
+		this->setupPort<LoggerPort>(nodeConfig, node);
 	} else
 	if (nodeType == "Logic") {
-		this->setupLogicPort(nodeConfig, node);
+		this->setupPort<LogicPort>(nodeConfig, node);
 	} else
 	if (nodeType == "Pulse") {
-		this->setupPulsePort(nodeConfig, node);
+		this->setupPort<PulsePort>(nodeConfig, node);
 	} else
 	if (nodeType == "Selector") {
-		this->setupSelectorPort(nodeConfig, node);
+		this->setupPort<SelectorPort>(nodeConfig, node);
 #ifdef OPENHAT_USE_EXPRTK
 	} else
 	if (nodeType == "Expression") {
-		this->setupExpressionPort(nodeConfig, node);
+		this->setupPort<ExpressionPort>(nodeConfig, node);
 #else
 #pragma message( "Expression library not included, cannot use the Expression node type" )
 #endif	// def OPENHAT_USE_EXPRTK
 	} else
 	if (nodeType == "Timer") {
-		this->setupTimerPort(nodeConfig, config, node);
+		this->setupPortEx<TimerPort>(nodeConfig, config, node);
 	} else
 	if (nodeType == "ErrorDetector") {
-		this->setupErrorDetectorPort(nodeConfig, node);
+		this->setupPort<ErrorDetectorPort>(nodeConfig, node);
 	} else
 	if (nodeType == "Fader") {
-		this->setupFaderPort(nodeConfig, node);
+		this->setupPort<FaderPort>(nodeConfig, node);
 	} else
 	if (nodeType == "Exec") {
-		this->setupExecPort(nodeConfig, node);
+		this->setupPort<ExecPort>(nodeConfig, node);
 	} else
 	if (nodeType == "SceneSelect") {
-		this->setupSceneSelectPort(nodeConfig, config, node);
+		this->setupPortEx<SceneSelectPort>(nodeConfig, config, node);
 	} else
 	if (nodeType == "File") {
-		this->setupFilePort(nodeConfig, config, node);
+		this->setupPortEx<FilePort>(nodeConfig, config, node);
 	} else
 	if (nodeType == "Aggregator") {
-		this->setupAggregatorPort(nodeConfig, config, node);
+		this->setupPortEx<AggregatorPort>(nodeConfig, config, node);
 	} else
 	if (nodeType == "Trigger") {
-		this->setupTriggerPort(nodeConfig, node);
+		this->setupPort<TriggerPort>(nodeConfig, node);
 	} else
 	if (nodeType == "Counter") {
-		this->setupCounterPort(nodeConfig, node);
+		this->setupPort<CounterPort>(nodeConfig, node);
 	} else
 	if (nodeType == "InfluxDB") {
-		this->setupInfluxDBPort(nodeConfig, node);
+		this->setupPort<InfluxDBPort>(nodeConfig, node);
 	}
 	else
 		throw Poco::DataException("Invalid configuration: Unknown node type: " + nodeType);

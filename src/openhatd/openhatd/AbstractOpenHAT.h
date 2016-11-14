@@ -11,7 +11,7 @@
 #include "Poco/BasicEvent.h"
 #include "Poco/Delegate.h"
 
-#include "OpenHATConfigurationFile.h"
+#include "Configuration.h"
 
 #include "opdi_configspecs.h"
 #include "OPDI.h"
@@ -224,37 +224,11 @@ public:
 
 	virtual void setupSerialStreamingPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port);
 
-	virtual void setupLoggerPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port);
+	template <typename PortType> 
+	void setupPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port);
 
-	virtual void setupLogicPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port);
-
-	virtual void setupPulsePort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port);
-
-	virtual void setupSelectorPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port);
-
-#ifdef OPENHAT_USE_EXPRTK
-	virtual void setupExpressionPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port);
-#endif	// def OPENHAT_USE_EXPRTK
-
-	virtual void setupTimerPort(Poco::Util::AbstractConfiguration* portConfig, Poco::Util::AbstractConfiguration* parentConfig, const std::string& port);
-
-	virtual void setupErrorDetectorPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port);
-
-	virtual void setupFaderPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port);
-
-	virtual void setupExecPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port);
-
-	virtual void setupSceneSelectPort(Poco::Util::AbstractConfiguration* portConfig, Poco::Util::AbstractConfiguration* parentConfig, const std::string& port);
-
-	virtual void setupFilePort(Poco::Util::AbstractConfiguration* portConfig, Poco::Util::AbstractConfiguration* parentConfig, const std::string& port);
-
-	virtual void setupAggregatorPort(Poco::Util::AbstractConfiguration* portConfig, Poco::Util::AbstractConfiguration* parentConfig, const std::string& port);
-
-	virtual void setupTriggerPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port);
-
-	virtual void setupCounterPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port);
-
-	virtual void setupInfluxDBPort(Poco::Util::AbstractConfiguration* portConfig, const std::string& port);
+	template <typename PortType> 
+	void setupPortEx(Poco::Util::AbstractConfiguration* portConfig, Poco::Util::AbstractConfiguration* parentConfig, const std::string& port);
 
 	/** Configures the specified node. */
 	virtual void setupNode(Poco::Util::AbstractConfiguration* config, const std::string& node);

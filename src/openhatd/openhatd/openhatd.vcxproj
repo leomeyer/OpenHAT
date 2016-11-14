@@ -109,9 +109,9 @@
     <ClInclude Include="..\..\..\opdi_core\code\c\common\cppwrapper\OPDI.h" />
     <ClInclude Include="..\..\..\opdi_core\code\c\common\cppwrapper\OPDI_Ports.h" />
     <ClInclude Include="AbstractOpenHAT.h" />
+    <ClInclude Include="Configuration.h" />
     <ClInclude Include="ExecPort.h" />
     <ClInclude Include="ExpressionPort.h" />
-    <ClInclude Include="OpenHATConfigurationFile.h" />
     <ClInclude Include="opdi_configspecs.h" />
     <ClInclude Include="Ports.h" />
     <ClInclude Include="stdafx.h" />
@@ -140,9 +140,9 @@
     <ClCompile Include="..\..\..\opdi_core\code\c\libraries\libctb\src\win32\timer.cpp" />
     <ClCompile Include="..\..\..\opdi_core\code\c\platforms\win32\opdi_platformfuncs.c" />
     <ClCompile Include="AbstractOpenHAT.cpp" />
+    <ClCompile Include="Configuration.cpp" />
     <ClCompile Include="ExecPort.cpp" />
     <ClCompile Include="ExpressionPort.cpp" />
-    <ClCompile Include="OpenHATConfigurationFile.cpp" />
     <ClCompile Include="openhat_win.cpp" />
     <ClCompile Include="Ports.cpp" />
     <ClCompile Include="stdafx.cpp" />

@@ -122,9 +122,6 @@
     <ClInclude Include="AbstractOpenHAT.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
-    <ClInclude Include="OpenHATConfigurationFile.h">
-      <Filter>Headerdateien</Filter>
-    </ClInclude>
     <ClInclude Include="WindowsOpenHAT.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
@@ -136,6 +133,9 @@
     </ClInclude>
     <ClInclude Include="..\..\..\opdi_core\code\c\common\cppwrapper\OPDI_Ports.h">
       <Filter>Headerdateien\common\cppwrapper</Filter>
+    </ClInclude>
+    <ClInclude Include="Configuration.h">
+      <Filter>Headerdateien</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -158,9 +158,6 @@
       <Filter>Quelldateien</Filter>
     </ClCompile>
     <ClCompile Include="AbstractOpenHAT.cpp">
-      <Filter>Quelldateien</Filter>
-    </ClCompile>
-    <ClCompile Include="OpenHATConfigurationFile.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
     <ClCompile Include="openhat_win.cpp">
@@ -222,6 +219,9 @@
     </ClCompile>
     <ClCompile Include="..\..\..\opdi_core\code\c\platforms\win32\opdi_platformfuncs.c">
       <Filter>Quelldateien\platform</Filter>
+    </ClCompile>
+    <ClCompile Include="Configuration.cpp">
+      <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

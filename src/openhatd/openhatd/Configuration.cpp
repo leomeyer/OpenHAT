@@ -1,4 +1,4 @@
-#include "OpenHATConfigurationFile.h"
+#include "Configuration.h"
 
 #include <sstream>
 

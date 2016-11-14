@@ -222,7 +222,7 @@ int WindowsOpenHAT::HandleTCPConnection(int* csock) {
     return result;
 }
 
-int WindowsOpenHAT::setupTCP(std::string interface_, int port) {
+int WindowsOpenHAT::setupTCP(const std::string& interface_, int port) {
 	int err = 0;
 
     // Initialize socket support
@@ -326,21 +326,26 @@ int WindowsOpenHAT::setupTCP(std::string interface_, int port) {
 	return 0;
 }
 
-IOpenHATPlugin* WindowsOpenHAT::getPlugin(std::string driver) {
-	this->warnIfPluginMoreRecent(driver);
+IOpenHATPlugin* WindowsOpenHAT::getPlugin(const std::string& driver) {
+	// append platform specific extension if necessary
+	std::string lDriver(driver);
+	if (lDriver.find(".dll") != lDriver.length() - 4)
+		lDriver.append(".dll");
+
+	this->warnIfPluginMoreRecent(lDriver);
 
 	// attempt to load the specified DLL
-	HINSTANCE dllHandle = LoadLibraryW(utf8_decode(driver).c_str());
+	HINSTANCE dllHandle = LoadLibraryW(utf8_decode(lDriver).c_str());
 
 	if (!dllHandle) {
-		throw Poco::FileException("Could not load the plugin DLL", driver);
+		throw Poco::FileException("Could not load the plugin DLL", lDriver);
 	}
 
 	GetOpenHATPluginInstance_t getPluginInstance = reinterpret_cast<GetOpenHATPluginInstance_t>(::GetProcAddress(dllHandle, "GetPluginInstance"));
 
 	if (!getPluginInstance) {
 		::FreeLibrary(dllHandle);
-		throw Poco::ApplicationException("Invalid plugin driver DLL (could not locate function 'GetPluginInstance')", driver);
+		throw Poco::ApplicationException("Invalid plugin driver DLL (could not locate function 'GetPluginInstance')", lDriver);
 	}
 
 	// call the DLL function to get the plugin instance
@@ -391,7 +396,7 @@ std::string WindowsOpenHAT::getCurrentUser(void) {
 	return utf8_encode(result);
 }
 
-void WindowsOpenHAT::switchToUser(std::string newUser) {
+void WindowsOpenHAT::switchToUser(const std::string& newUser) {
 	// TODO
 }
 

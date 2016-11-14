@@ -187,7 +187,7 @@ void TimerPort::ManualSchedulePort::setPosition(int64_t position, ChangeSource c
 
 
 TimerPort::TimerPort(AbstractOpenHAT* openhat, const char* id) : DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0) {
-	this->openhat = openhat;
+	this->opdi = this->openhat = openhat;
 
 	DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
 

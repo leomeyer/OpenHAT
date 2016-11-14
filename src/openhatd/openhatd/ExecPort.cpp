@@ -9,7 +9,7 @@ namespace openhat {
 ///////////////////////////////////////////////////////////////////////////////
 
 ExecPort::ExecPort(AbstractOpenHAT* openhat, const char* id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), waiter(*this, &ExecPort::waitForProcessEnd) {
-	this->openhat = openhat;
+	this->opdi = this->openhat = openhat;
 
 	opdi::DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
 

@@ -31,13 +31,13 @@ public:
 
 	int HandleTCPConnection(int* csock);
 
-	int setupTCP(std::string interfaces, int port) override;
+	int setupTCP(const std::string& interfaces, int port) override;
 
-	IOpenHATPlugin* getPlugin(std::string driver) override;
+	IOpenHATPlugin* getPlugin(const std::string& driver) override;
 
 	virtual std::string getCurrentUser(void) override;
 
-	virtual void switchToUser(std::string newUser) override;
+	virtual void switchToUser(const std::string& newUser) override;
 };
 
 // The plugin DLL entry function that returns the plugin instance

@@ -159,7 +159,7 @@ protected:
 	openhat::AbstractOpenHAT* openhat;
 
 public:
-	virtual void setupPlugin(openhat::AbstractOpenHAT* openHAT, const std::string& node, openhat::ConfigurationView* config) override;
+	virtual void setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, openhat::ConfigurationView* config) override;
 
 	virtual void masterConnected(void) override;
 	virtual void masterDisconnected(void) override;
@@ -168,7 +168,7 @@ public:
 }	// end anonymous namespace
 
 WindowPort::WindowPort(openhat::AbstractOpenHAT* openhat, const char* id) : opdi::SelectPort(id) {
-	this->openhat = openhat;
+	this->opdi = this->openhat = openhat;
 
 	this->targetState = UNKNOWN;
 	this->currentState = UNKNOWN;
@@ -1085,8 +1085,8 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 }
 
 
-void WindowPlugin::setupPlugin(openhat::AbstractOpenHAT* openHAT, const std::string& node, openhat::ConfigurationView* config) {
-	this->openhat = openHAT;
+void WindowPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, openhat::ConfigurationView* config) {
+	this->openhat = openhat;
 
 	Poco::AutoPtr<openhat::ConfigurationView> nodeConfig = this->openhat->createConfigView(config, node);
 	// avoid check for unused plugin keys
@@ -1094,73 +1094,73 @@ void WindowPlugin::setupPlugin(openhat::AbstractOpenHAT* openHAT, const std::str
 	nodeConfig->addUsedKey("Driver");
 
 	// create window port
-	WindowPort* port = new WindowPort(openHAT, node.c_str());
-	openHAT->configureSelectPort(nodeConfig, config, port);
+	WindowPort* port = new WindowPort(this->openhat, node.c_str());
+	this->openhat->configureSelectPort(nodeConfig, config, port);
 
 	port->logVerbosity = this->openhat->getConfigLogVerbosity(nodeConfig, opdi::LogVerbosity::UNKNOWN);
 
 	if (nodeConfig->getInt("EnableDelay", 0) < 0)
-		throw Poco::DataException("EnableDelay may not be negative: " + openHAT->to_string(port->enableDelay));
+		throw Poco::DataException("EnableDelay may not be negative: " + this->openhat->to_string(port->enableDelay));
 	port->enableDelay = nodeConfig->getInt("EnableDelay", 0);
 
 	// read control mode
-	std::string controlMode = openHAT->getConfigString(nodeConfig, node, "ControlMode", "", true);
+	std::string controlMode = this->openhat->getConfigString(nodeConfig, node, "ControlMode", "", true);
 	if (controlMode == "H-Bridge") {
 		this->openhat->logVerbose("Configuring WindowPlugin port " + node + " in H-Bridge Mode");
 		port->mode = WindowPort::H_BRIDGE;
 		// motorA and motorB are required
-		port->motorAStr = openHAT->getConfigString(nodeConfig, node, "MotorA", "", true);
-		port->motorBStr = openHAT->getConfigString(nodeConfig, node, "MotorB", "", true);
+		port->motorAStr = this->openhat->getConfigString(nodeConfig, node, "MotorA", "", true);
+		port->motorBStr = this->openhat->getConfigString(nodeConfig, node, "MotorB", "", true);
 		if (nodeConfig->getInt("MotorDelay", 0) < 0)
-			throw Poco::DataException("MotorDelay may not be negative: " + openHAT->to_string(port->motorDelay));
+			throw Poco::DataException("MotorDelay may not be negative: " + this->openhat->to_string(port->motorDelay));
 		port->motorDelay = nodeConfig->getInt("MotorDelay", 0);
 		port->enable = nodeConfig->getString("Enable", "");
 		if (port->enableDelay < port->motorDelay)
-			throw Poco::DataException("If using MotorDelay, EnableDelay must be greater or equal: " + openHAT->to_string(port->enableDelay));
+			throw Poco::DataException("If using MotorDelay, EnableDelay must be greater or equal: " + this->openhat->to_string(port->enableDelay));
 	} else if (controlMode == "SerialRelay") {
 		this->openhat->logVerbose("Configuring WindowPlugin port " + node + " in Serial Relay Mode");
 		port->mode = WindowPort::SERIAL_RELAY;
 		// direction and enable ports are required
-		port->direction = openHAT->getConfigString(nodeConfig, node, "Direction", "", true);
-		port->enable = openHAT->getConfigString(nodeConfig, node, "Enable", "", true);
+		port->direction = this->openhat->getConfigString(nodeConfig, node, "Direction", "", true);
+		port->enable = this->openhat->getConfigString(nodeConfig, node, "Enable", "", true);
 	} else
 		throw Poco::DataException("ControlMode setting not supported; expected 'H-Bridge' or 'SerialRelay'", controlMode);
 
 	// legacy check
-	if (!openHAT->getConfigString(nodeConfig, node, "Sensor", "", false).empty())
+	if (!this->openhat->getConfigString(nodeConfig, node, "Sensor", "", false).empty())
 		throw Poco::DataException("Setting 'Sensor' is deprecated, please use 'SensorClosed' instead");
 
 	// read additional configuration parameters
-	port->sensorClosedPortStr = openHAT->getConfigString(nodeConfig, node, "SensorClosed", "", false);
+	port->sensorClosedPortStr = this->openhat->getConfigString(nodeConfig, node, "SensorClosed", "", false);
 	port->sensorClosedValue = (uint8_t)nodeConfig->getInt("SensorClosedValue", 1);
 	if (port->sensorClosedValue > 1)
-		throw Poco::DataException("SensorClosedValue must be either 0 or 1: " + openHAT->to_string((int)port->sensorClosedValue));
-	port->sensorOpenPortStr = openHAT->getConfigString(nodeConfig, node, "SensorOpen", "", false);
+		throw Poco::DataException("SensorClosedValue must be either 0 or 1: " + this->openhat->to_string((int)port->sensorClosedValue));
+	port->sensorOpenPortStr = this->openhat->getConfigString(nodeConfig, node, "SensorOpen", "", false);
 	port->sensorOpenValue = (uint8_t)nodeConfig->getInt("SensorOpenValue", 1);
 	if (port->sensorClosedValue > 1)
-		throw Poco::DataException("SensorOpenValue must be either 0 or 1: " + openHAT->to_string((int)port->sensorOpenValue));
+		throw Poco::DataException("SensorOpenValue must be either 0 or 1: " + this->openhat->to_string((int)port->sensorOpenValue));
 	port->motorActive = (uint8_t)nodeConfig->getInt("MotorActive", 1);
 	if (port->motorActive > 1)
-		throw Poco::DataException("MotorActive must be either 0 or 1: " + openHAT->to_string((int)port->motorActive));
+		throw Poco::DataException("MotorActive must be either 0 or 1: " + this->openhat->to_string((int)port->motorActive));
 	port->enableActive = (uint8_t)nodeConfig->getInt("EnableActive", 1);
 	if (port->enableActive > 1)
-		throw Poco::DataException("EnableActive must be either 0 or 1: " + openHAT->to_string((int)port->enableActive));
+		throw Poco::DataException("EnableActive must be either 0 or 1: " + this->openhat->to_string((int)port->enableActive));
 	port->openingTime = nodeConfig->getInt("OpeningTime", 0);
 	if (port->openingTime <= 0)
-		throw Poco::DataException("OpeningTime must be specified and greater than 0: " + openHAT->to_string(port->openingTime));
+		throw Poco::DataException("OpeningTime must be specified and greater than 0: " + this->openhat->to_string(port->openingTime));
 	port->closingTime = nodeConfig->getInt64("ClosingTime", port->openingTime);
 	if (port->closingTime <= 0)
-		throw Poco::DataException("ClosingTime must be greater than 0: " + openHAT->to_string(port->closingTime));
-	port->autoOpenStr = openHAT->getConfigString(nodeConfig, node, "AutoOpen", "", false);
-	port->autoCloseStr = openHAT->getConfigString(nodeConfig, node, "AutoClose", "", false);
-	port->forceOpenStr = openHAT->getConfigString(nodeConfig, node, "ForceOpen", "", false);
-	port->forceCloseStr = openHAT->getConfigString(nodeConfig, node, "ForceClose", "", false);
+		throw Poco::DataException("ClosingTime must be greater than 0: " + this->openhat->to_string(port->closingTime));
+	port->autoOpenStr = this->openhat->getConfigString(nodeConfig, node, "AutoOpen", "", false);
+	port->autoCloseStr = this->openhat->getConfigString(nodeConfig, node, "AutoClose", "", false);
+	port->forceOpenStr = this->openhat->getConfigString(nodeConfig, node, "ForceOpen", "", false);
+	port->forceCloseStr = this->openhat->getConfigString(nodeConfig, node, "ForceClose", "", false);
 	if ((port->forceOpenStr != "") && (port->forceCloseStr != ""))
 		throw Poco::DataException("You cannot use ForceOpen and ForceClose at the same time");
-	port->statusPortStr = openHAT->getConfigString(nodeConfig, node, "StatusPort", "", false);
-	port->errorPortStr = openHAT->getConfigString(nodeConfig, node, "ErrorPorts", "", false);
-	port->resetPortStr = openHAT->getConfigString(nodeConfig, node, "ResetPorts", "", false);
-	std::string resetTo = openHAT->getConfigString(nodeConfig, node, "ResetTo", "Off", false);
+	port->statusPortStr = this->openhat->getConfigString(nodeConfig, node, "StatusPort", "", false);
+	port->errorPortStr = this->openhat->getConfigString(nodeConfig, node, "ErrorPorts", "", false);
+	port->resetPortStr = this->openhat->getConfigString(nodeConfig, node, "ResetPorts", "", false);
+	std::string resetTo = this->openhat->getConfigString(nodeConfig, node, "ResetTo", "Off", false);
 	if (resetTo == "Closed") {
 		port->resetTo = WindowPort::RESET_TO_CLOSED;
 	} else if (resetTo == "Open") {
@@ -1170,7 +1170,7 @@ void WindowPlugin::setupPlugin(openhat::AbstractOpenHAT* openHAT, const std::str
 	port->positionAfterClose = nodeConfig->getInt("PositionAfterClose", -1);
 	port->positionAfterOpen = nodeConfig->getInt("PositionAfterOpen", -1);
 
-	openHAT->addPort(port);
+	this->openhat->addPort(port);
 
 	this->openhat->addConnectionListener(this);
 

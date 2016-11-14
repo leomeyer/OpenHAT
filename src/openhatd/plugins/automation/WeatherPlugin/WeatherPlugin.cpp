@@ -94,7 +94,7 @@ public:
 }	// end anonymous namespace
 
 WeatherGaugePort::WeatherGaugePort(openhat::AbstractOpenHAT* openhat, const char* id) : opdi::DialPort(id), WeatherPort(id) {
-	this->openhat = openhat;
+	this->opdi = this->openhat = openhat;
 	this->numerator = 1;
 	this->denominator = 1;
 //	this->lastRequestedValidState = false;
@@ -268,7 +268,7 @@ public:
 };
 
 void WeatherPlugin::setupPlugin(openhat::AbstractOpenHAT* openHAT, const std::string& node, openhat::ConfigurationView* config) {
-	this->openhat = openHAT;
+	this->openhat = openhat;
 	this->nodeID = node;
 	this->timeoutSeconds = 10;
 	this->refreshTime = 30;	// default: 30 seconds

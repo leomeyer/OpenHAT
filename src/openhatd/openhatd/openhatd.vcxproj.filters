@@ -87,13 +87,13 @@
     <None Include="testconfigs\window_test.ini">
       <Filter>Ressourcendateien\testconfigs</Filter>
     </None>
-    <None Include="testconfigs\windows_dev.ini">
-      <Filter>Ressourcendateien\testconfigs</Filter>
-    </None>
     <None Include="testconfigs\current.json">
       <Filter>Ressourcendateien\testconfigs</Filter>
     </None>
     <None Include="testconfigs\influxdb_test.ini">
+      <Filter>Ressourcendateien\testconfigs</Filter>
+    </None>
+    <None Include="testconfigs\dev.ini">
       <Filter>Ressourcendateien\testconfigs</Filter>
     </None>
   </ItemGroup>

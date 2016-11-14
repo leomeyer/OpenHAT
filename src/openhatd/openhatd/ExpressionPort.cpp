@@ -13,7 +13,7 @@ namespace openhat {
 ///////////////////////////////////////////////////////////////////////////////
 
 ExpressionPort::ExpressionPort(AbstractOpenHAT* openhat, const char* id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0) {
-	this->openhat = openhat;
+	this->opdi = this->openhat = openhat;
 	this->numIterations = 0;
 	this->fallbackSpecified = false;
 	this->fallbackValue = 0;

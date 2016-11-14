@@ -89,13 +89,13 @@
     <None Include="exectest.bat" />
     <None Include="fileinputtest.txt" />
     <None Include="testconfigs\current.json" />
+    <None Include="testconfigs\dev.ini" />
     <None Include="testconfigs\influxdb_test.ini" />
     <None Include="testconfigs\scene0.ini" />
     <None Include="testconfigs\scene1.ini" />
     <None Include="testconfigs\testconfig.ini" />
     <None Include="testconfigs\test_include.ini" />
     <None Include="testconfigs\weather_test.ini" />
-    <None Include="testconfigs\windows_dev.ini" />
     <None Include="testconfigs\window_test.ini" />
     <None Include="webdocroot\index.html" />
     <None Include="webdocroot\openhatd.css" />

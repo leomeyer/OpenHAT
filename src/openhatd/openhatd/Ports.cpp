@@ -30,7 +30,7 @@ namespace openhat {
 ///////////////////////////////////////////////////////////////////////////////
 
 LogicPort::LogicPort(AbstractOpenHAT* openhat, const char* id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0) {
-	this->openhat = openhat;
+	this->opdi = this->openhat = openhat;
 	this->function = UNKNOWN;
 	this->funcN = -1;
 	this->negate = false;
@@ -227,7 +227,7 @@ uint8_t LogicPort::doWork(uint8_t canSend)  {
 ///////////////////////////////////////////////////////////////////////////////
 
 PulsePort::PulsePort(AbstractOpenHAT* openhat, const char* id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), period(openhat), dutyCycle(openhat), pulses(openhat) {
-	this->openhat = openhat;
+	this->opdi = this->openhat = openhat;
 	this->negate = false;
 
 	opdi::DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
@@ -414,7 +414,7 @@ uint8_t PulsePort::doWork(uint8_t canSend)  {
 ///////////////////////////////////////////////////////////////////////////////
 
 SelectorPort::SelectorPort(AbstractOpenHAT* openhat, const char* id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0) {
-	this->openhat = openhat;
+	this->opdi = this->openhat = openhat;
 
 	opdi::DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
 	// set the line to an invalid state
@@ -517,7 +517,7 @@ uint8_t SelectorPort::doWork(uint8_t canSend)  {
 ///////////////////////////////////////////////////////////////////////////////
 
 ErrorDetectorPort::ErrorDetectorPort(AbstractOpenHAT* openhat, const char* id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_INPUT, 0) {
-	this->openhat = openhat;
+	this->opdi = this->openhat = openhat;
 
 	opdi::DigitalPort::setMode(OPDI_DIGITAL_MODE_INPUT_FLOATING);
 
@@ -587,7 +587,7 @@ uint8_t ErrorDetectorPort::doWork(uint8_t canSend)  {
 ///////////////////////////////////////////////////////////////////////////////
 
 SerialStreamingPort::SerialStreamingPort(AbstractOpenHAT* openhat, const char* id) : opdi::StreamingPort(id) {
-	this->openhat = openhat;
+	this->opdi = this->openhat = openhat;
 	this->mode = PASS_THROUGH;
 	this->device = nullptr;
 	this->serialPort = new ctb::SerialPort();
@@ -698,7 +698,7 @@ bool SerialStreamingPort::hasError(void) const {
 ///////////////////////////////////////////////////////////////////////////////
 
 LoggerPort::LoggerPort(AbstractOpenHAT* openhat, const char* id) : opdi::StreamingPort(id) {
-	this->openhat = openhat;
+	this->opdi = this->openhat = openhat;
 	this->logPeriod = 10000;		// default: 10 seconds
 	this->writeHeader = true;
 	this->lastEntryTime = opdi_get_time_ms();		// wait until writing first record
@@ -822,7 +822,7 @@ bool LoggerPort::hasError(void) const {
 ///////////////////////////////////////////////////////////////////////////////
 
 FaderPort::FaderPort(AbstractOpenHAT* openhat, const char* id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), leftValue(openhat), rightValue(openhat), durationMsValue(openhat) {
-	this->openhat = openhat;
+	this->opdi = this->openhat = openhat;
 	this->mode = LINEAR;
 	this->lastValue = -1;
 	this->invert = false;
@@ -1052,7 +1052,7 @@ uint8_t FaderPort::doWork(uint8_t canSend)  {
 ///////////////////////////////////////////////////////////////////////////////
 
 SceneSelectPort::SceneSelectPort(AbstractOpenHAT* openhat, const char* id) : opdi::SelectPort(id) {
-	this->openhat = openhat;
+	this->opdi = this->openhat = openhat;
 	this->positionSet = false;
 }
 
@@ -1423,7 +1423,7 @@ void FilePort::writeContent() {
 }
 
 FilePort::FilePort(AbstractOpenHAT* openhat, const char* id) : opdi::DigitalPort(id) {
-	this->openhat = openhat;
+	this->opdi = this->openhat = openhat;
 	this->directoryWatcher = nullptr;
 	this->reloadDelayMs = 0;
 	this->expiryMs = 0;
@@ -1835,7 +1835,7 @@ uint8_t AggregatorPort::doWork(uint8_t canSend) {
 }
 
 AggregatorPort::AggregatorPort(AbstractOpenHAT* openhat, const char* id) : opdi::DigitalPort(id) {
-	this->openhat = openhat;
+	this->opdi = this->openhat = openhat;
 	this->multiplier = 1;
 	// default: allow all values (set absolute limits very high)
 	this->minDelta = LLONG_MIN;
@@ -2008,7 +2008,7 @@ void AggregatorPort::setLine(uint8_t newLine, ChangeSource changeSource) {
 ///////////////////////////////////////////////////////////////////////////////
 
 CounterPort::CounterPort(AbstractOpenHAT* openhat, const char* id) : opdi::DialPort(id), increment(openhat, 1), periodMs(openhat, 1000) {
-	this->openhat = openhat;
+	this->opdi = this->openhat = openhat;
 	this->lastActionTime = 0;
 }
 
@@ -2049,7 +2049,7 @@ uint8_t CounterPort::doWork(uint8_t canSend) {
 ///////////////////////////////////////////////////////////////////////////////
 
 TriggerPort::TriggerPort(AbstractOpenHAT* openhat, const char* id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0) {
-	this->openhat = openhat;
+	this->opdi = this->openhat = openhat;
 
 	opdi::DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
 	this->line = 1;	// default: active
@@ -2235,7 +2235,7 @@ uint8_t TriggerPort::doWork(uint8_t canSend)  {
 ///////////////////////////////////////////////////////////////////////////////
 
 InfluxDBPort::InfluxDBPort(AbstractOpenHAT * openhat, const char * id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0) {
-	this->openhat = openhat;
+	this->opdi = this->openhat = openhat;
 
 	opdi::DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
 	this->line = 1;	// default: active

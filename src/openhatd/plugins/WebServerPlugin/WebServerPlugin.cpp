@@ -566,7 +566,7 @@ void WebServerPlugin::onPortRefreshed(const void* /*pSender*/, opdi::Port*& port
 
 void WebServerPlugin::setupPlugin(openhat::AbstractOpenHAT* openHAT, const std::string& node, openhat::ConfigurationView* config) {
 	this->opdi = openHAT;
-	this->openhat = openHAT;
+	this->opdi = this->openhat = openhat;
 	this->setID(node.c_str());
 
 	Poco::JSON::Object response;

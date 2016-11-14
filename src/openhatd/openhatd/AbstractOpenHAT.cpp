@@ -2,6 +2,9 @@
 
 #include <vector>
 #include <time.h>
+#ifdef __GNUG__
+#include <cxxabi.h>
+#endif
 
 #include "Poco/Exception.h"
 #include "Poco/Tuple.h"
@@ -1017,7 +1020,16 @@ void AbstractOpenHAT::setupSerialStreamingPort(ConfigurationView* portConfig, co
 
 template <typename PortType>
 void AbstractOpenHAT::setupPort(ConfigurationView* portConfig, const std::string& portID) {
-	this->logDebug("Setting up port: " + portID + " of type: " + typeid(PortType).name());
+#ifdef __GNUG__
+	int status;
+	char* realname;
+	realname = abi::__cxa_demangle(typeid(PortType).name(), 0, 0, &status);
+	std::string typeName(realname);
+	free(realname);
+#else
+	std::string typeName(typeid(PortType).name());
+#endif
+	this->logDebug("Setting up port: " + portID + " of type: " + typeName);
 
 	PortType* port = new PortType(this, portID.c_str());
 	port->configure(portConfig);
@@ -1027,7 +1039,16 @@ void AbstractOpenHAT::setupPort(ConfigurationView* portConfig, const std::string
 
 template <typename PortType>
 void AbstractOpenHAT::setupPortEx(ConfigurationView* portConfig, ConfigurationView* parentConfig, const std::string& portID) {
-	this->logDebug("Setting up port: " + portID + " of type: " + typeid(PortType).name());
+#ifdef __GNUG__
+	int status;
+	char* realname;
+	realname = abi::__cxa_demangle(typeid(PortType).name(), 0, 0, &status);
+	std::string typeName(realname);
+	free(realname);
+#else
+	std::string typeName(typeid(PortType).name());
+#endif
+	this->logDebug("Setting up port: " + portID + " of type: " + typeName);
 
 	PortType* port = new PortType(this, portID.c_str());
 	port->configure(portConfig, parentConfig);
@@ -1520,7 +1541,16 @@ void AbstractOpenHAT::getEnvironment(std::map<std::string, std::string>& mapToFi
 
 std::string AbstractOpenHAT::getExceptionMessage(Poco::Exception & e) {
 	std::string what(e.what());
-	return e.className() + (e.message().empty() ? "" : ": " + e.message()) + (what.empty() ? "" : " " + what);
+#ifdef __GNUG__
+	int status;
+	char* realname;
+	realname = abi::__cxa_demangle(e.className(), 0, 0, &status);
+	std::string typeName(realname);
+	free(realname);
+#else
+	std::string typeName(e.className());
+#endif
+	return typeName + (e.message().empty() ? "" : ": " + e.message()) + (what.empty() ? "" : " " + what);
 }
 
 }		// namespace openhat

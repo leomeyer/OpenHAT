@@ -145,7 +145,7 @@ public:
 	virtual std::string getCurrentUser(void) = 0;
 
 	/** Modify the current process credentials to a less privileged user. */
-	virtual void switchToUser(std::string newUser) = 0;
+	virtual void switchToUser(const std::string& newUser) = 0;
 
 	virtual std::string getTimestampStr(void);
 
@@ -246,13 +246,13 @@ public:
 	virtual int setupConnection(ConfigurationView* config, bool testMode);
 
 	/** Sets up a TCP listener and listens for incoming requests. This method does not return unless the program should exit. */
-	virtual int setupTCP(std::string interface_, int port) = 0;
+	virtual int setupTCP(const std::string& interface_, int port) = 0;
 
 	/** Checks whether the supplied file is more recent than the current binary and logs a warning if yes. */
 	virtual void warnIfPluginMoreRecent(const std::string& driver);
 
 	/** Returns a pointer to the plugin object instance specified by the given driver. */
-	virtual IOpenHATPlugin* getPlugin(std::string driver) = 0;
+	virtual IOpenHATPlugin* getPlugin(const std::string& driver) = 0;
 
 	virtual uint8_t waiting(uint8_t canSend) override;
 

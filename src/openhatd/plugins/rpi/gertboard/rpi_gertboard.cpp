@@ -61,7 +61,7 @@ protected:
 	int mapAndLockPin(int pinNumber, std::string forNode);
 
 public:
-	virtual void setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, Poco::Util::AbstractConfiguration* nodeConfig);
+	virtual void setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, openhat::ConfigurationView* nodeConfig);
 
 	virtual void masterConnected(void) override;
 	virtual void masterDisconnected(void) override;
@@ -720,12 +720,15 @@ int GertboardPlugin::mapAndLockPin(int pinNumber, std::string forNode) {
 	return internalPin;
 }
 
-void GertboardPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, Poco::Util::AbstractConfiguration* config) {
+void GertboardPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, openhat::ConfigurationView* config) {
 	this->openhat = openhat;
 	this->nodeID = node;
 	this->expanderInitialized = false;
 
-	Poco::Util::AbstractConfiguration* nodeConfig = this->openhat->createConfigViewconfig, node);
+	Poco::AutoPtr<openhat::ConfigurationView> nodeConfig = this->openhat->createConfigView(config, node);
+	// avoid check for unused plugin keys
+	nodeConfig->addUsedKey("Type");
+	nodeConfig->addUsedKey("Driver");
 
 	this->logVerbosity = openhat->getConfigLogVerbosity(nodeConfig, opdi::LogVerbosity::UNKNOWN);
 
@@ -794,10 +797,11 @@ void GertboardPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::
 	// enumerate keys of the plugin's nodes (in specified order)
 	this->openhat->logVerbose(node + ": Enumerating Gertboard nodes: " + node + ".Nodes");
 
-	Poco::Util::AbstractConfiguration* nodes = this->openhat->createConfigViewconfig, node + ".Nodes");
+	Poco::AutoPtr<openhat::ConfigurationView> nodes = this->openhat->createConfigView(nodeConfig, "Nodes");
+	nodeConfig->addUsedKey("Nodes");
 
 	// get ordered list of ports
-	Poco::Util::AbstractConfiguration::Keys portKeys;
+	openhat::ConfigurationView::Keys portKeys;
 	nodes->keys("", portKeys);
 
 	typedef Poco::Tuple<int, std::string> Item;
@@ -805,7 +809,7 @@ void GertboardPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::
 	ItemList orderedItems;
 
 	// create ordered list of port keys (by priority)
-	for (Poco::Util::AbstractConfiguration::Keys::const_iterator it = portKeys.begin(); it != portKeys.end(); ++it) {
+	for (openhat::ConfigurationView::Keys::const_iterator it = portKeys.begin(); it != portKeys.end(); ++it) {
 		int itemNumber = nodes->getInt(*it, 0);
 		// check whether the item is active
 		if (itemNumber < 0)
@@ -835,7 +839,7 @@ void GertboardPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::
 		this->openhat->logVerbose(node + ": Setting up Gertboard port(s) for node: " + nodeName);
 
 		// get port section from the configuration
-		Poco::Util::AbstractConfiguration* portConfig = this->openhat->createConfigViewconfig, nodeName);
+		Poco::AutoPtr<openhat::ConfigurationView> portConfig = this->openhat->createConfigView(config, nodeName);
 
 		// get port type (required)
 		std::string portType = openhat->getConfigString(portConfig, nodeName, "Type", "", true);

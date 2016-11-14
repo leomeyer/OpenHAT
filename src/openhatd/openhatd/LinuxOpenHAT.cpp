@@ -226,7 +226,7 @@ std::string LinuxOpenHAT::getCurrentUser(void) {
 	return std::string(passwd_data->pw_name) + " (" + this->to_string(getuid()) + ")";
 }
 
-void LinuxOpenHAT::switchToUser(std::string newUser) {
+void LinuxOpenHAT::switchToUser(const std::string& newUser) {
 	// this implementation expects a numeric user ID or a user name
 	int uid;
 	
@@ -309,7 +309,7 @@ int LinuxOpenHAT::HandleTCPConnection(int csock) {
 	return result;
 }
 
-int LinuxOpenHAT::setupTCP(std::string /*interface_*/, int port) {
+int LinuxOpenHAT::setupTCP(const std::string& /*interface_*/, int port) {
 
 	// store instance reference
 	linuxOpenHAT = this;
@@ -425,11 +425,15 @@ int LinuxOpenHAT::setupTCP(std::string /*interface_*/, int port) {
 	return 0;
 }
 
-IOpenHATPlugin* LinuxOpenHAT::getPlugin(std::string driver) {
+IOpenHATPlugin* LinuxOpenHAT::getPlugin(const std::string& driver) {
+	// append platform specific extension if necessary
+	std::string lDriver(driver);
+	if (lDriver.find(".so") != lDriver.length() - 3)
+		lDriver.append(".so");
 
-	this->warnIfPluginMoreRecent(driver);
+	this->warnIfPluginMoreRecent(lDriver);
 
-	void* hndl = dlopen(driver.c_str(), RTLD_NOW);
+	void* hndl = dlopen(lDriver.c_str(), RTLD_NOW);
 	if (hndl == NULL){
 		throw Poco::FileException("Could not load the plugin library", dlerror());
 	}

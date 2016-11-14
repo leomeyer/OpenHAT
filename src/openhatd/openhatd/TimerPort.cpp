@@ -273,7 +273,6 @@ void TimerPort::configure(ConfigurationView* config, ConfigurationView* parentCo
 
 		Schedule schedule;
 		schedule.nodeName = nodeName;
-
 		schedule.maxOccurrences = scheduleConfig->getInt("MaxOccurrences", -1);
 		schedule.duration = scheduleConfig->getInt("Duration", 1000);	// default duration: 1 second
 		schedule.action = SET_HIGH;										// default action

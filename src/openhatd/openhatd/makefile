@@ -18,7 +18,7 @@ PPATHBASE = $(OPDI_CORE_PATH)/code/c/platforms
 PPATH = $(PPATHBASE)/$(PLATFORM)
 
 # List C source files of the configuration here.
-SRC = LinuxOpenHAT.cpp OpenHATConfigurationFile.cpp SunRiseSet.cpp TimerPort.cpp ExpressionPort.cpp ExecPort.cpp
+SRC = LinuxOpenHAT.cpp Configuration.cpp SunRiseSet.cpp TimerPort.cpp ExpressionPort.cpp ExecPort.cpp
 
 # platform specific files
 SRC += $(PPATH)/opdi_platformfuncs.c

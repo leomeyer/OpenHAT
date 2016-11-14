@@ -21,13 +21,13 @@ public:
 	
 	virtual std::string getCurrentUser(void);
 
-	virtual void switchToUser(std::string newUser);
+	virtual void switchToUser(const std::string& newUser);
 	
 	int HandleTCPConnection(int csock);
 
-	int setupTCP(std::string interfaces, int port);
+	int setupTCP(const std::string& interfaces, int port);
 
-	IOpenHATPlugin* getPlugin(std::string driver);
+	IOpenHATPlugin* getPlugin(const std::string& driver);
 };
 
 }

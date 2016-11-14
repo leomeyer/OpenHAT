@@ -21,7 +21,7 @@ PPATHBASE = $(OPDI_CORE_PATH)/code/c/platforms
 PPATH = $(PPATHBASE)/$(PLATFORM)
 
 # List source files of the plugin here.
-SRC = $(TARGET).cpp
+SRC = $(TARGET).cpp $(APP_PATH)/Configuration.cpp
 
 # C++ wrapper
 CPPPATH = $(CPATH)/cppwrapper

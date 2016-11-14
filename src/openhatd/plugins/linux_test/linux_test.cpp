@@ -34,28 +34,19 @@ protected:
 	openhat::AbstractOpenHAT* openhat;
 
 public:
-	virtual void setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, Poco::Util::AbstractConfiguration* config);
+	virtual void setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, openhat::ConfigurationView* config);
 
 	virtual void masterConnected(void) override;
 	virtual void masterDisconnected(void) override;
 };
 
 
-void LinuxTestOpenHATPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, Poco::Util::AbstractConfiguration* config) {
+void LinuxTestOpenHATPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, openhat::ConfigurationView* config) {
 	this->openhat = openhat;
 
-	Poco::Util::AbstractConfiguration* nodeConfig = this->openhat->createConfigViewconfig, node);
-
-	// get port type
-	std::string portType = nodeConfig->getString("Type", "");
-
-	if (portType == "DigitalPort") {
-		// add emulated test port
-		DigitalTestPort* port = new DigitalTestPort();
-		openhat->configureDigitalPort(nodeConfig, port);
-		openhat->addPort(port);
-	} else
-		throw Poco::DataException("This plugin supports only node type 'DigitalPort'", portType);
+	// add emulated test port
+	DigitalTestPort* port = new DigitalTestPort();
+	openhat->addPort(port);
 
 	this->openhat->logVerbose("LinuxTestOpenHATPlugin setup completed successfully as node " + node);
 }
@@ -68,7 +59,7 @@ void LinuxTestOpenHATPlugin::masterDisconnected() {
 	this->openhat->logNormal("Test plugin: master disconnected");
 }
 
-extern "C" IOpenHATPlugin* GetOpenHATPluginInstance(int majorVersion, int minorVersion, int patchVersion) {
+extern "C" IOpenHATPlugin* GetPluginInstance(int majorVersion, int minorVersion, int patchVersion) {
 	// check whether the version is supported
 	if ((majorVersion != OPENHAT_MAJOR_VERSION) || (minorVersion != OPENHAT_MINOR_VERSION))
 		throw Poco::Exception("This plugin requires OpenHAT version "

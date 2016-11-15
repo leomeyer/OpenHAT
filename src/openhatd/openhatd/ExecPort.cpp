@@ -65,7 +65,7 @@ void ExecPort::configure(ConfigurationView* config) {
 	this->forceKill = config->getBool("ForceKill", false);
 	
 	if ((this->waitTimeMs > 0) && (this->resetTimeMs > 0) && (this->waitTimeMs > this->resetTimeMs))
-		this->logWarning("The specified wait time is larger than the reset time; reset will not execute!");
+		this->logWarning("The specified wait time is greater than the reset time; reset will not execute!");
 }
 
 void ExecPort::setDirCaps(const char* /*dirCaps*/) {

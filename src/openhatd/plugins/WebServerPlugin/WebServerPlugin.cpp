@@ -69,7 +69,7 @@ public:
 		this->nc = nullptr;
 	};
 
-	virtual void setupPlugin(openhat::AbstractOpenHAT* openHAT, const std::string& node, openhat::ConfigurationView* nodeConfig) override;
+	virtual void setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, openhat::ConfigurationView* nodeConfig) override;
 
 	void handleEvent(struct mg_connection* nc, int ev, void* p);
 
@@ -564,8 +564,7 @@ void WebServerPlugin::onPortRefreshed(const void* /*pSender*/, opdi::Port*& port
 	}
 }
 
-void WebServerPlugin::setupPlugin(openhat::AbstractOpenHAT* openHAT, const std::string& node, openhat::ConfigurationView* config) {
-	this->opdi = openHAT;
+void WebServerPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, openhat::ConfigurationView* config) {
 	this->opdi = this->openhat = openhat;
 	this->setID(node.c_str());
 
@@ -579,8 +578,8 @@ void WebServerPlugin::setupPlugin(openhat::AbstractOpenHAT* openHAT, const std::
 	nodeConfig->addUsedKey("Type");
 	nodeConfig->addUsedKey("Driver");
 
-	openHAT->configureDigitalPort(nodeConfig, this, false);
-	this->logVerbosity = openHAT->getConfigLogVerbosity(nodeConfig, opdi::LogVerbosity::UNKNOWN);
+	openhat->configureDigitalPort(nodeConfig, this, false);
+	this->logVerbosity = openhat->getConfigLogVerbosity(nodeConfig, opdi::LogVerbosity::UNKNOWN);
 
 	// get web server configuration
 	this->httpPort = nodeConfig->getString("Port", this->httpPort);
@@ -599,7 +598,7 @@ void WebServerPlugin::setupPlugin(openhat::AbstractOpenHAT* openHAT, const std::
 	this->documentRoot = finalPath.toString();
 	this->logDebug("Resolved document root to: " + this->documentRoot);
 	*/
-	this->documentRoot = openHAT->resolveRelativePath(nodeConfig, node, this->documentRoot, "Config");
+	this->documentRoot = openhat->resolveRelativePath(nodeConfig, node, this->documentRoot, "Config");
 	if (!Poco::File(this->documentRoot).isDirectory())
 		throw Poco::DataException("Resolved document root folder does not exist or is not a folder: " + documentRoot);
 		

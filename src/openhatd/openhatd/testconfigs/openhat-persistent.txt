@@ -1,6 +1,6 @@
-LastChange: 2016-11-14 17:21:55.038
-TempSetting_AutoAggregator.Time: 31898413
+LastChange: 2016-11-15 09:42:29.933
+TempSetting_AutoAggregator.Time: 78118802
 TempSetting_AutoAggregator.Values: 160
-TempThreshold_AutoAggregator.Time: 31898413
+TempThreshold_AutoAggregator.Time: 78118802
 TempThreshold_AutoAggregator.Values: 150
-Timer1ManualNode.Position: 1479140545
+Timer1ManualNode.Position: 1479199375

@@ -431,6 +431,8 @@ IOpenHATPlugin* LinuxOpenHAT::getPlugin(const std::string& driver) {
 	if (lDriver.find(".so") != lDriver.length() - 3)
 		lDriver.append(".so");
 
+	this->logDebug("Trying to load plugin shared library: " + lDriver);
+
 	this->warnIfPluginMoreRecent(lDriver);
 
 	void* hndl = dlopen(lDriver.c_str(), RTLD_NOW);
@@ -448,7 +450,7 @@ IOpenHATPlugin* LinuxOpenHAT::getPlugin(const std::string& driver) {
 	char* lasterror = dlerror();
 	if (lasterror != NULL) {
 		dlclose(hndl);
-		throw Poco::ApplicationException("Invalid plugin library; could not locate function 'GetPluginInstance' in " + driver, lasterror);
+		throw Poco::ApplicationException("Invalid plugin library; could not locate function 'GetPluginInstance' in " + lDriver, lasterror);
 	}
 
 	// call the library function to get the plugin instance

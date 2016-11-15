@@ -1539,7 +1539,7 @@ void AbstractOpenHAT::getEnvironment(std::map<std::string, std::string>& mapToFi
 	mapToFill.insert(this->environment.begin(), this->environment.end());
 }
 
-std::string AbstractOpenHAT::getExceptionMessage(Poco::Exception & e) {
+std::string AbstractOpenHAT::getExceptionMessage(Poco::Exception& e) {
 	std::string what(e.what());
 #ifdef __GNUG__
 	int status;
@@ -1550,7 +1550,8 @@ std::string AbstractOpenHAT::getExceptionMessage(Poco::Exception & e) {
 #else
 	std::string typeName(e.className());
 #endif
-	return typeName + (e.message().empty() ? "" : ": " + e.message()) + (what.empty() ? "" : " " + what);
+	return (e.message().empty() ? "" : ": " + e.message()) + (what.empty() ? "" : " " + what)
+		+ (typeName.empty() ? "" : " (" + typeName + ")");
 }
 
 }		// namespace openhat

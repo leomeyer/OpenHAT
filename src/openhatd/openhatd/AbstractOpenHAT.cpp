@@ -377,9 +377,7 @@ int AbstractOpenHAT::startup(const std::vector<std::string>& args, const std::ma
 		}
 	}
 
-	// create view to "General" section
-	Poco::AutoPtr<ConfigurationView> general = this->createConfigView(configuration, "General");
-	this->setGeneralConfiguration(general, configuration);
+	std::string switchToUserName = this->setupGeneralConfiguration(configuration);
 
 	this->setupRoot(configuration);
 
@@ -392,14 +390,11 @@ int AbstractOpenHAT::startup(const std::vector<std::string>& args, const std::ma
 
 	// startup has been done using the process owner
 	// if specified, change process privileges to a different user
-	if (general->hasProperty("SwitchToUser")) {
-		this->switchToUser(general->getString("SwitchToUser"));
+	if (!switchToUserName.empty()) {
+		this->switchToUser(switchToUserName);
 	}
 
-	// create view to "Connection" section
-	Poco::AutoPtr<ConfigurationView> connection = this->createConfigView(configuration, "Connection");
-
-	int result = this->setupConnection(connection, testMode);
+	int result = this->setupConnection(configuration, testMode);
 
 	// save persistent configuration when exiting
 	this->savePersistentConfig();
@@ -475,8 +470,10 @@ void AbstractOpenHAT::unusedConfigKeysDetected(const std::string & viewName, con
 	}
 }
 
-void AbstractOpenHAT::setGeneralConfiguration(ConfigurationView* general, ConfigurationView* mainConfig) {
+std::string AbstractOpenHAT::setupGeneralConfiguration(ConfigurationView* config) {
 	this->logVerbose("Setting up general configuration");
+	// enumerate section "Root"
+	Poco::AutoPtr<ConfigurationView> general = this->createConfigView(config, "General");
 
 	// set log verbosity only if it's not already set
 	if (this->logVerbosity == opdi::LogVerbosity::UNKNOWN)
@@ -527,19 +524,22 @@ void AbstractOpenHAT::setGeneralConfiguration(ConfigurationView* general, Config
 	// encryption defined?
 	std::string encryptionNode = general->getString("Encryption", "");
 	if (encryptionNode != "") {
-		Poco::AutoPtr<ConfigurationView> encryptionConfig = this->createConfigView(mainConfig, encryptionNode);
+		Poco::AutoPtr<ConfigurationView> encryptionConfig = this->createConfigView(config, encryptionNode);
 		this->configureEncryption(encryptionConfig);
 	}
 
 	// authentication defined?
 	std::string authenticationNode = general->getString("Authentication", "");
 	if (authenticationNode != "") {
-		Poco::AutoPtr<ConfigurationView> authenticationConfig = this->createConfigView(mainConfig, authenticationNode);
+		Poco::AutoPtr<ConfigurationView> authenticationConfig = this->createConfigView(config, authenticationNode);
 		this->configureAuthentication(authenticationConfig);
 	}
 
 	// initialize OPDI slave
 	this->setup(slaveName.c_str(), idleTimeout);
+
+	// return the user name to switch to (if specified)
+	return general->getString("SwitchToUser", "");
 }
 
 void AbstractOpenHAT::configureEncryption(ConfigurationView* config) {
@@ -1223,8 +1223,10 @@ void AbstractOpenHAT::setupRoot(ConfigurationView* config) {
 	// TODO check group hierarchy
 }
 
-int AbstractOpenHAT::setupConnection(ConfigurationView* config, bool testMode) {
+int AbstractOpenHAT::setupConnection(ConfigurationView* configuration, bool testMode) {
 	this->logVerbose(std::string("Setting up connection for slave: ") + this->slaveName);
+	Poco::AutoPtr<ConfigurationView> config = this->createConfigView(configuration, "Connection");
+
 	std::string connectionType = this->getConfigString(config, "Connection", "Type", "", true);
 	this->connectionLogVerbosity = this->getConfigLogVerbosity(config, this->logVerbosity);
 
@@ -1238,6 +1240,13 @@ int AbstractOpenHAT::setupConnection(ConfigurationView* config, bool testMode) {
 
 		if (testMode)
 			return OPDI_STATUS_OK;
+
+		// check unused keys here (before starting the connection loop)
+		std::vector<std::string> unusedKeys;
+		config->getUnusedKeys(unusedKeys);
+		if (unusedKeys.size() > 0)
+			this->unusedConfigKeysDetected("Connection", unusedKeys);
+		config->setCheckUnused(false);	// no check needed afterwards
 
 		return this->setupTCP(interface_, port);
 	}

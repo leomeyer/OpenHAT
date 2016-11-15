@@ -271,7 +271,7 @@ void TimerPort::configure(ConfigurationView* config, ConfigurationView* parentCo
 		// get schedule section from the configuration
 		Poco::AutoPtr<ConfigurationView> scheduleConfig = this->openhat->createConfigView(parentConfig, nodeName);
 
-		Schedule schedule;
+		Schedule schedule = {};
 		schedule.nodeName = nodeName;
 		schedule.maxOccurrences = scheduleConfig->getInt("MaxOccurrences", -1);
 		schedule.duration = scheduleConfig->getInt("Duration", 1000);	// default duration: 1 second

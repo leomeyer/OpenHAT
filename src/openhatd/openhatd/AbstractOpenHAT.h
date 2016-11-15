@@ -187,7 +187,8 @@ public:
 	/** Called by the destructor of ConfigurationView, do not throw exceptions in this method! */
 	virtual void unusedConfigKeysDetected(const std::string& viewName, const std::vector<std::string>& unusedKeys);
 
-	virtual void setGeneralConfiguration(ConfigurationView* general, ConfigurationView* mainConfig);
+	/** Returns the name of the user to switch to, if specified in SwitchToUser */
+	std::string setupGeneralConfiguration(ConfigurationView* config);
 
 	virtual void configureEncryption(ConfigurationView* config);
 
@@ -242,8 +243,8 @@ public:
 	/** Starts enumerating the nodes of the Root section and configures the nodes. */
 	virtual void setupRoot(ConfigurationView* config);
 
-	/** Sets up the connection from the specified configuration. */
-	virtual int setupConnection(ConfigurationView* config, bool testMode);
+	/** Sets up the connection from "Connection" section of the specified configuration. */
+	virtual int setupConnection(ConfigurationView* configuration, bool testMode);
 
 	/** Sets up a TCP listener and listens for incoming requests. This method does not return unless the program should exit. */
 	virtual int setupTCP(const std::string& interface_, int port) = 0;

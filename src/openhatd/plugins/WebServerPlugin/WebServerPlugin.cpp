@@ -568,11 +568,6 @@ void WebServerPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::
 	this->opdi = this->openhat = openhat;
 	this->setID(node.c_str());
 
-	Poco::JSON::Object response;
-	std::stringstream sOut;
-	response.stringify(sOut);
-	std::cout << sOut.str() << std::endl;
-	
 	Poco::AutoPtr<openhat::ConfigurationView> nodeConfig = this->openhat->createConfigView(config, node);
 	// avoid check for unused plugin keys
 	nodeConfig->addUsedKey("Type");
@@ -623,7 +618,7 @@ void WebServerPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::
 	if (this->ipACL != "")
 		this->s_http_server_opts.ip_acl = this->ipACL.c_str();
 
-	this->logVerbose("Setting up web server at: " + this->httpPort);
+	this->logVerbose("Setting up web server on port " + this->httpPort);
 
 	const char* errorString[256];
 	struct mg_bind_opts opts;
@@ -647,7 +642,7 @@ void WebServerPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::
 	// set HTTP server parameters
 	mg_set_protocol_http_websocket(this->nc);
 
-	this->logVerbose("WebServerPlugin setup completed successfully at: " + this->httpPort);
+	this->logVerbose("WebServerPlugin setup completed successfully on port " + this->httpPort);
 	
 	// register port (necessary for doWork to be called regularly)
 	this->opdi->addPort(this);

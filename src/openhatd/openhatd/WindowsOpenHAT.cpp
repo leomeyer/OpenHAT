@@ -332,6 +332,8 @@ IOpenHATPlugin* WindowsOpenHAT::getPlugin(const std::string& driver) {
 	if (lDriver.find(".dll") != lDriver.length() - 4)
 		lDriver.append(".dll");
 
+	this->logDebug("Trying to load plugin dynamic library: " + lDriver);
+
 	this->warnIfPluginMoreRecent(lDriver);
 
 	// attempt to load the specified DLL

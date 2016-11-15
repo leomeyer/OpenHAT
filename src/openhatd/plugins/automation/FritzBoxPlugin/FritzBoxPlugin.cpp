@@ -460,7 +460,7 @@ void FritzBoxPlugin::errorOccurred(const std::string& message) {
 	unsigned int msb = msb32(this->errorCount);
 	// are the lower bits zero?
 	if ((this->errorCount & ((1 << (msb - 1)) - 1)) == 0) {
-		// add occurrence count if larger than 1
+		// add occurrence count if greater than 1
 		this->openhat->logNormal((this->errorCount > 1 ? "(" + this->openhat->to_string(this->errorCount) + ") " : "") + message, this->logVerbosity);
 	}
 }

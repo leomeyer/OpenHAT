@@ -584,7 +584,7 @@ void WebServerPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::
 	// determine application-relative path depending on location of config file
 	std::string configFilePath = config->getString(OPENHAT_CONFIG_FILE_SETTING, "");
 	if (configFilePath == "")
-		throw Poco::DataException("Programming error: Configuration file path not specified in config settings");
+		this->throwSettingsException("Programming error: Configuration file path not specified in config settings");
 	Poco::Path filePath(configFilePath);
 	Poco::Path absPath(filePath.absolute());
 	Poco::Path parentPath = absPath.parent();
@@ -595,7 +595,7 @@ void WebServerPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::
 	*/
 	this->documentRoot = openhat->resolveRelativePath(nodeConfig, node, this->documentRoot, "Config");
 	if (!Poco::File(this->documentRoot).isDirectory())
-		throw Poco::DataException("Resolved document root folder does not exist or is not a folder: " + documentRoot);
+		this->openhat->throwSettingsException("Resolved document root folder does not exist or is not a folder: " + documentRoot);
 		
 	// expose JSON-RPC API via special URL (can be disabled by setting the URL to "")
 	this->jsonRpcUrl = nodeConfig->getString("JsonRpcUrl", this->jsonRpcUrl);

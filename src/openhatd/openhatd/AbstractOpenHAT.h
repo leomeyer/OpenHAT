@@ -10,6 +10,7 @@
 #include "Poco/Stopwatch.h"
 #include "Poco/BasicEvent.h"
 #include "Poco/Delegate.h"
+#include "Poco/Exception.h"
 
 #include "Configuration.h"
 
@@ -39,6 +40,12 @@ namespace openhat {
 #define OPENHAT_MAJOR_VERSION		0
 #define OPENHAT_MINOR_VERSION		1
 #define OPENHAT_PATCH_VERSION		0
+
+class SettingsException : public Poco::Exception
+{
+public:
+	explicit SettingsException(std::string message, const std::string& detail = "") : Poco::Exception(message, detail) {};
+};
 
 /** The listener interface for plugin registrations. */
 struct IConnectionListener {
@@ -95,6 +102,8 @@ protected:
 	int targetFramesPerSecond;				// target number of doWork iterations per second
 
 	std::string heartbeatFile;
+
+	bool suppressUnusedParameterMessages;
 
 	virtual uint8_t idleTimeoutReached(void) override;
 
@@ -186,6 +195,9 @@ public:
 
 	/** Called by the destructor of ConfigurationView, do not throw exceptions in this method! */
 	virtual void unusedConfigKeysDetected(const std::string& viewName, const std::vector<std::string>& unusedKeys);
+
+	/** Throws a SettingsException. Suppresses unused config key messages afterwards. */
+	virtual void throwSettingsException(const std::string& message, const std::string& detail = "");
 
 	/** Returns the name of the user to switch to, if specified in SwitchToUser */
 	std::string setupGeneralConfiguration(ConfigurationView* config);

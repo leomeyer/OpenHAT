@@ -80,23 +80,23 @@ void LogicPort::configure(ConfigurationView* config) {
 			}
 		}
 	} catch (...) {
-		throw Poco::DataException(std::string("Syntax error for LogicPort ") + this->getID() + ", Function setting: Expected OR, AND, XOR, ATLEAST <n>, ATMOST <n> or EXACT <n>");
+		this->openhat->throwSettingsException(std::string("Syntax error for LogicPort ") + this->getID() + ", Function setting: Expected OR, AND, XOR, ATLEAST <n>, ATMOST <n> or EXACT <n>");
 	}
 
 	if (this->function == UNKNOWN)
-		throw Poco::DataException("Unknown function specified for LogicPort: " + function);
+		this->openhat->throwSettingsException("Unknown function specified for LogicPort: " + function);
 	if ((this->function == ATLEAST) && (this->funcN <= 0))
-		throw Poco::DataException("Expected positive integer for function ATLEAST of LogicPort: " + function);
+		this->openhat->throwSettingsException("Expected positive integer for function ATLEAST of LogicPort: " + function);
 	if ((this->function == ATMOST) && (this->funcN <= 0))
-		throw Poco::DataException("Expected positive integer for function ATMOST of LogicPort: " + function);
+		this->openhat->throwSettingsException("Expected positive integer for function ATMOST of LogicPort: " + function);
 	if ((this->function == EXACT) && (this->funcN <= 0))
-		throw Poco::DataException("Expected positive integer for function EXACT of LogicPort: " + function);
+		this->openhat->throwSettingsException("Expected positive integer for function EXACT of LogicPort: " + function);
 
 	this->negate = config->getBool("Negate", false);
 
 	this->inputPortStr = config->getString("InputPorts", "");
 	if (this->inputPortStr == "")
-		throw Poco::DataException("Expected at least one input port for LogicPort");
+		this->openhat->throwSettingsException("Expected at least one input port for LogicPort");
 
 	this->outputPortStr = config->getString("OutputPorts", "");
 	this->inverseOutputPortStr = config->getString("InverseOutputPorts", "");
@@ -255,7 +255,7 @@ void PulsePort::configure(ConfigurationView* config) {
 	} else if (portLine == "Low") {
 		this->setLine(0);
 	} else if (portLine != "")
-		throw Poco::DataException("Unknown Line specified; expected 'Low' or 'High'", portLine);
+		this->openhat->throwSettingsException("Unknown Line specified; expected 'Low' or 'High'", portLine);
 
 	std::string disabledState = config->getString("DisabledState", "");
 	if (disabledState == "High") {
@@ -263,7 +263,7 @@ void PulsePort::configure(ConfigurationView* config) {
 	} else if (disabledState == "Low") {
 		this->disabledState = 0;
 	} else if (disabledState != "")
-		throw Poco::DataException("Unknown DisabledState specified; expected 'Low' or 'High'", disabledState);
+		this->openhat->throwSettingsException("Unknown DisabledState specified; expected 'Low' or 'High'", disabledState);
 
 	this->enablePortStr = config->getString("EnablePorts", "");
 	this->outputPortStr = config->getString("OutputPorts", "");
@@ -271,18 +271,18 @@ void PulsePort::configure(ConfigurationView* config) {
 
 	this->period.initialize(this, "Period", config->getString("Period", "-1"));
 	if (!this->period.validate(1, INT_MAX))
-		throw Poco::DataException("Specify a positive integer value for the Period setting of a PulsePort: " + this->to_string(this->period.value()));
+		this->openhat->throwSettingsException("Specify a positive integer value for the Period setting of a PulsePort: " + this->to_string(this->period.value()));
 
 	// duty cycle is specified in percent
 	this->dutyCycle.initialize(this, "DutyCycle", config->getString("DutyCycle", "50"));
 	if (!this->dutyCycle.validate(0, 100))
-		throw Poco::DataException("Specify a percentage value from 0 - 100 for the DutyCycle setting of a PulsePort: " + this->to_string(this->dutyCycle.value()));
+		this->openhat->throwSettingsException("Specify a percentage value from 0 - 100 for the DutyCycle setting of a PulsePort: " + this->to_string(this->dutyCycle.value()));
 
 	// number of pulses
 	if (config->hasProperty("Pulses")) {
 		this->pulses.initialize(this, "Pulses", config->getString("Pulses", "-1"));
 		if (!this->pulses.validate(1, INT_MAX))
-			throw Poco::DataException("Specify a positive integer value for the Pulses setting of a PulsePort: " + this->to_string(this->pulses.value()));
+			this->openhat->throwSettingsException("Specify a positive integer value for the Pulses setting of a PulsePort: " + this->to_string(this->pulses.value()));
 	}
 }
 
@@ -430,13 +430,13 @@ void SelectorPort::configure(ConfigurationView* config) {
 
 	this->selectPortStr = config->getString("SelectPort", "");
 	if (this->selectPortStr == "")
-		throw Poco::DataException(this->ID() + ": You have to specify the SelectPort");
+		this->openhat->throwSettingsException(this->ID() + ": You have to specify the SelectPort");
 
 	this->outputPortStr = config->getString("OutputPorts", "");
 
 	int pos = config->getInt("Position", -1);
 	if ((pos < 0) || (pos > 65535))
-		throw Poco::DataException(this->ID() + ": You have to specify a SelectPort position that is greater than -1 and lower than 65536");
+		this->openhat->throwSettingsException(this->ID() + ": You have to specify a SelectPort position that is greater than -1 and lower than 65536");
 
 	this->position = pos;
 }
@@ -476,7 +476,7 @@ void SelectorPort::prepare() {
 
 	// check position range
 	if (this->position > this->selectPort->getMaxPosition())
-		throw Poco::DataException(this->ID() + ": The specified selector position exceeds the maximum of port " + this->selectPort->ID() + ": " + to_string(this->selectPort->getMaxPosition()));
+		this->openhat->throwSettingsException(this->ID() + ": The specified selector position exceeds the maximum of port " + this->selectPort->ID() + ": " + to_string(this->selectPort->getMaxPosition()));
 }
 
 uint8_t SelectorPort::doWork(uint8_t canSend)  {
@@ -650,7 +650,7 @@ void SerialStreamingPort::configure(ConfigurationView* config) {
 		this->mode = PASS_THROUGH;
 	} else
 		if (modeStr != "")
-			throw Poco::DataException(this->ID() + ": Invalid mode specifier; expected 'Passthrough' or 'Loopback': " + modeStr);
+			this->openhat->throwSettingsException(this->ID() + ": Invalid mode specifier; expected 'Passthrough' or 'Loopback': " + modeStr);
 }
 
 int SerialStreamingPort::write(char* bytes, size_t length) {
@@ -781,7 +781,7 @@ void LoggerPort::configure(ConfigurationView* config) {
 
 	std::string formatStr = config->getString("Format", "CSV");
 	if (formatStr != "CSV")
-		throw Poco::DataException(this->ID() + ": Formats other than CSV are currently not supported");
+		this->openhat->throwSettingsException(this->ID() + ": Formats other than CSV are currently not supported");
 
 	std::string outFileStr = config->getString("OutputFile", "");
 	if (outFileStr != "") {
@@ -793,7 +793,7 @@ void LoggerPort::configure(ConfigurationView* config) {
 		// open the stream in append mode
 		this->outFile.open(outFileStr, std::ios_base::app);
 	} else
-		throw Poco::DataException(this->ID() + ": The OutputFile setting must be specified");
+		this->openhat->throwSettingsException(this->ID() + ": The OutputFile setting must be specified");
 
 	this->portsToLogStr = this->openhat->getConfigString(config, this->ID(), "Ports", "", true);
 }
@@ -844,25 +844,25 @@ void FaderPort::configure(ConfigurationView* config) {
 	else if (modeStr == "Exponential")
 		this->mode = EXPONENTIAL;
 	else if (modeStr != "")
-		throw Poco::DataException(this->ID() + ": Invalid FadeMode setting specified; expected 'Linear' or 'Exponential': " + modeStr);
+		this->openhat->throwSettingsException(this->ID() + ": Invalid FadeMode setting specified; expected 'Linear' or 'Exponential': " + modeStr);
 
 	this->leftValue.initialize(this, "Left", config->getString("Left", "-1"));
 	if (!this->leftValue.validate(0.0, 100.0))
-		throw Poco::DataException(this->ID() + ": Value for 'Left' must be between 0 and 100 percent");
+		this->openhat->throwSettingsException(this->ID() + ": Value for 'Left' must be between 0 and 100 percent");
 	this->rightValue.initialize(this, "Right", config->getString("Right", "-1"));
 	if (!this->rightValue.validate(0.0, 100.0))
-		throw Poco::DataException(this->ID() + ": Value for 'Right' must be between 0 and 100 percent");
+		this->openhat->throwSettingsException(this->ID() + ": Value for 'Right' must be between 0 and 100 percent");
 	this->durationMsValue.initialize(this, "Duration", config->getString("Duration", "-1"));
 	if (!this->durationMsValue.validate(0, INT_MAX))
-		throw Poco::DataException(this->ID() + ": 'Duration' must be a positive non-zero value (in milliseconds)");
+		this->openhat->throwSettingsException(this->ID() + ": 'Duration' must be a positive non-zero value (in milliseconds)");
 
 	if (this->mode == EXPONENTIAL) {
 		this->expA = config->getDouble("ExpA", 1);
 		if (this->expA < 0.0)
-			throw Poco::DataException(this->ID() + ": Value for 'ExpA' must be greater than 0 (default: 1)");
+			this->openhat->throwSettingsException(this->ID() + ": Value for 'ExpA' must be greater than 0 (default: 1)");
 		this->expB = config->getDouble("ExpB", 10);
 		if (this->expB < 0.0)
-			throw Poco::DataException(this->ID() + ": Value for 'ExpB' must be greater than 0 (default: 10)");
+			this->openhat->throwSettingsException(this->ID() + ": Value for 'ExpB' must be greater than 0 (default: 10)");
 
 		// determine maximum result of the exponentiation, depending on the coefficients expA and expB
 		this->expMax = this->expA * (exp(this->expB) - 1);
@@ -878,7 +878,7 @@ void FaderPort::configure(ConfigurationView* config) {
 	if (switchOffActionStr == "None") {
 		this->switchOffAction = NONE;
 	} else
-		throw Poco::DataException(this->ID() + ": Illegal value for 'SwitchOffAction', expected 'SetToLeft', 'SetToRight', or 'None': " + switchOffActionStr);
+		this->openhat->throwSettingsException(this->ID() + ": Illegal value for 'SwitchOffAction', expected 'SetToLeft', 'SetToRight', or 'None': " + switchOffActionStr);
 
 	this->outputPortStr = openhat->getConfigString(config, this->ID(), "OutputPorts", "", true);
 	this->endSwitchesStr = openhat->getConfigString(config, this->ID(), "EndSwitches", "", false);
@@ -1081,7 +1081,7 @@ void SceneSelectPort::configure(ConfigurationView* config, ConfigurationView* pa
 	for (auto it = itemKeys.begin(), ite = itemKeys.end(); it != ite; ++it) {
 		int itemNumber;
 		if (!Poco::NumberParser::tryParse(*it, itemNumber) || (itemNumber < 0)) {
-			throw Poco::DataException(this->ID() + ": Scene identifiers must be numeric integer values greater or equal than 0; got: " + this->to_string(itemNumber));
+			this->openhat->throwSettingsException(this->ID() + ": Scene identifiers must be numeric integer values greater or equal than 0; got: " + this->to_string(itemNumber));
 		}
 		// insert at the correct position to create a sorted list of items
 		auto nli = orderedItems.begin();
@@ -1096,7 +1096,7 @@ void SceneSelectPort::configure(ConfigurationView* config, ConfigurationView* pa
 	}
 
 	if (orderedItems.size() == 0)
-		throw Poco::DataException(this->ID() + ": A scene select port requires at least one scene in its config section", this->ID() + ".Scenes");
+		this->openhat->throwSettingsException(this->ID() + ": A scene select port requires at least one scene in its config section", this->ID() + ".Scenes");
 
 	// go through items, create ordered list of char* items
 	auto nli = orderedItems.begin();
@@ -1110,7 +1110,7 @@ void SceneSelectPort::configure(ConfigurationView* config, ConfigurationView* pa
 
 	// check whether port items and file match in numbers
 	if ((uint32_t)(this->getMaxPosition() + 1) != this->fileList.size()) 
-		throw Poco::DataException(this->ID() + ": The number of scenes (" + this->to_string(this->fileList.size()) + ")"
+		this->openhat->throwSettingsException(this->ID() + ": The number of scenes (" + this->to_string(this->fileList.size()) + ")"
 			+ " must match the number of items (" + this->to_string(this->getMaxPosition() + 1) + ")");
 }
 
@@ -1461,7 +1461,7 @@ void FilePort::configure(ConfigurationView* config, ConfigurationView* parentCon
 		this->openhat->configureDigitalPort(nodeConfig, (opdi::DigitalPort*)valuePort);
 		// validate setup
 		if (((opdi::DigitalPort*)valuePort)->getMode() != OPDI_DIGITAL_MODE_INPUT_FLOATING)
-			throw Poco::DataException(this->ID() + ": Modes other than 'Input' are not supported for a digital file port: " + portNode);
+			this->openhat->throwSettingsException(this->ID() + ": Modes other than 'Input' are not supported for a digital file port: " + portNode);
 	} else
 	if (portType == "AnalogPort") {
 		this->portType = ANALOG_PORT;
@@ -1469,7 +1469,7 @@ void FilePort::configure(ConfigurationView* config, ConfigurationView* parentCon
 		this->openhat->configureAnalogPort(nodeConfig, (opdi::AnalogPort*)valuePort);
 		// validate setup
 		if (((opdi::AnalogPort*)valuePort)->getMode() != OPDI_ANALOG_MODE_INPUT)
-			throw Poco::DataException(this->ID() + ": Modes other than 'Input' are not supported for a analog file port: " + portNode);
+			this->openhat->throwSettingsException(this->ID() + ": Modes other than 'Input' are not supported for a analog file port: " + portNode);
 	} else
 	if (portType == "DialPort") {
 		this->portType = DIAL_PORT;
@@ -1485,7 +1485,7 @@ void FilePort::configure(ConfigurationView* config, ConfigurationView* parentCon
 		this->portType = STREAMING_PORT;
 		throw Poco::NotImplementedException("Streaming port support not yet implemented");
 	} else
-		throw Poco::DataException(this->ID() + ": Node " + portNode + ": Type unsupported, expected 'DigitalPort', 'AnalogPort', 'DialPort', 'SelectPort', or 'StreamingPort': " + portType);
+		this->openhat->throwSettingsException(this->ID() + ": Node " + portNode + ": Type unsupported, expected 'DigitalPort', 'AnalogPort', 'DialPort', 'SelectPort', or 'StreamingPort': " + portType);
 
 	this->openhat->addPort(this->valuePort);
 
@@ -1504,12 +1504,12 @@ void FilePort::configure(ConfigurationView* config, ConfigurationView* parentCon
 
 	this->reloadDelayMs = config->getInt("ReloadDelay", this->reloadDelayMs);
 	if (this->reloadDelayMs < 0) {
-		throw Poco::DataException(this->ID() + ": If ReloadDelay is specified it must be greater than 0 (ms): " + this->to_string(this->reloadDelayMs));
+		this->openhat->throwSettingsException(this->ID() + ": If ReloadDelay is specified it must be greater than 0 (ms): " + this->to_string(this->reloadDelayMs));
 	}
 
 	this->expiryMs = config->getInt("Expiry", this->expiryMs);
 	if (this->expiryMs < 0) {
-		throw Poco::DataException(this->ID() + ": If Expiry is specified it must be greater than 0 (ms): " + this->to_string(this->expiryMs));
+		this->openhat->throwSettingsException(this->ID() + ": If Expiry is specified it must be greater than 0 (ms): " + this->to_string(this->expiryMs));
 	}
 	this->deleteAfterRead = config->getBool("DeleteAfterRead", this->deleteAfterRead);
 
@@ -1865,12 +1865,12 @@ void AggregatorPort::configure(ConfigurationView* config, ConfigurationView* par
 
 	this->queryInterval = config->getInt("Interval", 0);
 	if (this->queryInterval <= 0) {
-		throw Poco::DataException(this->ID() + ": Please specify a positive value for Interval (in seconds): " + this->to_string(this->queryInterval));
+		this->openhat->throwSettingsException(this->ID() + ": Please specify a positive value for Interval (in seconds): " + this->to_string(this->queryInterval));
 	}
 
 	this->totalValues = config->getInt("Values", 0);
 	if (this->totalValues <= 1) {
-		throw Poco::DataException(this->ID() + ": Please specify a number greater than 1 for Values: " + this->to_string(this->totalValues));
+		this->openhat->throwSettingsException(this->ID() + ": Please specify a number greater than 1 for Values: " + this->to_string(this->totalValues));
 	}
 
 	this->multiplier = config->getInt("Multiplier", this->multiplier);
@@ -1934,7 +1934,7 @@ void AggregatorPort::configure(ConfigurationView* config, ConfigurationView* par
 
 		// type must be "DialPort"
 		if (type != "DialPort")
-			throw Poco::DataException(this->ID() + ": Invalid type for calculation section, must be 'DialPort': " + nodeName);
+			this->openhat->throwSettingsException(this->ID() + ": Invalid type for calculation section, must be 'DialPort': " + nodeName);
 
 		// creat the dial port for the calculation
 		Calculation* calc = new Calculation(nodeName);
@@ -1965,7 +1965,7 @@ void AggregatorPort::configure(ConfigurationView* config, ConfigurationView* par
 			calc->algorithm = MAXIMUM;
 			calc->allowIncomplete = true;
 		} else
-			throw Poco::DataException(this->ID() + ": Algorithm unsupported or not specified; expected 'Delta', 'ArithmeticMean'/'Average', 'Minimum', or 'Maximum': " + algStr);
+			this->openhat->throwSettingsException(this->ID() + ": Algorithm unsupported or not specified; expected 'Delta', 'ArithmeticMean'/'Average', 'Minimum', or 'Maximum': " + algStr);
 
 		// override allowIncomplete flag if specified
 		calc->allowIncomplete = calculationConfig->getBool("AllowIncomplete", calc->allowIncomplete);
@@ -2072,7 +2072,7 @@ void TriggerPort::configure(ConfigurationView* config) {
 		this->triggerType = BOTH;
 	else
 		if (triggerTypeStr != "")
-			throw Poco::DataException(this->ID() + ": Invalid specification for 'Trigger', expected 'RisingEdge', 'FallingEdge', or 'Both'");
+			this->openhat->throwSettingsException(this->ID() + ": Invalid specification for 'Trigger', expected 'RisingEdge', 'FallingEdge', or 'Both'");
 
 	std::string changeTypeStr = config->getString("Change", "Toggle");
 	if (changeTypeStr == "SetHigh")
@@ -2085,11 +2085,11 @@ void TriggerPort::configure(ConfigurationView* config) {
 		this->changeType = TOGGLE;
 	else
 		if (changeTypeStr != "")
-			throw Poco::DataException(this->ID() + ": Invalid specification for 'Change', expected 'SetHigh', 'SetLow', or 'Toggle'");
+			this->openhat->throwSettingsException(this->ID() + ": Invalid specification for 'Change', expected 'SetHigh', 'SetLow', or 'Toggle'");
 
 	this->inputPortStr = config->getString("InputPorts", "");
 	if (this->inputPortStr == "")
-		throw Poco::DataException("Expected at least one input port for TriggerPort");
+		this->openhat->throwSettingsException("Expected at least one input port for TriggerPort");
 
 	this->outputPortStr = config->getString("OutputPorts", "");
 	this->inverseOutputPortStr = config->getString("InverseOutputPorts", "");

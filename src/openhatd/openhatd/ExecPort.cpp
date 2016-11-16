@@ -42,25 +42,25 @@ void ExecPort::configure(ConfigurationView* config) {
         this->changeType = ANY_CHANGE;
 	} else
 	if (!changeTypeStr.empty())
-        throw Poco::DataException(this->ID() + ": Illegal value for 'ChangeType', expected: 'ChangedToHigh', 'ChangedToLow', or 'AnyChange': " + changeTypeStr);
+        this->openhat->throwSettingsException(this->ID() + ": Illegal value for 'ChangeType', expected: 'ChangedToHigh', 'ChangedToLow', or 'AnyChange': " + changeTypeStr);
 
 	this->programName = config->getString("Program", "");
 	if (this->programName == "")
-		throw Poco::DataException(this->ID() + ": You have to specify a Program parameter");
+		this->openhat->throwSettingsException(this->ID() + ": You have to specify a Program parameter");
 
 	this->parameters = config->getString("Parameters", "");
 
 	this->waitTimeMs = config->getInt64("WaitTime", this->waitTimeMs);
 	if (this->waitTimeMs < 0)
-		throw Poco::DataException(this->ID() + ": Please specify a positive value for WaitTime: ", this->to_string(this->waitTimeMs));
+		this->openhat->throwSettingsException(this->ID() + ": Please specify a positive value for WaitTime: ", this->to_string(this->waitTimeMs));
 
 	this->resetTimeMs = config->getInt64("ResetTime", this->resetTimeMs);
 	if (this->resetTimeMs < 0)
-		throw Poco::DataException(this->ID() + ": Please specify a positive value for ResetTime: ", this->to_string(this->resetTimeMs));
+		this->openhat->throwSettingsException(this->ID() + ": Please specify a positive value for ResetTime: ", this->to_string(this->resetTimeMs));
 
 	this->killTimeMs = config->getInt64("KillTime", this->killTimeMs);
 	if (this->killTimeMs < 0)
-		throw Poco::DataException(this->ID() + ": Please specify a positive value for KillTime: ", this->to_string(this->killTimeMs));
+		this->openhat->throwSettingsException(this->ID() + ": Please specify a positive value for KillTime: ", this->to_string(this->killTimeMs));
 
 	this->forceKill = config->getBool("ForceKill", false);
 	

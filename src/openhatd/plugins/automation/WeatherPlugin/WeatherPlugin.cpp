@@ -288,7 +288,7 @@ void WeatherPlugin::setupPlugin(openhat::AbstractOpenHAT* openHAT, const std::st
 	if (this->provider == "Weewx-JSON") {
 		// nothing to do
 	} else
-		throw Poco::DataException(node + ": Provider not supported: " + this->provider);
+		this->openhat->throwSettingsException(node + ": Provider not supported: " + this->provider);
 
 	this->timeoutSeconds = nodeConfig->getInt("Timeout", this->timeoutSeconds);
 
@@ -296,13 +296,13 @@ void WeatherPlugin::setupPlugin(openhat::AbstractOpenHAT* openHAT, const std::st
 	std::string group = nodeConfig->getString("Group", "");
 	this->refreshTime = nodeConfig->getInt("RefreshTime", this->refreshTime);
 	if (this->refreshTime <= 0)
-		throw Poco::DataException(node + ": Please specify a non-negative meaningful RefreshTime in seconds");
+		this->openhat->throwSettingsException(node + ": Please specify a non-negative meaningful RefreshTime in seconds");
 	if (this->refreshTime > 600)
-		throw Poco::DataException(node + ": Please do not specify more than 10 minutes RefreshTime");
+		this->openhat->throwSettingsException(node + ": Please do not specify more than 10 minutes RefreshTime");
 
 	this->dataValiditySeconds = nodeConfig->getInt("DataValidity", this->dataValiditySeconds);
 	if (this->dataValiditySeconds <= 0)
-		throw Poco::DataException(node + ": Please specify a non-negative meaningful DataValidity in seconds");
+		this->openhat->throwSettingsException(node + ": Please specify a non-negative meaningful DataValidity in seconds");
 
 	// enumerate keys of the plugin's nodes (in specified order)
 	this->openhat->logVerbose(node + ": Enumerating Weather nodes: " + node + ".Nodes", this->logVerbosity);
@@ -365,7 +365,7 @@ void WeatherPlugin::setupPlugin(openhat::AbstractOpenHAT* openHAT, const std::st
 			// add port to internal list
 			this->weatherPorts.push_back(port);
 		} else
-			throw Poco::DataException("This plugin does not support the port type", portType);
+			this->openhat->throwSettingsException("This plugin does not support the port type", portType);
 
 		++nli;
 	}

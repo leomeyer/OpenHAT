@@ -78,6 +78,7 @@ AbstractOpenHAT::AbstractOpenHAT(void) {
 	this->waitingCallsPerSecond = 0;
 	this->framesPerSecond = 0;
 	this->allowHiddenPorts = true;
+	this->suppressUnusedParameterMessages = false;
 
 	// map result codes
 	opdiCodeTexts[0] = "STATUS_OK";
@@ -230,7 +231,7 @@ ConfigurationView* AbstractOpenHAT::readConfiguration(const std::string& filenam
 std::string AbstractOpenHAT::getConfigString(Poco::Util::AbstractConfiguration* config, const std::string &section, const std::string &key, const std::string &defaultValue, const bool isRequired) {
 	if (isRequired) {
 		if (!config->hasProperty(key)) {
-			throw Poco::DataException("Expected configuration parameter not found in section '" + section + "'", key);
+			this->throwSettingsException("Expected configuration parameter not found in section '" + section + "'", key);
 		}
 	}
 	return config->getString(key, defaultValue);
@@ -408,7 +409,7 @@ void AbstractOpenHAT::lockResource(const std::string& resourceID, const std::str
 	LockedResources::const_iterator it = this->lockedResources.find(resourceID);
 	// resource already used?
 	if (it != this->lockedResources.end())
-		throw Poco::DataException("Resource requested by " + lockerID + " is already in use by " + it->second + ": " + resourceID);
+		this->throwSettingsException("Resource requested by " + lockerID + " is already in use by " + it->second + ": " + resourceID);
 
 	// store the resource
 	this->lockedResources[resourceID] = lockerID;
@@ -464,10 +465,19 @@ Poco::Util::AbstractConfiguration* AbstractOpenHAT::getConfigForState(Configurat
 }
 
 void AbstractOpenHAT::unusedConfigKeysDetected(const std::string & viewName, const std::vector<std::string>& unusedKeys) {
+	if (this->suppressUnusedParameterMessages)
+		return;
 	auto ite = unusedKeys.cend();
 	for (auto it = unusedKeys.cbegin(); it != ite; ++it) {
 		this->logWarning("Unused configuration parameter in node " + viewName + ": " + *it);
 	}
+}
+
+void AbstractOpenHAT::throwSettingsException(const std::string & message, const std::string& detail) {
+	// do not output unused parameter messages after this call
+	this->suppressUnusedParameterMessages = true;
+
+	throw SettingsException(message, detail);
 }
 
 std::string AbstractOpenHAT::setupGeneralConfiguration(ConfigurationView* config) {
@@ -485,7 +495,7 @@ std::string AbstractOpenHAT::setupGeneralConfiguration(ConfigurationView* config
 		// determine CWD-relative path depending on location of config file
 		std::string configFilePath = general->getString(OPENHAT_CONFIG_FILE_SETTING, "");
 		if (configFilePath == "")
-			throw Poco::DataException("Programming error: Configuration file path not specified in config settings");
+			this->throwSettingsException("Programming error: Configuration file path not specified in config settings");
 
 		Poco::Path filePath(configFilePath);
 		Poco::Path absPath(filePath.absolute());
@@ -549,12 +559,12 @@ void AbstractOpenHAT::configureEncryption(ConfigurationView* config) {
 	if (type == "AES") {
 		std::string key = config->getString("Key", "");
 		if (key.length() != 16)
-			throw Poco::DataException("AES encryption setting 'Key' must be specified and 16 characters long");
+			this->throwSettingsException("AES encryption setting 'Key' must be specified and 16 characters long");
 
 		strncpy(opdi_encryption_method, "AES", ENCRYPTION_METHOD_MAXLENGTH);
 		strncpy(opdi_encryption_key, key.c_str(), ENCRYPTION_KEY_MAXLENGTH);
 	} else
-		throw Poco::DataException("Encryption type not supported, expected 'AES': " + type);
+		this->throwSettingsException("Encryption type not supported, expected 'AES': " + type);
 }
 
 void AbstractOpenHAT::configureAuthentication(ConfigurationView* config) {
@@ -564,7 +574,7 @@ void AbstractOpenHAT::configureAuthentication(ConfigurationView* config) {
 	if (type == "Login") {
 		std::string username = config->getString("Username", "");
 		if (username == "")
-			throw Poco::DataException("Authentication setting 'Username' must be specified");
+			this->throwSettingsException("Authentication setting 'Username' must be specified");
 		this->loginUser = username;
 
 		this->loginPassword = config->getString("Password", "");
@@ -572,7 +582,7 @@ void AbstractOpenHAT::configureAuthentication(ConfigurationView* config) {
 		// flag the device: expect authentication
 		opdi_device_flags |= OPDI_FLAG_AUTHENTICATION_REQUIRED;
 	} else
-		throw Poco::DataException("Authentication type not supported, expected 'Login': " + type);
+		this->throwSettingsException("Authentication type not supported, expected 'Login': " + type);
 }
 
 /** Reads common properties from the configuration and configures the port group. */
@@ -635,7 +645,7 @@ std::string AbstractOpenHAT::resolveRelativePath(ConfigurationView* config, cons
 		// determine configuration-relative path depending on location of previous config file
 		std::string configFile = config->getString(OPENHAT_CONFIG_FILE_SETTING, "");
 		if (configFile == "")
-			throw Poco::DataException("Programming error: Configuration file path not specified in config settings");
+			this->throwSettingsException("Programming error: Configuration file path not specified in config settings");
 		Poco::Path configFilePath(configFile);
 		Poco::Path parentPath = configFilePath.parent();
         this->logDebug("Resolving path '" + path + "' relative to configuration file path '" + parentPath.toString() + "'");
@@ -647,7 +657,8 @@ std::string AbstractOpenHAT::resolveRelativePath(ConfigurationView* config, cons
         if (relativeTo.empty())
             return path;
 
-    throw Poco::DataException("Unknown RelativeTo property specified; expected 'CWD' or 'Config'", relativeTo);
+    this->throwSettingsException("Unknown RelativeTo property specified; expected 'CWD' or 'Config'", relativeTo);
+	return "";
 }
 
 void AbstractOpenHAT::setupInclude(ConfigurationView* config, ConfigurationView* parentConfig, const std::string& node) {
@@ -726,7 +737,7 @@ void AbstractOpenHAT::configurePort(ConfigurationView* portConfig, opdi::Port* p
 	} else if (portDirCaps == "Bidi") {
 		port->setDirCaps(OPDI_PORTDIRCAP_BIDI);
 	} else if (portDirCaps != "")
-		throw Poco::DataException("Unknown DirCaps specified; expected 'Input', 'Output' or 'Bidi'", portDirCaps);
+		this->throwSettingsException("Unknown DirCaps specified; expected 'Input', 'Output' or 'Bidi'", portDirCaps);
 
 	int flags = portConfig->getInt("Flags", -1);
 	if (flags >= 0) {
@@ -748,14 +759,14 @@ void AbstractOpenHAT::configurePort(ConfigurationView* portConfig, opdi::Port* p
 		port->setRefreshMode(opdi::Port::RefreshMode::REFRESH_AUTO);
 	} else
 		if (refreshMode != "")
-			throw Poco::DataException("Unknown RefreshMode specified; expected 'Off', 'Periodic' or 'Auto': " + refreshMode);
+			this->throwSettingsException("Unknown RefreshMode specified; expected 'Off', 'Periodic' or 'Auto': " + refreshMode);
 
 	if (port->getRefreshMode() == opdi::Port::RefreshMode::REFRESH_PERIODIC) {
 		int time = portConfig->getInt("RefreshTime", -1);
 		if (time >= 0) {
 			port->setPeriodicRefreshTime(time);
 		} else {
-			throw Poco::DataException("A RefreshTime > 0 must be specified in Periodic refresh mode: " + to_string(time));
+			this->throwSettingsException("A RefreshTime > 0 must be specified in Periodic refresh mode: " + to_string(time));
 		}
 	}
 
@@ -799,7 +810,7 @@ void AbstractOpenHAT::configureDigitalPort(ConfigurationView* portConfig, opdi::
 	} else if (portMode == "Output") {
 		port->setMode(OPDI_DIGITAL_MODE_OUTPUT);
 	} else if (portMode != "")
-		throw Poco::DataException("Unknown Mode specified; expected 'Input', 'Input with pullup', 'Input with pulldown', or 'Output'", portMode);
+		this->throwSettingsException("Unknown Mode specified; expected 'Input', 'Input with pullup', 'Input with pulldown', or 'Output'", portMode);
 
 	std::string portLine = this->getConfigString(stateConfig, port->ID(), "Line", "", false);
 	if (portLine == "High") {
@@ -807,7 +818,7 @@ void AbstractOpenHAT::configureDigitalPort(ConfigurationView* portConfig, opdi::
 	} else if (portLine == "Low") {
 		port->setLine(0);
 	} else if (portLine != "")
-		throw Poco::DataException("Unknown Line specified; expected 'Low' or 'High'", portLine);
+		this->throwSettingsException("Unknown Line specified; expected 'Low' or 'High'", portLine);
 }
 
 void AbstractOpenHAT::setupEmulatedDigitalPort(ConfigurationView* portConfig, const std::string& port) {
@@ -900,7 +911,7 @@ void AbstractOpenHAT::configureSelectPort(ConfigurationView* portConfig, Configu
 		}
 
 		if (orderedItems.size() == 0)
-			throw Poco::DataException("The select port " + std::string(port->ID()) + " requires at least one item in its config section", std::string(port->ID()) + ".Items");
+			this->throwSettingsException("The select port " + std::string(port->ID()) + " requires at least one item in its config section", std::string(port->ID()) + ".Items");
 
 		// go through items, create ordered list of char* items
 		std::vector<const char*> charItems;
@@ -921,7 +932,7 @@ void AbstractOpenHAT::configureSelectPort(ConfigurationView* portConfig, Configu
 	if (stateConfig->getString("Position", "") != "") {
 		int16_t position = stateConfig->getInt("Position", 0);
 		if ((position < 0) || (position > port->getMaxPosition()))
-			throw Poco::DataException("Wrong select port setting: Position is out of range: " + to_string(position));
+			this->throwSettingsException("Wrong select port setting: Position is out of range: " + to_string(position));
 		port->setPosition(position);
 	}
 }
@@ -942,10 +953,10 @@ void AbstractOpenHAT::configureDialPort(ConfigurationView* portConfig, opdi::Dia
 		int64_t min = portConfig->getInt64("Min", LLONG_MIN);
 		int64_t max = portConfig->getInt64("Max", LLONG_MAX);
 		if (min >= max)
-			throw Poco::DataException("Wrong dial port setting: Max must be greater than Min");
+			this->throwSettingsException("Wrong dial port setting: Max must be greater than Min");
 		int64_t step = portConfig->getInt64("Step", 1);
 		if (step < 1)
-			throw Poco::DataException("Wrong dial port setting: Step may not be negative or zero: " + to_string(step));
+			this->throwSettingsException("Wrong dial port setting: Step may not be negative or zero: " + to_string(step));
 
 		port->setMin(min);
 		port->setMax(max);
@@ -968,7 +979,7 @@ void AbstractOpenHAT::configureDialPort(ConfigurationView* portConfig, opdi::Dia
 			if (history == "Day") {
 				aggPort->totalValues = 1440;
 			} else
-				throw Poco::DataException(port->ID() + ": Value for 'History' not supported, expected 'Hour' or 'Day': " + history);
+				this->throwSettingsException(port->ID() + ": Value for 'History' not supported, expected 'Hour' or 'Day': " + history);
 			aggPort->setHidden(true);
 			// set the standard log verbosity of hidden automatic aggregators to "Normal" because they can sometimes generate a log of log spam
 			// if the dial port's log verbosity is defined, the aggregator uses the same value
@@ -990,7 +1001,7 @@ void AbstractOpenHAT::configureDialPort(ConfigurationView* portConfig, opdi::Dia
 	// set port error to invalid if the value is out of range
 	if ((position < port->getMin()) || (position > port->getMax()))
 		port->setError(opdi::Port::Error::VALUE_NOT_AVAILABLE);
-		//throw Poco::DataException("Wrong dial port setting: Position is out of range: " + to_string(position));
+		//this->throwSettingsException("Wrong dial port setting: Position is out of range: " + to_string(position));
 	else
 		port->setPosition(position);
 }
@@ -1169,7 +1180,7 @@ void AbstractOpenHAT::setupNode(ConfigurationView* config, const std::string& no
 		this->setupPort<InfluxDBPort>(nodeConfig, node);
 	}
 	else
-		throw Poco::DataException("Invalid configuration: Unknown node type: " + nodeType);
+		this->throwSettingsException("Invalid configuration: Unknown node type: " + nodeType);
 }
 
 void AbstractOpenHAT::setupRoot(ConfigurationView* config) {
@@ -1234,7 +1245,7 @@ int AbstractOpenHAT::setupConnection(ConfigurationView* configuration, bool test
 		std::string interface_ = this->getConfigString(config, "Connection", "Interface", "*", false);
 
 		if (interface_ != "*")
-			throw Poco::DataException("Connection interface: Sorry, values other than '*' are currently not supported");
+			this->throwSettingsException("Connection interface: Sorry, values other than '*' are currently not supported");
 
 		int port = config->getInt("Port", DEFAULT_TCP_PORT);
 
@@ -1251,7 +1262,8 @@ int AbstractOpenHAT::setupConnection(ConfigurationView* configuration, bool test
 		return this->setupTCP(interface_, port);
 	}
 	else
-		throw Poco::DataException("Invalid configuration; unknown connection type", connectionType);
+		this->throwSettingsException("Invalid configuration; unknown connection type", connectionType);
+	return OPDI_STATUS_OK;
 }
 
 void AbstractOpenHAT::warnIfPluginMoreRecent(const std::string& driver) {

@@ -304,7 +304,7 @@ void FritzDECT200Power::configure(openhat::ConfigurationView* portConfig) {
 	if (time >= 0) {
 		this->setPeriodicRefreshTime(time);
 	} else {
-		throw Poco::DataException(this->ID() + ": A PowerRefreshTime > 0 must be specified: " + to_string(time));
+		plugin->openhat->throwSettingsException(this->ID() + ": A PowerRefreshTime > 0 must be specified: " + to_string(time));
 	}
 
 	// extended properties
@@ -385,7 +385,7 @@ void FritzDECT200Energy::configure(openhat::ConfigurationView* portConfig) {
 	if (time >= 0) {
 		this->setPeriodicRefreshTime(time);
 	} else {
-		throw Poco::DataException(this->ID() + ": An EnergyRefreshTime > 0 must be specified: " + to_string(time));
+		plugin->openhat->throwSettingsException(this->ID() + ": An EnergyRefreshTime > 0 must be specified: " + to_string(time));
 	}
 
 	// extended properties
@@ -846,7 +846,7 @@ void FritzBoxPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, cons
 			this->fritzPorts.push_back(powerPort);
 
 		} else
-			throw Poco::DataException("This plugin does not support the port type", portType);
+			this->openhat->throwSettingsException("This plugin does not support the port type", portType);
 
 		++nli;
 	}

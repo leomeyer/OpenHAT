@@ -77,9 +77,9 @@ namespace openhat {
 			};
 			Type type;
 
-			static int ParseValue(Type type, std::string val);
+			static int ParseValue(Type type, std::string val, AbstractOpenHAT* openhat);
 
-			static ScheduleComponent Parse(Type type, std::string def);
+			static ScheduleComponent Parse(Type type, std::string def, AbstractOpenHAT* openhat);
 
 			bool getNextPossibleValue(int* currentValue, bool* rollover, bool* changed, int month, int year);
 

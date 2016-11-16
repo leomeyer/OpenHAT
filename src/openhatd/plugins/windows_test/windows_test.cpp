@@ -55,7 +55,7 @@ void WindowsTestPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, c
 		abstractOpenHAT->configureDigitalPort(nodeConfig, port);
 		abstractOpenHAT->addPort(port);
 	} else
-		throw Poco::DataException("This plugin supports only node type 'DigitalPort'", portType);
+		this->openhat->throwSettingsException("This plugin supports only node type 'DigitalPort'", portType);
 
 	this->openhat->addConnectionListener(this);
 

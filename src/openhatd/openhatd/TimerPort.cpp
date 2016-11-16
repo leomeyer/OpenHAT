@@ -17,7 +17,7 @@ namespace openhat {
 // Timer Port
 ///////////////////////////////////////////////////////////////////////////////
 
-int TimerPort::ScheduleComponent::ParseValue(Type type, std::string value) {
+int TimerPort::ScheduleComponent::ParseValue(Type type, std::string value, AbstractOpenHAT* openhat) {
 	std::string compName;
 	switch (type) {
 	case MONTH: compName = "Month"; break;
@@ -39,11 +39,11 @@ int TimerPort::ScheduleComponent::ParseValue(Type type, std::string value) {
 	case WEEKDAY: valid = (number >= 0) && (number <= 6); break;
 	}
 	if (!valid)
-		throw Poco::DataException("The specification '" + value + "' is not valid for the date/time component " + compName);
+		openhat->throwSettingsException("The specification '" + value + "' is not valid for the date/time component " + compName);
 	return number;
 }
 
-TimerPort::ScheduleComponent TimerPort::ScheduleComponent::Parse(Type type, std::string def) {
+TimerPort::ScheduleComponent TimerPort::ScheduleComponent::Parse(Type type, std::string def, AbstractOpenHAT* openhat) {
 	ScheduleComponent result;
 	result.type = type;
 
@@ -81,20 +81,20 @@ TimerPort::ScheduleComponent TimerPort::ScheduleComponent::Parse(Type type, std:
 			if (dashPos == 0)
 				range1 = result.getMinimum();
 			else
-				range1 = ParseValue(type, item.substr(0, dashPos));
+				range1 = ParseValue(type, item.substr(0, dashPos), openhat);
 			// dash at last position?
 			if (dashPos == item.size() - 1)
 				range2 = result.getMaximum();
 			else
-				range2 = ParseValue(type, item.substr(dashPos + 1));
+				range2 = ParseValue(type, item.substr(dashPos + 1), openhat);
 			if (range1 > range2)
-				throw Poco::DataException("The range specification '" + item + "' is not valid for the date/time component " + compName);
+				openhat->throwSettingsException("The range specification '" + item + "' is not valid for the date/time component " + compName);
 			// set values of the range
 			for (int i = range1; i <= range2; i++)
 				result.values[i] = val;
 		} else {
 			// parse as integer
-			result.values[ParseValue(type, item)] = val;
+			result.values[ParseValue(type, item, openhat)] = val;
 		}
 	}
 
@@ -103,7 +103,8 @@ TimerPort::ScheduleComponent TimerPort::ScheduleComponent::Parse(Type type, std:
 		if (result.values[i])
 			return result;
 
-	throw Poco::DataException("Timer port schedule component " + compName + " requires at least one allowed value");
+	openhat->throwSettingsException("Timer port schedule component " + compName + " requires at least one allowed value");
+	return result;
 }
 
 bool TimerPort::ScheduleComponent::getNextPossibleValue(int* currentValue, bool* rollover, bool* changed, int month, int year) {
@@ -271,7 +272,7 @@ void TimerPort::configure(ConfigurationView* config, ConfigurationView* parentCo
 		// get schedule section from the configuration
 		Poco::AutoPtr<ConfigurationView> scheduleConfig = this->openhat->createConfigView(parentConfig, nodeName);
 
-		Schedule schedule = {};
+		Schedule schedule = Schedule();
 		schedule.nodeName = nodeName;
 		schedule.maxOccurrences = scheduleConfig->getInt("MaxOccurrences", -1);
 		schedule.duration = scheduleConfig->getInt("Duration", 1000);	// default duration: 1 second
@@ -289,7 +290,7 @@ void TimerPort::configure(ConfigurationView* config, ConfigurationView* parentCo
 			schedule.action = TOGGLE;
 		} else
 			if (!action.empty())
-				throw Poco::DataException(nodeName + ": Unknown schedule action; expected: 'SetHigh', 'SetLow' or 'Toggle': " + action);
+				this->openhat->throwSettingsException(nodeName + ": Unknown schedule action; expected: 'SetHigh', 'SetLow' or 'Toggle': " + action);
 
 		// get schedule type (required)
 		std::string scheduleType = this->openhat->getConfigString(scheduleConfig, nodeName, "Type", "", true);
@@ -305,12 +306,12 @@ void TimerPort::configure(ConfigurationView* config, ConfigurationView* parentCo
 			schedule.data.time.second = scheduleConfig->getInt("Second", -1);
 
 			if (schedule.data.time.weekday > -1)
-				throw Poco::DataException(nodeName + ": You cannot use the Weekday setting with schedule type Once");
+				this->openhat->throwSettingsException(nodeName + ": You cannot use the Weekday setting with schedule type Once");
 			if ((schedule.data.time.year < 0) || (schedule.data.time.month < 0)
 				|| (schedule.data.time.day < 0)
 				|| (schedule.data.time.hour < 0) || (schedule.data.time.minute < 0)
 				|| (schedule.data.time.second < 0))
-				throw Poco::DataException(nodeName + ": You have to specify all time components (except Weekday) for schedule type Once");
+				this->openhat->throwSettingsException(nodeName + ": You have to specify all time components (except Weekday) for schedule type Once");
 		} else
 		if (scheduleType == "Interval") {
 			schedule.type = INTERVAL;
@@ -323,27 +324,27 @@ void TimerPort::configure(ConfigurationView* config, ConfigurationView* parentCo
 			schedule.data.time.second = scheduleConfig->getInt("Second", -1);
 
 			if (schedule.data.time.year > -1)
-				throw Poco::DataException(nodeName + ": You cannot use the Year setting with schedule type Interval");
+				this->openhat->throwSettingsException(nodeName + ": You cannot use the Year setting with schedule type Interval");
 			if (schedule.data.time.month > -1)
-				throw Poco::DataException(nodeName + ": You cannot use the Month setting with schedule type Interval");
+				this->openhat->throwSettingsException(nodeName + ": You cannot use the Month setting with schedule type Interval");
 			if (schedule.data.time.weekday > -1)
-				throw Poco::DataException(nodeName + ": You cannot use the Weekday setting with schedule type Interval");
+				this->openhat->throwSettingsException(nodeName + ": You cannot use the Weekday setting with schedule type Interval");
 
 			if ((schedule.data.time.day < 0)
 				&& (schedule.data.time.hour < 0) && (schedule.data.time.minute < 0)
 				&& (schedule.data.time.second < 0))
-				throw Poco::DataException(nodeName + ": You have to specify at least one of Day, Hour, Minute or Second for schedule type Interval");
+				this->openhat->throwSettingsException(nodeName + ": You have to specify at least one of Day, Hour, Minute or Second for schedule type Interval");
 		} else
 		if (scheduleType == "Periodic") {
 			schedule.type = PERIODIC;
 			if (scheduleConfig->getString("Year", "") != "")
-				throw Poco::DataException(nodeName + ": You cannot use the Year setting with schedule type Periodic");
-			schedule.monthComponent = ScheduleComponent::Parse(ScheduleComponent::MONTH, scheduleConfig->getString("Month", "*"));
-			schedule.dayComponent = ScheduleComponent::Parse(ScheduleComponent::DAY, scheduleConfig->getString("Day", "*"));
-			schedule.hourComponent = ScheduleComponent::Parse(ScheduleComponent::HOUR, scheduleConfig->getString("Hour", "*"));
-			schedule.minuteComponent = ScheduleComponent::Parse(ScheduleComponent::MINUTE, scheduleConfig->getString("Minute", "*"));
-			schedule.secondComponent = ScheduleComponent::Parse(ScheduleComponent::SECOND, scheduleConfig->getString("Second", "*"));
-			schedule.weekdayComponent = ScheduleComponent::Parse(ScheduleComponent::WEEKDAY, scheduleConfig->getString("Weekday", "*"));
+				this->openhat->throwSettingsException(nodeName + ": You cannot use the Year setting with schedule type Periodic");
+			schedule.monthComponent = ScheduleComponent::Parse(ScheduleComponent::MONTH, scheduleConfig->getString("Month", "*"), this->openhat);
+			schedule.dayComponent = ScheduleComponent::Parse(ScheduleComponent::DAY, scheduleConfig->getString("Day", "*"), this->openhat);
+			schedule.hourComponent = ScheduleComponent::Parse(ScheduleComponent::HOUR, scheduleConfig->getString("Hour", "*"), this->openhat);
+			schedule.minuteComponent = ScheduleComponent::Parse(ScheduleComponent::MINUTE, scheduleConfig->getString("Minute", "*"), this->openhat);
+			schedule.secondComponent = ScheduleComponent::Parse(ScheduleComponent::SECOND, scheduleConfig->getString("Second", "*"), this->openhat);
+			schedule.weekdayComponent = ScheduleComponent::Parse(ScheduleComponent::WEEKDAY, scheduleConfig->getString("Weekday", "*"), this->openhat);
 		} else
 		if (scheduleType == "Astronomical") {
 			schedule.type = ASTRONOMICAL;
@@ -354,16 +355,16 @@ void TimerPort::configure(ConfigurationView* config, ConfigurationView* parentCo
 			if (astroEventStr == "Sunset") {
 				schedule.astroEvent = SUNSET;
 			} else
-				throw Poco::DataException(nodeName + ": Parameter AstroEvent must be specified; use either 'Sunrise' or 'Sunset'");
+				this->openhat->throwSettingsException(nodeName + ": Parameter AstroEvent must be specified; use either 'Sunrise' or 'Sunset'");
 			schedule.astroOffset = scheduleConfig->getInt("AstroOffset", 0);
 			schedule.astroLon = scheduleConfig->getDouble("Longitude", -999);
 			schedule.astroLat = scheduleConfig->getDouble("Latitude", -999);
 			if ((schedule.astroLon < -180) || (schedule.astroLon > 180))
-				throw Poco::DataException(nodeName + ": Parameter Longitude must be specified and within -180..180");
+				this->openhat->throwSettingsException(nodeName + ": Parameter Longitude must be specified and within -180..180");
 			if ((schedule.astroLat < -90) || (schedule.astroLat > 90))
-				throw Poco::DataException(nodeName + ": Parameter Latitude must be specified and within -90..90");
+				this->openhat->throwSettingsException(nodeName + ": Parameter Latitude must be specified and within -90..90");
 			if ((schedule.astroLat < -65) || (schedule.astroLat > 65))
-				throw Poco::DataException(nodeName + ": Sorry. Latitudes outside -65..65 are currently not supported (library crash). You can either relocate or try and fix the bug.");
+				this->openhat->throwSettingsException(nodeName + ": Sorry. Latitudes outside -65..65 are currently not supported (library crash). You can either relocate or try and fix the bug.");
 		} else
 		if (scheduleType == "OnLogin") {
 			schedule.type = ONLOGIN;
@@ -383,7 +384,7 @@ void TimerPort::configure(ConfigurationView* config, ConfigurationView* parentCo
 
 			// port must be of type "DialPort"
 			if (this->openhat->getConfigString(manualPortNode, nodeName, "Type", "", true) != "DialPort")
-				throw Poco::DataException(nodeName + "The dependent port node for a manual timer schedule must be of type 'DialPort' (referenced by NodeID '" + nodeID + "')");
+				this->openhat->throwSettingsException(nodeName + "The dependent port node for a manual timer schedule must be of type 'DialPort' (referenced by NodeID '" + nodeID + "')");
 
 			// create the manual schedule dial port
 			schedule.data.manualPort = new ManualSchedulePort(nodeID.c_str(), this);
@@ -396,7 +397,7 @@ void TimerPort::configure(ConfigurationView* config, ConfigurationView* parentCo
 			// add the port
 			this->openhat->addPort(schedule.data.manualPort);
 		} else
-			throw Poco::DataException(nodeName + ": Schedule type is not supported: " + scheduleType);
+			this->openhat->throwSettingsException(nodeName + ": Schedule type is not supported: " + scheduleType);
 
 		this->schedules.push_back(schedule);
 
@@ -456,15 +457,15 @@ Poco::Timestamp TimerPort::calculateNextOccurrence(Schedule* schedule) {
 	if (schedule->type == ONCE) {
 		// validate
 		if ((schedule->data.time.month < 1) || (schedule->data.time.month > 12))
-			throw Poco::DataException(this->ID() + ": Invalid Month specification in schedule " + schedule->nodeName);
+			this->openhat->throwSettingsException(this->ID() + ": Invalid Month specification in schedule " + schedule->nodeName);
 		if ((schedule->data.time.day < 1) || (schedule->data.time.day > Poco::DateTime::daysOfMonth(schedule->data.time.year, schedule->data.time.month)))
-			throw Poco::DataException(this->ID() + ": Invalid Day specification in schedule " + schedule->nodeName);
+			this->openhat->throwSettingsException(this->ID() + ": Invalid Day specification in schedule " + schedule->nodeName);
 		if (schedule->data.time.hour > 23)
-			throw Poco::DataException(this->ID() + ": Invalid Hour specification in schedule " + schedule->nodeName);
+			this->openhat->throwSettingsException(this->ID() + ": Invalid Hour specification in schedule " + schedule->nodeName);
 		if (schedule->data.time.minute > 59)
-			throw Poco::DataException(this->ID() + ": Invalid Minute specification in schedule " + schedule->nodeName);
+			this->openhat->throwSettingsException(this->ID() + ": Invalid Minute specification in schedule " + schedule->nodeName);
 		if (schedule->data.time.second > 59)
-			throw Poco::DataException(this->ID() + ": Invalid Second specification in schedule " + schedule->nodeName);
+			this->openhat->throwSettingsException(this->ID() + ": Invalid Second specification in schedule " + schedule->nodeName);
 		// create timestamp via datetime
 		Poco::DateTime result = Poco::DateTime(schedule->data.time.year, schedule->data.time.month, schedule->data.time.day, 
 			schedule->data.time.hour, schedule->data.time.minute, schedule->data.time.second);

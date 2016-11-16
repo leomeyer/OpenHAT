@@ -1067,7 +1067,7 @@ uint8_t GertboardPlugin::receiveExpansionPortCode(void) {
 }
 
 // plugin factory function
-extern "C" IOpenHATPlugin* GetOpenHATPluginInstance(int majorVersion, int minorVersion, int patchVersion) {
+extern "C" IOpenHATPlugin* GetPluginInstance(int majorVersion, int minorVersion, int patchVersion) {
 	// check whether the version is supported
 	if ((majorVersion != OPENHAT_MAJOR_VERSION) || (minorVersion != OPENHAT_MINOR_VERSION))
 		throw Poco::Exception("This plugin requires OpenHAT version "

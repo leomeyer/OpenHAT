@@ -8,7 +8,7 @@ namespace openhat {
 // Exec Port
 ///////////////////////////////////////////////////////////////////////////////
 
-ExecPort::ExecPort(AbstractOpenHAT* openhat, const char* id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), waiter(*this, &ExecPort::waitForProcessEnd) {
+ExecPort::ExecPort(AbstractOpenHAT* openhat, const char* id) : opdi::DigitalPort(id, OPDI_PORTDIRCAP_OUTPUT, 0), waiter(*this, &ExecPort::waitForProcessEnd) {
 	this->opdi = this->openhat = openhat;
 
 	opdi::DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
@@ -66,14 +66,6 @@ void ExecPort::configure(ConfigurationView* config) {
 	
 	if ((this->waitTimeMs > 0) && (this->resetTimeMs > 0) && (this->waitTimeMs > this->resetTimeMs))
 		this->logWarning("The specified wait time is greater than the reset time; reset will not execute!");
-}
-
-void ExecPort::setDirCaps(const char* /*dirCaps*/) {
-	throw PortError(this->ID() + ": The direction capabilities of an ExecPort cannot be changed");
-}
-
-void ExecPort::setMode(uint8_t /*mode*/, ChangeSource /*changeSource*/) {
-	throw PortError(this->ID() + ": The mode of an ExecPort cannot be changed");
 }
 
 void ExecPort::prepare() {

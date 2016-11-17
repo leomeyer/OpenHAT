@@ -78,10 +78,6 @@ public:
 
 	virtual void configure(ConfigurationView* config);
 
-	virtual void setDirCaps(const char* dirCaps) override;
-
-	virtual void setMode(uint8_t mode, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
-
 	virtual void setLine(uint8_t line, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 
 	virtual void prepare() override;
@@ -128,10 +124,6 @@ public:
 
 	virtual void configure(ConfigurationView* config);
 
-	virtual void setDirCaps(const char* dirCaps) override;
-
-	virtual void setMode(uint8_t mode, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
-
 	virtual void prepare() override;
 };
 
@@ -160,10 +152,6 @@ public:
 	virtual ~SelectorPort();
 
 	virtual void configure(ConfigurationView* config);
-
-	virtual void setDirCaps(const char* dirCaps) override;
-
-	virtual void setMode(uint8_t mode, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 
 	virtual void setLine(uint8_t line, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 
@@ -194,10 +182,6 @@ public:
 	virtual ~ErrorDetectorPort();
 
 	virtual void configure(ConfigurationView* config);
-
-	virtual void setDirCaps(const char* dirCaps) override;
-
-	virtual void setMode(uint8_t mode, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 
 	virtual void prepare() override;
 };
@@ -348,10 +332,6 @@ public:
 	virtual ~FaderPort();
 
 	virtual void configure(ConfigurationView* config);
-
-	virtual void setDirCaps(const char* dirCaps) override;
-
-	virtual void setMode(uint8_t mode, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 
 	virtual void setLine(uint8_t line, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 

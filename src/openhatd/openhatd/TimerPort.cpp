@@ -187,7 +187,7 @@ void TimerPort::ManualSchedulePort::setPosition(int64_t position, ChangeSource c
 }
 
 
-TimerPort::TimerPort(AbstractOpenHAT* openhat, const char* id) : DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0) {
+TimerPort::TimerPort(AbstractOpenHAT* openhat, const char* id) : DigitalPort(id, OPDI_PORTDIRCAP_OUTPUT, 0) {
 	this->opdi = this->openhat = openhat;
 
 	DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
@@ -403,15 +403,6 @@ void TimerPort::configure(ConfigurationView* config, ConfigurationView* parentCo
 
 		++nli;
 	}
-}
-
-void TimerPort::setDirCaps(const char* /*dirCaps*/) {
-	throw PortError(this->ID() + ": The direction capabilities of a TimerPort cannot be changed");
-}
-
-void TimerPort::setMode(uint8_t mode, ChangeSource /*changeSource*/) {
-	if (mode != OPDI_DIGITAL_MODE_OUTPUT)
-		throw PortError(this->ID() + ": The mode of a TimerPort cannot be set to anything other than 'Output'");
 }
 
 void TimerPort::prepare() {

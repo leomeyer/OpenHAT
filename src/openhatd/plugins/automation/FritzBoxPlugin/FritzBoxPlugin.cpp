@@ -210,13 +210,11 @@ public:
 
 }	// end anonymous namespace
 
-FritzDECT200Switch::FritzDECT200Switch(FritzBoxPlugin* plugin, const char* id) : opdi::DigitalPort(id), FritzPort(id) {
+FritzDECT200Switch::FritzDECT200Switch(FritzBoxPlugin* plugin, const char* id) : opdi::DigitalPort(id, OPDI_PORTDIRCAP_OUTPUT, 0), FritzPort(id) {
 	this->plugin = plugin;
 	this->switchState = -1;	// unknown
 	this->refreshMode =RefreshMode::REFRESH_PERIODIC;
 
-	// output only
-	this->setDirCaps(OPDI_PORTDIRCAP_OUTPUT);
 	this->setIcon("powersocket");
 }
 

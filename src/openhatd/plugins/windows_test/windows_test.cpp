@@ -13,7 +13,7 @@ public:
 	virtual void setLine(uint8_t line, ChangeSource /*changeSource*/) override;
 };
 
-DigitalTestPort::DigitalTestPort() : opdi::DigitalPort("PluginPort", "Windows Test Plugin Port", OPDI_PORTDIRCAP_OUTPUT, 0) {}
+DigitalTestPort::DigitalTestPort() : opdi::DigitalPort("WindowsTestPluginPort", OPDI_PORTDIRCAP_OUTPUT, 0) {}
 
 void DigitalTestPort::setLine(uint8_t line, ChangeSource changeSource) {
 	opdi::DigitalPort::setLine(line, changeSource);

@@ -15,7 +15,7 @@ public:
 
 }
 
-DigitalTestPort::DigitalTestPort() : opdi::DigitalPort("PluginPort", "Linux Test Plugin Port", OPDI_PORTDIRCAP_OUTPUT, 0) {}
+DigitalTestPort::DigitalTestPort() : opdi::DigitalPort("LinuxTestPluginPort", OPDI_PORTDIRCAP_OUTPUT, 0) {}
 
 void DigitalTestPort::setLine(uint8_t line, ChangeSource /*changeSource*/) {
 	opdi::DigitalPort::setLine(line);

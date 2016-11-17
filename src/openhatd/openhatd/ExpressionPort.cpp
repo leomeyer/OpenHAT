@@ -12,7 +12,7 @@ namespace openhat {
 // Expression Port
 ///////////////////////////////////////////////////////////////////////////////
 
-ExpressionPort::ExpressionPort(AbstractOpenHAT* openhat, const char* id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0) {
+ExpressionPort::ExpressionPort(AbstractOpenHAT* openhat, const char* id) : opdi::DigitalPort(id, OPDI_PORTDIRCAP_OUTPUT, 0) {
 	this->opdi = this->openhat = openhat;
 	this->numIterations = 0;
 	this->fallbackSpecified = false;
@@ -52,14 +52,6 @@ void ExpressionPort::configure(ConfigurationView* config) {
 		this->deactivationValue = config->getDouble("DeactivationValue");
 		this->deactivationSpecified = true;
 	}
-}
-
-void ExpressionPort::setDirCaps(const char* /*dirCaps*/) {
-	throw PortError(this->ID() + ": The direction capabilities of an ExpressionPort cannot be changed");
-}
-
-void ExpressionPort::setMode(uint8_t /*mode*/, ChangeSource /*changeSource*/) {
-	throw PortError(this->ID() + ": The mode of an ExpressionPort cannot be changed");
 }
 
 void ExpressionPort::setLine(uint8_t line, ChangeSource changeSource) {

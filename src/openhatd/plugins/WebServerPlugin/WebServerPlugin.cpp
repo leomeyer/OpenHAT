@@ -59,7 +59,7 @@ class WebServerPlugin : public IOpenHATPlugin, public openhat::IConnectionListen
 	std::string jsonRpcUrl;
 
 public:
-	WebServerPlugin(): opdi::DigitalPort("WebServerPlugin"), mgr() {
+	WebServerPlugin(): opdi::DigitalPort("WebServerPlugin", OPDI_PORTDIRCAP_OUTPUT, 0), mgr() {
 		memset(&this->s_http_server_opts, 0, sizeof(mg_serve_http_opts));
 		this->httpPort = "8080";
 		this->documentRoot = ".";

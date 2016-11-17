@@ -29,7 +29,7 @@ namespace openhat {
 // Logic Port
 ///////////////////////////////////////////////////////////////////////////////
 
-LogicPort::LogicPort(AbstractOpenHAT* openhat, const char* id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0) {
+LogicPort::LogicPort(AbstractOpenHAT* openhat, const char* id) : opdi::DigitalPort(id, OPDI_PORTDIRCAP_OUTPUT, 0) {
 	this->opdi = this->openhat = openhat;
 	this->function = UNKNOWN;
 	this->funcN = -1;
@@ -100,14 +100,6 @@ void LogicPort::configure(ConfigurationView* config) {
 
 	this->outputPortStr = config->getString("OutputPorts", "");
 	this->inverseOutputPortStr = config->getString("InverseOutputPorts", "");
-}
-
-void LogicPort::setDirCaps(const char* /*dirCaps*/) {
-	throw PortError(this->ID() + ": The direction capabilities of a LogicPort cannot be changed");
-}
-
-void LogicPort::setMode(uint8_t /*mode*/, ChangeSource /*changeSource*/) {
-	throw PortError(this->ID() + ": The mode of a LogicPort cannot be changed");
 }
 
 void LogicPort::setLine(uint8_t /*line*/, ChangeSource /*changeSource*/) {
@@ -226,7 +218,7 @@ uint8_t LogicPort::doWork(uint8_t canSend)  {
 // Pulse Port
 ///////////////////////////////////////////////////////////////////////////////
 
-PulsePort::PulsePort(AbstractOpenHAT* openhat, const char* id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), period(openhat), dutyCycle(openhat), pulses(openhat) {
+PulsePort::PulsePort(AbstractOpenHAT* openhat, const char* id) : opdi::DigitalPort(id, OPDI_PORTDIRCAP_OUTPUT, 0), period(openhat), dutyCycle(openhat), pulses(openhat) {
 	this->opdi = this->openhat = openhat;
 	this->negate = false;
 
@@ -284,14 +276,6 @@ void PulsePort::configure(ConfigurationView* config) {
 		if (!this->pulses.validate(1, INT_MAX))
 			this->openhat->throwSettingsException("Specify a positive integer value for the Pulses setting of a PulsePort: " + this->to_string(this->pulses.value()));
 	}
-}
-
-void PulsePort::setDirCaps(const char* /*dirCaps*/) {
-	throw PortError(this->ID() + ": The direction capabilities of a PulsePort cannot be changed");
-}
-
-void PulsePort::setMode(uint8_t /*mode*/, ChangeSource /*changeSource*/) {
-	throw PortError(this->ID() + ": The mode of a PulsePort cannot be changed");
 }
 
 void PulsePort::prepare() {
@@ -413,7 +397,7 @@ uint8_t PulsePort::doWork(uint8_t canSend)  {
 // Selector Port
 ///////////////////////////////////////////////////////////////////////////////
 
-SelectorPort::SelectorPort(AbstractOpenHAT* openhat, const char* id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0) {
+SelectorPort::SelectorPort(AbstractOpenHAT* openhat, const char* id) : opdi::DigitalPort(id, OPDI_PORTDIRCAP_OUTPUT, 0) {
 	this->opdi = this->openhat = openhat;
 
 	opdi::DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
@@ -439,14 +423,6 @@ void SelectorPort::configure(ConfigurationView* config) {
 		this->openhat->throwSettingsException(this->ID() + ": You have to specify a SelectPort position that is greater than -1 and lower than 65536");
 
 	this->position = pos;
-}
-
-void SelectorPort::setDirCaps(const char* /*dirCaps*/) {
-	throw PortError(this->ID() + ": The direction capabilities of a SelectorPort cannot be changed");
-}
-
-void SelectorPort::setMode(uint8_t /*mode*/, ChangeSource /*changeSource*/) {
-	throw PortError(this->ID() + ": The mode of a SelectorPort cannot be changed");
 }
 
 void SelectorPort::setLine(uint8_t line, ChangeSource changeSource) {
@@ -516,7 +492,7 @@ uint8_t SelectorPort::doWork(uint8_t canSend)  {
 // Error Detector Port
 ///////////////////////////////////////////////////////////////////////////////
 
-ErrorDetectorPort::ErrorDetectorPort(AbstractOpenHAT* openhat, const char* id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_INPUT, 0) {
+ErrorDetectorPort::ErrorDetectorPort(AbstractOpenHAT* openhat, const char* id) : opdi::DigitalPort(id, OPDI_PORTDIRCAP_INPUT, 0) {
 	this->opdi = this->openhat = openhat;
 
 	opdi::DigitalPort::setMode(OPDI_DIGITAL_MODE_INPUT_FLOATING);
@@ -534,14 +510,6 @@ void ErrorDetectorPort::configure(ConfigurationView* config) {
 
 	this->inputPortStr = this->openhat->getConfigString(config, this->ID(), "InputPorts", "", true);
 	this->negate = config->getBool("Negate", false);
-}
-
-void ErrorDetectorPort::setDirCaps(const char* /*dirCaps*/) {
-	throw PortError(this->ID() + ": The direction capabilities of an ErrorDetectorPort cannot be changed");
-}
-
-void ErrorDetectorPort::setMode(uint8_t /*mode*/, ChangeSource /*changeSource*/) {
-	throw PortError(this->ID() + ": The mode of an ErrorDetectorPort cannot be changed");
 }
 
 void ErrorDetectorPort::prepare() {
@@ -821,7 +789,7 @@ bool LoggerPort::hasError(void) const {
 // Fader Port
 ///////////////////////////////////////////////////////////////////////////////
 
-FaderPort::FaderPort(AbstractOpenHAT* openhat, const char* id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0), leftValue(openhat), rightValue(openhat), durationMsValue(openhat) {
+FaderPort::FaderPort(AbstractOpenHAT* openhat, const char* id) : opdi::DigitalPort(id, OPDI_PORTDIRCAP_OUTPUT, 0), leftValue(openhat), rightValue(openhat), durationMsValue(openhat) {
 	this->opdi = this->openhat = openhat;
 	this->mode = LINEAR;
 	this->lastValue = -1;
@@ -884,14 +852,6 @@ void FaderPort::configure(ConfigurationView* config) {
 	this->endSwitchesStr = openhat->getConfigString(config, this->ID(), "EndSwitches", "", false);
 
 	this->openhat->configurePort(config, this, 0);
-}
-
-void FaderPort::setDirCaps(const char* /*dirCaps*/) {
-	throw PortError(this->ID() + ": The direction capabilities of a FaderPort cannot be changed");
-}
-
-void FaderPort::setMode(uint8_t /*mode*/, ChangeSource /*changeSource*/) {
-	throw PortError(this->ID() + ": The mode of a FaderPort cannot be changed");
 }
 
 void FaderPort::setLine(uint8_t line, ChangeSource changeSource) {
@@ -1422,7 +1382,9 @@ void FilePort::writeContent() {
 	fos.close();
 }
 
-FilePort::FilePort(AbstractOpenHAT* openhat, const char* id) : opdi::DigitalPort(id) {
+FilePort::FilePort(AbstractOpenHAT* openhat, const char* id) : 
+	// a File port is presented as an output (being High means that file IO is active)
+	opdi::DigitalPort(id, OPDI_PORTDIRCAP_OUTPUT, 0) {
 	this->opdi = this->openhat = openhat;
 	this->directoryWatcher = nullptr;
 	this->reloadDelayMs = 0;
@@ -1435,8 +1397,6 @@ FilePort::FilePort(AbstractOpenHAT* openhat, const char* id) : opdi::DigitalPort
 	this->valuePort = nullptr;
 	this->portType = UNKNOWN;
 
-	// a File port is presented as an output (being High means that file IO is active)
-	this->setDirCaps(OPDI_PORTDIRCAP_OUTPUT);
 	// file IO is active by default
 	this->setLine(1);
 }
@@ -1457,7 +1417,7 @@ void FilePort::configure(ConfigurationView* config, ConfigurationView* parentCon
 	std::string portType = openhat->getConfigString(nodeConfig, this->ID(), "Type", "", true);
 	if (portType == "DigitalPort") {
 		this->portType = DIGITAL_PORT;
-		this->valuePort = new opdi::DigitalPort(portNode.c_str(), portNode.c_str(), OPDI_PORTDIRCAP_INPUT, 0);
+		this->valuePort = new opdi::DigitalPort(portNode.c_str(), OPDI_PORTDIRCAP_INPUT, 0);
 		this->openhat->configureDigitalPort(nodeConfig, (opdi::DigitalPort*)valuePort);
 		// validate setup
 		if (((opdi::DigitalPort*)valuePort)->getMode() != OPDI_DIGITAL_MODE_INPUT_FLOATING)
@@ -1465,7 +1425,7 @@ void FilePort::configure(ConfigurationView* config, ConfigurationView* parentCon
 	} else
 	if (portType == "AnalogPort") {
 		this->portType = ANALOG_PORT;
-		this->valuePort = new opdi::AnalogPort(portNode.c_str(), portNode.c_str(), OPDI_PORTDIRCAP_INPUT, 0);
+		this->valuePort = new opdi::AnalogPort(portNode.c_str(), OPDI_PORTDIRCAP_INPUT, 0);
 		this->openhat->configureAnalogPort(nodeConfig, (opdi::AnalogPort*)valuePort);
 		// validate setup
 		if (((opdi::AnalogPort*)valuePort)->getMode() != OPDI_ANALOG_MODE_INPUT)
@@ -1834,7 +1794,9 @@ uint8_t AggregatorPort::doWork(uint8_t canSend) {
 	return OPDI_STATUS_OK;
 }
 
-AggregatorPort::AggregatorPort(AbstractOpenHAT* openhat, const char* id) : opdi::DigitalPort(id) {
+AggregatorPort::AggregatorPort(AbstractOpenHAT* openhat, const char* id) : 
+	// an aggregator is an output only port
+	opdi::DigitalPort(id, OPDI_PORTDIRCAP_OUTPUT, 0) {
 	this->opdi = this->openhat = openhat;
 	this->multiplier = 1;
 	// default: allow all values (set absolute limits very high)
@@ -1847,8 +1809,6 @@ AggregatorPort::AggregatorPort(AbstractOpenHAT* openhat, const char* id) : opdi:
 	this->setHistory = true;
 	this->historyPort = nullptr;
 	this->allowedErrors = 0;		// default setting allows no errors
-	// an aggregator is an output only port
-	this->setDirCaps(OPDI_PORTDIRCAP_OUTPUT);
 	// an aggregator is enabled by default
 	this->setLine(1);
 	this->errors = 0;
@@ -2048,7 +2008,7 @@ uint8_t CounterPort::doWork(uint8_t canSend) {
 // TriggerPort
 ///////////////////////////////////////////////////////////////////////////////
 
-TriggerPort::TriggerPort(AbstractOpenHAT* openhat, const char* id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0) {
+TriggerPort::TriggerPort(AbstractOpenHAT* openhat, const char* id) : opdi::DigitalPort(id, OPDI_PORTDIRCAP_OUTPUT, 0) {
 	this->opdi = this->openhat = openhat;
 
 	opdi::DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
@@ -2234,7 +2194,7 @@ uint8_t TriggerPort::doWork(uint8_t canSend)  {
 // InfluxDBPort
 ///////////////////////////////////////////////////////////////////////////////
 
-InfluxDBPort::InfluxDBPort(AbstractOpenHAT * openhat, const char * id) : opdi::DigitalPort(id, id, OPDI_PORTDIRCAP_OUTPUT, 0) {
+InfluxDBPort::InfluxDBPort(AbstractOpenHAT * openhat, const char * id) : opdi::DigitalPort(id, OPDI_PORTDIRCAP_OUTPUT, 0) {
 	this->opdi = this->openhat = openhat;
 
 	opdi::DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);

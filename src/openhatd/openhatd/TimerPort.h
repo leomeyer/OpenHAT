@@ -217,10 +217,6 @@ namespace openhat {
 
 		virtual void configure(ConfigurationView* config, ConfigurationView* parentConfig);
 
-		virtual void setDirCaps(const char* dirCaps) override;
-
-		virtual void setMode(uint8_t mode, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
-
 		virtual void setLine(uint8_t line, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 
 		virtual void prepare() override;

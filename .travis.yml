@@ -2,14 +2,12 @@ sudo: required
 
 language: cpp
 
-compiler:
-  - gcc
-
 install:
 - pushd opdi_core/code/c/libraries/POCO
 - ./build_poco.sh
 - popd
-- export CXX="g++-4.8" CC="gcc-4.8"
+- export CXX=g++-4.8
+- export CC=gcc-4.8
 
 addons:
   apt:

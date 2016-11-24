@@ -16,11 +16,11 @@ addons:
     - gcc-4.9
     - g++-4.9
     - binutils-arm-linux-gnueabi
-    - gcc-4.9-arm-linux-gnueabihf
-    - g++-4.9-arm-linux-gnueabihf
+    - gcc-4.8-arm-linux-gnueabihf
+    - g++-4.8-arm-linux-gnueabihf
 
 script: 
-- export CXX=g++-4.
+- export CXX=g++-4.9
 - export CC=gcc-4.9
 - make -C src/openhatd/openhatd/
 - make -C src/openhatd/openhatd/ -f makefile-rpi

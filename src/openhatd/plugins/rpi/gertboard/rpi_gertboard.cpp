@@ -243,9 +243,7 @@ public:
 // Implementations
 ////////////////////////////////////////////////////////////////////////
 
-DigitalGertboardPort::DigitalGertboardPort(openhat::AbstractOpenHAT* openhat, const char* ID, int pin) : opdi::DigitalPort(ID,
-	(std::string("Digital Gertboard Port ") + to_string(pin)).c_str(), // default label - can be changed by configuration
-	OPDI_PORTDIRCAP_BIDI,	// default: input
+DigitalGertboardPort::DigitalGertboardPort(openhat::AbstractOpenHAT* openhat, const char* ID, int pin) : opdi::DigitalPort(ID, OPDI_PORTDIRCAP_BIDI,	// default: input
 	0) {
 	this->openhat = openhat;
 	this->pin = pin;
@@ -321,9 +319,8 @@ void DigitalGertboardPort::getState(uint8_t* mode, uint8_t* line) const {
 
 
 AnalogGertboardOutput::AnalogGertboardOutput(openhat::AbstractOpenHAT* openhat, const char* id, int output) : opdi::AnalogPort(id, 
-	(std::string("Analog Gertboard Output ") + to_string(output)).c_str(), // default label - can be changed by configuration
 	OPDI_PORTDIRCAP_OUTPUT, 
-	// possible resolutions - hardware decides which one is actually used; set value in configuration
+	// possible resolutions - set correct value in configuration (depends on your hardware)
 	OPDI_ANALOG_PORT_RESOLUTION_8 | OPDI_ANALOG_PORT_RESOLUTION_10 | OPDI_ANALOG_PORT_RESOLUTION_12) {
 
 	this->openhat = openhat;
@@ -383,9 +380,8 @@ void AnalogGertboardOutput::getState(uint8_t* mode, uint8_t* resolution, uint8_t
 
 
 AnalogGertboardInput::AnalogGertboardInput(openhat::AbstractOpenHAT* openhat, const char* id, int input) : opdi::AnalogPort(id, 
-	(std::string("Analog Gertboard Input ") + to_string(input)).c_str(), // default label - can be changed by configuration
 	OPDI_PORTDIRCAP_INPUT, 
-	// possible resolutions - hardware decides which one is actually used; set value in configuration
+	// possible resolutions - set correct value in configuration (depends on your hardware)
 	OPDI_ANALOG_PORT_RESOLUTION_8 | OPDI_ANALOG_PORT_RESOLUTION_10 | OPDI_ANALOG_PORT_RESOLUTION_12) {
 
 	this->openhat = openhat;
@@ -441,7 +437,6 @@ void AnalogGertboardInput::getState(uint8_t* mode, uint8_t* resolution, uint8_t*
 
 
 GertboardButton::GertboardButton(openhat::AbstractOpenHAT* openhat, const char* ID, int pin) : opdi::DigitalPort(ID, 
-	(std::string("Gertboard Button on pin ") + to_string(pin)).c_str(), // default label - can be changed by configuration
 	OPDI_PORTDIRCAP_INPUT,	// default: input with pullup always on
 	OPDI_DIGITAL_PORT_HAS_PULLUP | OPDI_DIGITAL_PORT_PULLUP_ALWAYS) {
 	this->openhat = openhat;
@@ -565,8 +560,7 @@ void GertboardPWM::setPosition(int64_t position, ChangeSource /*changeSource*/) 
 }
 
 
-DigitalExpansionPort::DigitalExpansionPort(openhat::AbstractOpenHAT* openhat, GertboardPlugin* gbPlugin, const char* ID, int pin) : opdi::DigitalPort(ID, 
-	(std::string("Digital Expansion Port ") + to_string(pin)).c_str(), // default label - can be changed by configuration
+DigitalExpansionPort::DigitalExpansionPort(openhat::AbstractOpenHAT* openhat, GertboardPlugin* gbPlugin, const char* ID, int pin) : opdi::DigitalPort(ID,
 	OPDI_PORTDIRCAP_BIDI,	// default: bidirectional
 	0) {
 	this->openhat = openhat;
@@ -1022,7 +1016,7 @@ void GertboardPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::
 		nli++;
 	}
 
-	this->openhat->logVerbose(node + ": GertboardPlugin setup completed successfully as node " + node);
+	this->openhat->logVerbose(node + ": GertboardPlugin setup completed successfully");
 }
 
 void GertboardPlugin::masterConnected() {
@@ -1067,7 +1061,7 @@ uint8_t GertboardPlugin::receiveExpansionPortCode(void) {
 }
 
 // plugin factory function
-extern "C" IOpenHATPlugin* GetOpenHATPluginInstance(int majorVersion, int minorVersion, int patchVersion) {
+extern "C" IOpenHATPlugin* GetPluginInstance(int majorVersion, int minorVersion, int patchVersion) {
 	// check whether the version is supported
 	if ((majorVersion != OPENHAT_MAJOR_VERSION) || (minorVersion != OPENHAT_MINOR_VERSION))
 		throw Poco::Exception("This plugin requires OpenHAT version "

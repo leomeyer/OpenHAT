@@ -237,7 +237,7 @@ void WindowPort::getState(uint16_t* position) const {
 }
 
 void WindowPort::prepare() {
-	this->logDebug("Preparing port");
+	this->logDebug("Preparing WindowPort");
 	opdi::Port::prepare();
 
 	// find ports; throws errors if something required is missing
@@ -1106,7 +1106,7 @@ void WindowPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::str
 	// read control mode
 	std::string controlMode = this->openhat->getConfigString(nodeConfig, node, "ControlMode", "", true);
 	if (controlMode == "H-Bridge") {
-		this->openhat->logVerbose("Configuring WindowPlugin port " + node + " in H-Bridge Mode");
+		this->openhat->logVerbose(node + ": Configuring WindowPort in H-Bridge Mode");
 		port->mode = WindowPort::H_BRIDGE;
 		// motorA and motorB are required
 		port->motorAStr = this->openhat->getConfigString(nodeConfig, node, "MotorA", "", true);
@@ -1118,7 +1118,7 @@ void WindowPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::str
 		if (port->enableDelay < port->motorDelay)
 			this->openhat->throwSettingsException("If using MotorDelay, EnableDelay must be greater or equal: " + this->openhat->to_string(port->enableDelay));
 	} else if (controlMode == "SerialRelay") {
-		this->openhat->logVerbose("Configuring WindowPlugin port " + node + " in Serial Relay Mode");
+		this->openhat->logVerbose(node + ": Configuring WindowPort in Serial Relay Mode");
 		port->mode = WindowPort::SERIAL_RELAY;
 		// direction and enable ports are required
 		port->direction = this->openhat->getConfigString(nodeConfig, node, "Direction", "", true);
@@ -1174,7 +1174,7 @@ void WindowPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::str
 
 	this->openhat->addConnectionListener(this);
 
-	this->openhat->logVerbose("WindowPlugin setup completed successfully as node " + node);
+	this->openhat->logVerbose(node + ": WindowPlugin setup completed successfully");
 }
 
 void WindowPlugin::masterConnected() {

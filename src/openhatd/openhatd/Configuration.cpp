@@ -82,7 +82,7 @@ bool ConfigurationView::getRaw(const std::string& key, std::string& value) const
 	Poco::Util::LayeredConfiguration::getRaw(key, value);
 	if (this->innerConfig->has(key)) {
 		if (!section.empty())
-			this->openhat->logDebug("Retrieved setting " + section + "." + key + ", value is: " + value);
+			this->openhat->logDebug("Retrieved setting " + section + "." + key + ", value is: '" + value + "'");
 		this->usedKeys.insert(key);
 		return true;
 	} else

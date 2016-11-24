@@ -16,8 +16,8 @@ addons:
     - gcc-4.9
     - g++-4.9
     - binutils-arm-linux-gnueabi
-    - gcc-arm-linux-gnueabihf
-    - g++-arm-linux-gnueabihf
+    - gcc-4.9-arm-linux-gnueabihf
+    - g++-4.9-arm-linux-gnueabihf
 
 script: 
 - export CXX=g++-4.

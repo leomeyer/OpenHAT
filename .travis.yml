@@ -7,6 +7,7 @@ install:
 - ./build_poco.sh
 - ./build_poco_rpi.sh
 - popd
+- git clone https://github.com/raspberrypi/tools.git --depth=1
 
 addons:
   apt:
@@ -15,12 +16,10 @@ addons:
     packages:
     - gcc-4.9
     - g++-4.9
-    - binutils-arm-linux-gnueabi
-    - gcc-4.8-arm-linux-gnueabihf
-    - g++-4.8-arm-linux-gnueabihf
 
 script: 
 - export CXX=g++-4.9
 - export CC=gcc-4.9
 - make -C src/openhatd/openhatd/
+- export PATH=tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin:$PATH
 - make -C src/openhatd/openhatd/ -f makefile-rpi

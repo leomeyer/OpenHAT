@@ -6,15 +6,15 @@ install:
 - pushd opdi_core/code/c/libraries/POCO
 - ./build_poco.sh
 - popd
-- export CXX=g++-4.8
-- export CC=gcc-4.8
+- export CXX=g++-4.
+- export CC=gcc-4.9
 
 addons:
   apt:
     sources:
     - ubuntu-toolchain-r-test
     packages:
-    - gcc-4.8
-    - g++-4.8
+    - gcc-4.9
+    - g++-4.9
 
 script: make -C src/openhatd/openhatd/ CC=$CC

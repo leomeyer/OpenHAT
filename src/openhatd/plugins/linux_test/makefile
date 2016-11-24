@@ -45,7 +45,7 @@ POCOLIBS = -lPocoUtil -lPocoNet -lPocoFoundation
 LIBS = -lpthread 
 
 # The compiler to be used.
-CC = g++
+CC ?= g++
 
 # List any extra directories to look for include files here.
 # Each directory must be separated by a space.

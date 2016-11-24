@@ -17,4 +17,4 @@ addons:
     - gcc-4.8
     - g++-4.8
 
-script: make -C src/openhatd/openhatd/
+script: make -C src/openhatd/openhatd/ CC=$CC

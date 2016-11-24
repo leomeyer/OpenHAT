@@ -3,11 +3,12 @@ sudo: required
 language: cpp
 
 install:
+- git clone https://github.com/raspberrypi/tools.git --depth=1
+- export PATH=tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin:$PATH
 - pushd opdi_core/code/c/libraries/POCO
 - ./build_poco.sh
 - ./build_poco_rpi.sh
 - popd
-- git clone https://github.com/raspberrypi/tools.git --depth=1
 
 addons:
   apt:

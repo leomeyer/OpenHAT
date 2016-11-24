@@ -5,9 +5,8 @@ language: cpp
 install:
 - pushd opdi_core/code/c/libraries/POCO
 - ./build_poco.sh
+- ./build_poco_rpi.sh
 - popd
-- export CXX=g++-4.
-- export CC=gcc-4.9
 
 addons:
   apt:
@@ -16,5 +15,12 @@ addons:
     packages:
     - gcc-4.9
     - g++-4.9
+    - binutils-arm-linux-gnueabi
+    - gcc-arm-linux-gnueabihf
+    - g++-arm-linux-gnueabihf
 
-script: make -C src/openhatd/openhatd/ CC=$CC
+script: 
+- export CXX=g++-4.
+- export CC=gcc-4.9
+- make -C src/openhatd/openhatd/
+- make -C src/openhatd/openhatd/ -f makefile-rpi

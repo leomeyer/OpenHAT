@@ -18,6 +18,5 @@ addons:
     packages:
     - gcc-4.8
     - g++-4.8
-    - arduino-core
 
-script: ./makeall.sh
+script: make -C src/openhatd/openhatd/

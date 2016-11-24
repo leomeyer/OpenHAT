@@ -605,7 +605,7 @@ void SerialStreamingPort::configure(ConfigurationView* config) {
 							ctb::SerialPort::NoFlowControl) >= 0) {
 		this->device = this->serialPort;
 	} else {
-		throw Poco::ApplicationException(this->ID() + ": Unable to open serial port: " + serialPortName);
+		this->openhat->throwSettingsException(this->ID() + ": Unable to open serial port: " + serialPortName);
 	}
 
 	this->logVerbose("Serial port " + serialPortName + " opened successfully");

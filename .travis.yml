@@ -1,0 +1,22 @@
+sudo: required
+
+language: cpp
+
+compiler:
+  - gcc
+
+install:
+- pushd opdi_core/code/c/libraries/POCO
+- ./build_poco.sh
+- popd
+- export CXX="g++-4.8" CC="gcc-4.8"
+
+addons:
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test
+    packages:
+    - gcc-4.8
+    - g++-4.8
+
+script: make -C src/openhatd/openhatd/

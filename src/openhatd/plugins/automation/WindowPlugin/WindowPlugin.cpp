@@ -1,7 +1,4 @@
 
-#include "opdi_constants.h"
-#include "opdi_platformfuncs.h"
-
 #ifdef _WINDOWS
 #include "WindowsOpenHAT.h"
 #endif

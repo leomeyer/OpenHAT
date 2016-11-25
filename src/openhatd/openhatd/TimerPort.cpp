@@ -6,9 +6,6 @@
 #include "Poco/NumberParser.h"
 #include "Poco/Format.h"
 
-#include "opdi_constants.h"
-#include "opdi_platformfuncs.h"
-
 #include "SunRiseSet.h"
 
 namespace openhat {

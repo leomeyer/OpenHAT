@@ -15,7 +15,6 @@
 // serial port library
 #include "ctb-0.16/ctb.h"
 
-#include "opdi_constants.h"
 #include "opdi_port.h"
 
 #include "AbstractOpenHAT.h"

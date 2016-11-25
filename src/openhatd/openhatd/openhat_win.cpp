@@ -11,8 +11,6 @@
 #include "Windows.h"
 #include "stdafx.h"
 
-#include "opdi_constants.h"
-
 // the main OPDI instance is declared here
 openhat::AbstractOpenHAT* Opdi;
 

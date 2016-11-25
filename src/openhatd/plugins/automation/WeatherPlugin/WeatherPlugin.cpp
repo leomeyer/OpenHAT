@@ -28,9 +28,6 @@
 #include "Poco/RegularExpression.h"
 #include "Poco/JSON/Parser.h"
 
-#include "opdi_constants.h"
-#include "opdi_platformfuncs.h"
-
 #include "AbstractOpenHAT.h"
 
 namespace {

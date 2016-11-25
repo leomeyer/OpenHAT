@@ -1,8 +1,6 @@
 
 // Test plugin for OpenHAT (Windows version)
 
-#include "opdi_constants.h"
-
 #include "WindowsOpenHAT.h"
 
 namespace {

@@ -2,8 +2,6 @@
 
 #include "Poco/Timestamp.h"
 
-#include "opdi_constants.h"
-
 #ifdef OPENHAT_USE_EXPRTK
 
 namespace openhat {

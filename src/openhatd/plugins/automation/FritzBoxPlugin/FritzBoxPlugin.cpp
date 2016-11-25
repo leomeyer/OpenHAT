@@ -24,9 +24,6 @@
 #include "Poco/AutoPtr.h"
 #include "Poco/NumberParser.h"
 
-#include "opdi_constants.h"
-#include "opdi_platformfuncs.h"
-
 #include "AbstractOpenHAT.h"
 
 #define INVALID_SID		"0000000000000000"

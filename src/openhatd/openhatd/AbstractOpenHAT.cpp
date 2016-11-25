@@ -23,8 +23,6 @@
 #include "Poco/NumberParser.h"
 #include "Poco/RegularExpression.h"
 
-#include "opdi_constants.h"
-
 #include "OPDI_Ports.h"
 #include "Ports.h"
 #include "TimerPort.h"

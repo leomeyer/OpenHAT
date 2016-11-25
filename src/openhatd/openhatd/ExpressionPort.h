@@ -10,8 +10,6 @@
 
 #include "AbstractOpenHAT.h"
 
-#include "opdi_configspecs.h"
-
 // expression evaluation library
 #include <exprtk.hpp>
 

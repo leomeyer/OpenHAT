@@ -9,9 +9,6 @@
 #include "Poco/BasicEvent.h"
 #include "Poco/Delegate.h"
 
-#include "opdi_constants.h"
-#include "opdi_platformfuncs.h"
-
 #include "AbstractOpenHAT.h"
 
 #define OPENHAT_NO_INTTYPES

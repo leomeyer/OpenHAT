@@ -12,10 +12,12 @@
 #include "Poco/Delegate.h"
 #include "Poco/Exception.h"
 
-#include "Configuration.h"
-
+#include "opdi_constants.h"
+#include "opdi_platformfuncs.h"
 #include "opdi_configspecs.h"
 #include "OPDI.h"
+
+#include "Configuration.h"
 
 // protocol callback function for the OPDI slave implementation
 extern void protocol_callback(uint8_t state);

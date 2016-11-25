@@ -1,131 +1,24 @@
-# Program file name
-BASENAME = $(shell basename $(CURDIR))
+# openhatd makefile
+# Creates a release file that includes plugins.
+# Pass DEBUG=1 to enable a debug build.
 
-# Target file name (without extension). For intermediate binary and tar file
-TARGET = $(BASENAME)-rpi
+# Architecture, used for creating the release file
+ARCH = rpi
 
-# OPDI platform specifier
-PLATFORM = linux
+include common.mk
 
-APP_PATH = .
+# build specific settings
 
-OPDI_CORE_PATH = $(APP_PATH)/../../../opdi_core
-
-# Relative path to common directory (without trailing slash)
-# This also becomes an additional include directory.
-CPATH = $(OPDI_CORE_PATH)/code/c/common
-
-# Relative path to platform directory (without trailing slash)
-# This also becomes an additional include directory.
-PPATHBASE = $(OPDI_CORE_PATH)/code/c/platforms
-PPATH = $(PPATHBASE)/$(PLATFORM)
-
-# List C source files of the configuration here.
-SRC = LinuxOpenHAT.cpp Configuration.cpp SunRiseSet.cpp TimerPort.cpp ExpressionPort.cpp ExecPort.cpp
-
-# platform specific files
-SRC += $(PPATH)/opdi_platformfuncs.c
-
-# common files
-SRC += $(CPATH)/opdi_message.c $(CPATH)/opdi_port.c $(CPATH)/opdi_protocol.c $(CPATH)/opdi_slave_protocol.c $(CPATH)/opdi_strings.c
-SRC += $(CPATH)/opdi_aes.cpp $(CPATH)/opdi_rijndael.cpp
-
-# master implementation
-MPATH = $(CPATH)/master
-
-# master files
-# SRC += $(MPATH)/opdi_AbstractProtocol.cpp $(MPATH)/opdi_BasicDeviceCapabilities.cpp $(MPATH)/opdi_BasicProtocol.cpp $(MPATH)/opdi_DigitalPort.cpp $(MPATH)/opdi_IODevice.cpp $(MPATH)/opdi_main_io.cpp $(MPATH)/opdi_OPDIMessage.cpp $(MPATH)/opdi_MessageQueueDevice.cpp $(MPATH)/opdi_OPDIPort.cpp $(MPATH)/opdi_PortFactory.cpp $(MPATH)/opdi_ProtocolFactory.cpp $(MPATH)/opdi_StringTools.cpp $(MPATH)/opdi_TCPIPDevice.cpp
-
-# C++ wrapper
-CPPPATH = $(APP_PATH)
-
-# C++ wrapper files
-SRC += $(CPPPATH)/OPDI.cpp $(CPPPATH)/OPDI_Ports.cpp
-
-# additional source files
-SRC += ./AbstractOpenHAT.cpp ./Ports.cpp ./openhat_linux.cpp
-
-# POCO include path
-POCOINCPATH = $(OPDI_CORE_PATH)/code/c/libraries/POCO/Util/include $(OPDI_CORE_PATH)/code/c/libraries/POCO/Foundation/include $(OPDI_CORE_PATH)/code/c/libraries/POCO/Net/include
+MAKEFILE = makefile-rpicc
 
 # POCO library path
 POCOLIBPATH = $(OPDI_CORE_PATH)/code/c/libraries/POCO/lib/Linux/ARM
 
 # POCO libraries
-#POCOLIBS = -lPocoUtil -lPocoNet -lPocoFoundation -lPocoXML -lPocoJSON
 POCOLIBS = $(POCOLIBPATH)/libPocoUtil.a $(POCOLIBPATH)/libPocoNet.a $(POCOLIBPATH)/libPocoFoundation.a $(POCOLIBPATH)/libPocoXML.a $(POCOLIBPATH)/libPocoJSON.a
 
-# ExprTk expression library path
-EXPRTK = ../../../libraries/exprtk
-
-# libctb serial communication library
-LIBCTB = $(OPDI_CORE_PATH)/code/c/libraries/libctb
-LIBCTBINC = $(LIBCTB)/include
-SRC += $(LIBCTB)/src/fifo.cpp $(LIBCTB)/src/getopt.cpp $(LIBCTB)/src/iobase.cpp $(LIBCTB)/src/kbhit.cpp $(LIBCTB)/src/linux/serport.cpp
-SRC += $(LIBCTB)/src/linux/timer.cpp $(LIBCTB)/src/portscan.cpp $(LIBCTB)/src/serportx.cpp
-
-# Additional libraries
-LIBS = -lpthread -ldl -lrt
-
 # The compiler to be used.
-# Example compiler: Raspberry Tools (Github)
 CC = arm-linux-gnueabihf-g++
 
-# Example compiler: crosstools-ng
-# CC = arm-unknown-linux-gnueabihf-g++
-
-# List any extra directories to look for include files here.
-# Each directory must be seperated by a space.
-EXTRAINCDIRS = $(CPATH) $(CPPPATH) $(MPATH) $(PPATHBASE) $(PPATH) $(POCOINCPATH) $(CONIOINCPATH) $(EXPRTK) $(LIBCTBINC) .
-
-# Place -I options here
-CINCS =
-
-# Defines
-CDEFINES = -Dlinux
-
 # Compiler flags.
-CFLAGS = -Wall -Wextra $(CDEFS) $(CINCS) -L $(POCOLIBPATH) $(CDEFINES) -Wno-unused-parameter -Wno-narrowing
-CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS)) -std=c++11 -O2
-CFLAGS += -Wl,-z,defs
-
-# Debug flags
-CFLAGS +=
-#-ggdb 
-
-OBJECTS = $(SRC)
-
-TARFOLDER = $(TARGET)-release
-
-all: $(SRC) plugins $(TARGET) tar
-
-$(TARGET): $(OBJECTS)
-	$(CC) $(CFLAGS) $(OBJECTS) -o $@ $(POCOLIBS) $(LIBS)
-
-.cpp.o:
-	@echo
-	@echo Compiling: $<
-	$(CC) -c $(CFLAGS) $< -o $@
-
-.c.o:
-	$(CC) -c $(CFLAGS) $< -o $@
-
-plugins:
-	$(MAKE) -C ../plugins -f makefile-rpicc
-
-tar:
-	mkdir $(TARFOLDER)
-	cp $(TARGET) $(TARFOLDER)/$(BASENAME)
-	cp -r webdocroot $(TARFOLDER)
-	mkdir $(TARFOLDER)/plugins
-	find ../plugins/ -name '*.so' -exec cp {} $(TARFOLDER)/plugins \;
-	cp -r testconfigs $(TARFOLDER)
-	tar czf $(TARFOLDER).tar.gz $(TARFOLDER)
-	rm -r $(TARFOLDER)
-
-clean:
-	rm -f $(PPATH)/*.o
-	rm -f $(CPATH)/*.o
-	rm -f $(MPATH)/*.o
-	rm $(TARGET)
-
+CFLAGS += -Wno-narrowing -Wl,-z,defs

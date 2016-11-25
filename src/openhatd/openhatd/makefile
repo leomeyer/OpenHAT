@@ -1,8 +1,25 @@
-# Target file name (without extension).
-TARGET = $(shell basename $(CURDIR))
+# openhatd makefile
+# Creates a release file that includes plugins.
+# Pass DEBUG=1 to enable a debug build.
+
+# Program file name
+BASENAME = $(shell basename $(CURDIR))
+
+# Architecture, used for creating the release file
+ARCH = x86_64
 
 # OPDI platform specifier
 PLATFORM = linux
+
+# Target file name (without extension). For intermediate binary and tar file
+TARGET = $(BASENAME)-$(PLATFORM)-$(ARCH)
+
+# version from file
+VERSIONRAW = $(shell cat VERSION)
+VERSION = $(subst ",,$(VERSIONRAW))
+
+# build identification; if not specified, it is "current"
+BUILD ?= current
 
 APP_PATH = .
 
@@ -67,25 +84,34 @@ LIBS = -lpthread -ldl -lrt
 CC = g++
 
 # List any extra directories to look for include files here.
-# Each directory must be seperated by a space.
+# Each directory must be separated by a space.
 EXTRAINCDIRS = $(CPATH) $(CPPPATH) $(MPATH) $(PPATHBASE) $(PPATH) $(POCOINCPATH) $(CONIOINCPATH) $(EXPRTK) $(LIBCTBINC) .
 
 # Place -I options here
 CINCS =
 
 # Defines
-CDEFINES = -Dlinux -DPOCO_STATIC
+CDEFINES = -Dlinux
 
 # Compiler flags.
 CFLAGS = -Wall -Wextra $(CDEFS) $(CINCS) -L $(POCOLIBPATH) $(CDEFINES) -Wno-unused-parameter
 CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS)) -std=c++11 -static-libstdc++ -O2
 
 # Debug flags
-CFLAGS += -ggdb -ftrapv -fsanitize=undefined
+DEBUG ?= 0
+ifeq (DEBUG, 1)
+	CFLAGS += -ggdb -ftrapv -fsanitize=undefined
+else
+    CFLAGS += -DNDEBUG
+endif
 
 OBJECTS = $(SRC)
 
-all: $(SRC) plugins $(TARGET)
+TARFOLDER = $(TARGET)-$(VERSION)-$(BUILD)
+
+all: plugins $(TARGET) tar
+
+target: $(TARGET)
 
 $(TARGET): $(OBJECTS)
 	$(CC) $(CFLAGS) $(OBJECTS) -o $@ $(POCOLIBS) $(LIBS)
@@ -99,11 +125,23 @@ $(TARGET): $(OBJECTS)
 	$(CC) -c $(CFLAGS) $< -o $@
 
 plugins:
-	$(MAKE) -C ../plugins
+	find ../plugins/ -name '*.so' -exec rm {} \;
+	$(MAKE) -C ../plugins -f makefile-rpicc
+
+tar:
+	mkdir $(TARFOLDER)
+	cp $(TARGET) $(TARFOLDER)/$(BASENAME)
+	cp -r webdocroot $(TARFOLDER)
+	mkdir $(TARFOLDER)/plugins
+	find ../plugins/ -name '*.so' -exec cp --parents {} $(TARFOLDER)/plugins \;
+	cp -r testconfigs $(TARFOLDER)
+	tar czf $(TARFOLDER).tar.gz $(TARFOLDER)
+	rm -r $(TARFOLDER)
 
 clean:
+	find ../plugins/ -name '*.so' -exec rm {} \;
 	rm -f $(PPATH)/*.o
 	rm -f $(CPATH)/*.o
 	rm -f $(MPATH)/*.o
-	rm $(TARGET)
+	rm -f $(TARGET)
 

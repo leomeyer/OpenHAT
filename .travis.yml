@@ -17,6 +17,7 @@ addons:
     packages:
     - gcc-4.9
     - g++-4.9
+    - sshpass
 
 script: 
 - export CXX=g++-4.9
@@ -24,3 +25,4 @@ script:
 - make -C src/openhatd/openhatd/ CC=$CC
 - export PATH=$(pwd)/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin:$PATH
 - make -C src/openhatd/openhatd/ -f makefile-rpicc
+- sshpass -p $RELEASE_UPLOAD_PASSWORD scp *.tar.gz $RELEASE_UPLOAD_USER@$RELEASE_UPLOAD_HOST:~

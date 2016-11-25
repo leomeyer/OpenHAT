@@ -13,17 +13,8 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Headerdateien\common">
-      <UniqueIdentifier>{15b6eb6b-5c9c-49fb-9658-10708e5b2496}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Quelldateien\common">
       <UniqueIdentifier>{fe170a8f-fe38-4ad0-9eb0-7451842f7683}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Headerdateien\common\cppwrapper">
-      <UniqueIdentifier>{496d7b9c-9b05-429b-9c3c-61284749dcb7}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Quelldateien\common\cppwrapper">
-      <UniqueIdentifier>{ec6597fa-f6eb-4783-94ac-6944857f7cdd}</UniqueIdentifier>
     </Filter>
     <Filter Include="Quelldateien\libraries">
       <UniqueIdentifier>{beece497-7f96-47e1-a2eb-4aca03b19691}</UniqueIdentifier>
@@ -125,16 +116,10 @@
     <ClInclude Include="WindowsOpenHAT.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
-    <ClInclude Include="opdi_configspecs.h">
-      <Filter>Headerdateien\common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\opdi_core\code\c\common\cppwrapper\OPDI.h">
-      <Filter>Headerdateien\common\cppwrapper</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\opdi_core\code\c\common\cppwrapper\OPDI_Ports.h">
-      <Filter>Headerdateien\common\cppwrapper</Filter>
-    </ClInclude>
     <ClInclude Include="Configuration.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="opdi_configspecs.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
   </ItemGroup>
@@ -211,16 +196,16 @@
     <ClCompile Include="..\..\..\opdi_core\code\c\common\opdi_rijndael.cpp">
       <Filter>Quelldateien\common</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\opdi_core\code\c\common\cppwrapper\OPDI.cpp">
-      <Filter>Quelldateien\common\cppwrapper</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\opdi_core\code\c\common\cppwrapper\OPDI_Ports.cpp">
-      <Filter>Quelldateien\common\cppwrapper</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\opdi_core\code\c\platforms\win32\opdi_platformfuncs.c">
       <Filter>Quelldateien\platform</Filter>
     </ClCompile>
     <ClCompile Include="Configuration.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="OPDI.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="OPDI_Ports.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>

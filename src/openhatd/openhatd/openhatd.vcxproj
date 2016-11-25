@@ -106,8 +106,6 @@
     <None Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\opdi_core\code\c\common\cppwrapper\OPDI.h" />
-    <ClInclude Include="..\..\..\opdi_core\code\c\common\cppwrapper\OPDI_Ports.h" />
     <ClInclude Include="AbstractOpenHAT.h" />
     <ClInclude Include="Configuration.h" />
     <ClInclude Include="ExecPort.h" />
@@ -121,8 +119,6 @@
     <ClInclude Include="WindowsOpenHAT.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\opdi_core\code\c\common\cppwrapper\OPDI.cpp" />
-    <ClCompile Include="..\..\..\opdi_core\code\c\common\cppwrapper\OPDI_Ports.cpp" />
     <ClCompile Include="..\..\..\opdi_core\code\c\common\opdi_aes.cpp" />
     <ClCompile Include="..\..\..\opdi_core\code\c\common\opdi_message.c" />
     <ClCompile Include="..\..\..\opdi_core\code\c\common\opdi_port.c" />
@@ -143,6 +139,8 @@
     <ClCompile Include="Configuration.cpp" />
     <ClCompile Include="ExecPort.cpp" />
     <ClCompile Include="ExpressionPort.cpp" />
+    <ClCompile Include="OPDI.cpp" />
+    <ClCompile Include="OPDI_Ports.cpp" />
     <ClCompile Include="openhat_win.cpp" />
     <ClCompile Include="Ports.cpp" />
     <ClCompile Include="stdafx.cpp" />

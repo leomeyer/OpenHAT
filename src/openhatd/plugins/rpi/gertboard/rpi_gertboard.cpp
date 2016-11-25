@@ -8,9 +8,6 @@
 
 #include "Poco/Tuple.h"
 
-#include "opdi_constants.h"
-#include "opdi_platformfuncs.h"
-
 #include "gb_common.h"
 #include "gb_spi.h"
 #include "gb_pwm.h"
@@ -1063,9 +1060,9 @@ uint8_t GertboardPlugin::receiveExpansionPortCode(void) {
 // plugin factory function
 extern "C" IOpenHATPlugin* GetPluginInstance(int majorVersion, int minorVersion, int patchVersion) {
 	// check whether the version is supported
-	if ((majorVersion != OPENHAT_MAJOR_VERSION) || (minorVersion != OPENHAT_MINOR_VERSION))
+	if ((majorVersion != openhat::OPENHAT_MAJOR_VERSION) || (minorVersion != openhat::OPENHAT_MINOR_VERSION))
 		throw Poco::Exception("This plugin requires OpenHAT version "
-			OPDI_QUOTE(OPENHAT_MAJOR_VERSION) "." OPDI_QUOTE(OPENHAT_MINOR_VERSION));
+			OPDI_QUOTE(openhat::OPENHAT_MAJOR_VERSION) "." OPDI_QUOTE(openhat::OPENHAT_MINOR_VERSION));
 
 	// return a new instance of this plugin
 	return new GertboardPlugin();

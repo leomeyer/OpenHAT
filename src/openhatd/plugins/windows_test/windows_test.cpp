@@ -74,7 +74,7 @@ extern "C" __declspec(dllexport) IOpenHATPlugin* __cdecl GetPluginInstance(int m
 	// check whether the version is supported
 	if ((majorVersion != openhat::OPENHAT_MAJOR_VERSION) || (minorVersion != openhat::OPENHAT_MINOR_VERSION))
 		throw Poco::Exception("This plugin requires OpenHAT version "
-			OPDI_QUOTE(OPENHAT_MAJOR_VERSION) "." OPDI_QUOTE(OPENHAT_MINOR_VERSION));
+			OPDI_QUOTE(openhat::OPENHAT_MAJOR_VERSION) "." OPDI_QUOTE(openhat::OPENHAT_MINOR_VERSION));
 
 	// return a new instance of this plugin
 	return new WindowsTestPlugin();

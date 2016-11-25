@@ -34,7 +34,7 @@ MPATH = $(CPATH)/master
 # SRC += $(MPATH)/opdi_AbstractProtocol.cpp $(MPATH)/opdi_BasicDeviceCapabilities.cpp $(MPATH)/opdi_BasicProtocol.cpp $(MPATH)/opdi_DigitalPort.cpp $(MPATH)/opdi_IODevice.cpp $(MPATH)/opdi_main_io.cpp $(MPATH)/opdi_OPDIMessage.cpp $(MPATH)/opdi_MessageQueueDevice.cpp $(MPATH)/opdi_OPDIPort.cpp $(MPATH)/opdi_PortFactory.cpp $(MPATH)/opdi_ProtocolFactory.cpp $(MPATH)/opdi_StringTools.cpp $(MPATH)/opdi_TCPIPDevice.cpp
 
 # C++ wrapper
-CPPPATH = $(CPATH)/cppwrapper
+CPPPATH = $(APP_PATH)
 
 # C++ wrapper files
 SRC += $(CPPPATH)/OPDI.cpp $(CPPPATH)/OPDI_Ports.cpp

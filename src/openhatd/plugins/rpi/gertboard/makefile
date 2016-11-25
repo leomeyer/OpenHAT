@@ -22,7 +22,7 @@ PPATH = $(PPATHBASE)/$(PLATFORM)
 SRC = $(TARGET).cpp $(APP_PATH)/Configuration.cpp
 
 # C++ wrapper
-CPPPATH = $(CPATH)/cppwrapper
+CPPPATH = $(APP_PATH)
 
 # C++ wrapper files
 SRC += $(CPPPATH)/OPDI_Ports.cpp

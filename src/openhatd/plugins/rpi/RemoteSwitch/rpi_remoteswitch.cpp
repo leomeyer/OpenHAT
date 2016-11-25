@@ -4,9 +4,6 @@
 #include "Poco/Tuple.h"
 #include "Poco/RegularExpression.h"
 
-#include "opdi_constants.h"
-#include "opdi_platformfuncs.h"
-
 #include "wiringPi.h"
 #include "RCSwitch.h"
 
@@ -207,7 +204,7 @@ extern "C" IOpenHATPlugin* GetPluginInstance(int majorVersion, int minorVersion,
 	// check whether the version is supported
 	if ((majorVersion != OPENHAT_MAJOR_VERSION) || (minorVersion != OPENHAT_MINOR_VERSION))
 		throw Poco::Exception("This plugin requires OpenHAT version "
-			OPDI_QUOTE(OPENHAT_MAJOR_VERSION) "." OPDI_QUOTE(OPENHAT_MINOR_VERSION));
+			OPDI_QUOTE(openhat::OPENHAT_MAJOR_VERSION) "." OPDI_QUOTE(openhat::OPENHAT_MINOR_VERSION));
 
 	// return a new instance of this plugin
 	return new RemoteSwitchPlugin();

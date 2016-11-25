@@ -1,8 +1,6 @@
 
 // Test plugin for OpenHAT (Linux version)
 
-#include "opdi_constants.h"
-
 #include "LinuxOpenHAT.h"
 
 namespace {
@@ -61,9 +59,9 @@ void LinuxTestOpenHATPlugin::masterDisconnected() {
 
 extern "C" IOpenHATPlugin* GetPluginInstance(int majorVersion, int minorVersion, int patchVersion) {
 	// check whether the version is supported
-	if ((majorVersion != OPENHAT_MAJOR_VERSION) || (minorVersion != OPENHAT_MINOR_VERSION))
+	if ((majorVersion != openhat::OPENHAT_MAJOR_VERSION) || (minorVersion != openhat::OPENHAT_MINOR_VERSION))
 		throw Poco::Exception("This plugin requires OpenHAT version "
-			OPDI_QUOTE(OPENHAT_MAJOR_VERSION) "." OPDI_QUOTE(OPENHAT_MINOR_VERSION));
+			OPDI_QUOTE(openhat::OPENHAT_MAJOR_VERSION) "." OPDI_QUOTE(openhat::OPENHAT_MINOR_VERSION));
 
 	// return a new instance of this plugin
 	return new LinuxTestOpenHATPlugin();

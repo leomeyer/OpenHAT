@@ -37,9 +37,14 @@ namespace openhat {
 
 #define OPENHAT_CONFIG_FILE_SETTING	"__OPENHAT_CONFIG_FILE_PATH"
 
-#define OPENHAT_MAJOR_VERSION		0
-#define OPENHAT_MINOR_VERSION		1
-#define OPENHAT_PATCH_VERSION		0
+constexpr char OPENHAT_VERSION_ID[] =
+#include "VERSION"
+;
+// C++14: when C++11 constexpr limitations have been lifted, this code can be changed 
+// to support more than one-digit version number components
+constexpr int OPENHAT_MAJOR_VERSION = OPENHAT_VERSION_ID[0] - '0';
+constexpr int OPENHAT_MINOR_VERSION = OPENHAT_VERSION_ID[2] - '0';
+constexpr int OPENHAT_PATCH_VERSION = OPENHAT_VERSION_ID[4] - '0';
 
 class SettingsException : public Poco::Exception
 {

@@ -286,6 +286,7 @@ int AbstractOpenHAT::startup(const std::vector<std::string>& args, const std::ma
 	bool testMode = false;
 
 	// add default environment parameters
+	this->environment["$OPENHAT_VERSION"] = OPENHAT_VERSION_ID;
 	this->environment["$DATETIME"] = Poco::DateTimeFormatter::format(Poco::LocalDateTime(), this->timestampFormat);
 	this->environment["$LOG_DATETIME"] = Poco::DateTimeFormatter::format(Poco::LocalDateTime(), "%Y%m%d_%H%M%S");
 	this->environment["$CWD"] = Poco::Path::current();

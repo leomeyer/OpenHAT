@@ -94,6 +94,12 @@
   <ItemGroup>
     <ClInclude Include="../../../../opdi_core/code/c/common\cppwrapper\OPDI_Ports.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="webdocroot\index.html" />
+    <None Include="webdocroot\openhat.css" />
+    <None Include="webdocroot\strings.js" />
+    <None Include="webdocroot\units.json" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

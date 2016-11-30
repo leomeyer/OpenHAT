@@ -98,11 +98,7 @@
     <None Include="testconfigs\test_include.ini" />
     <None Include="testconfigs\weather_test.ini" />
     <None Include="testconfigs\window_test.ini" />
-    <None Include="webdocroot\index.html" />
     <None Include="webdocroot\openhatd.css" />
-    <None Include="webdocroot\strings.js" />
-    <None Include="webdocroot\units.json" />
-    <None Include="webdocroot\utils.js" />
     <None Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>

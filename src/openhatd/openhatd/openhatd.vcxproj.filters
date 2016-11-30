@@ -22,9 +22,6 @@
     <Filter Include="Quelldateien\libraries\libctb">
       <UniqueIdentifier>{fc51c054-eb17-44b7-be46-90d5c9e425ec}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Ressourcendateien\webdocroot">
-      <UniqueIdentifier>{321ae4be-ff15-4696-b28e-67890965877d}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Quelldateien\platform">
       <UniqueIdentifier>{3346649b-3db5-4663-bdaa-7207353952f8}</UniqueIdentifier>
     </Filter>
@@ -39,18 +36,6 @@
     </None>
     <None Include="fileinputtest.txt">
       <Filter>Ressourcendateien</Filter>
-    </None>
-    <None Include="webdocroot\index.html">
-      <Filter>Ressourcendateien\webdocroot</Filter>
-    </None>
-    <None Include="webdocroot\strings.js">
-      <Filter>Ressourcendateien\webdocroot</Filter>
-    </None>
-    <None Include="webdocroot\utils.js">
-      <Filter>Ressourcendateien\webdocroot</Filter>
-    </None>
-    <None Include="webdocroot\units.json">
-      <Filter>Ressourcendateien\webdocroot</Filter>
     </None>
     <None Include="..\doc\complex_example_1.ini">
       <Filter>Ressourcendateien</Filter>

@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Ressourcendateien\webdocroot">
+      <UniqueIdentifier>{44a11152-392b-4878-b781-19f1351eb66d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="WebServerPlugin.cpp">
@@ -35,5 +38,19 @@
     <ClInclude Include="../../../../opdi_core/code/c/common\cppwrapper\OPDI_Ports.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="webdocroot\index.html">
+      <Filter>Ressourcendateien\webdocroot</Filter>
+    </None>
+    <None Include="webdocroot\openhat.css">
+      <Filter>Ressourcendateien\webdocroot</Filter>
+    </None>
+    <None Include="webdocroot\strings.js">
+      <Filter>Ressourcendateien\webdocroot</Filter>
+    </None>
+    <None Include="webdocroot\units.json">
+      <Filter>Ressourcendateien\webdocroot</Filter>
+    </None>
   </ItemGroup>
 </Project>

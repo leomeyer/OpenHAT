@@ -69,7 +69,7 @@ public:
 		this->setLine(1, opdi::Port::ChangeSource::CHANGESOURCE_INT);
 	};
 
-	virtual void setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, openhat::ConfigurationView* nodeConfig) override;
+	virtual void setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, openhat::ConfigurationView* nodeConfig, const std::string& driverPath) override;
 
 	void handleEvent(struct mg_connection* nc, int ev, void* p);
 
@@ -567,7 +567,7 @@ void WebServerPlugin::onPortRefreshed(const void* /*pSender*/, opdi::Port*& port
 	}
 }
 
-void WebServerPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, openhat::ConfigurationView* config) {
+void WebServerPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, openhat::ConfigurationView* config, const std::string& driverPath) {
 	this->opdi = this->openhat = openhat;
 	this->setID(node.c_str());
 
@@ -581,9 +581,10 @@ void WebServerPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::
 
 	// get web server configuration
 	this->httpPort = nodeConfig->getString("Port", this->httpPort);
-	// determine document root; default is the current directory
+	// determine document root; default is the current plugin directory
 	this->documentRoot = nodeConfig->getString("DocumentRoot", this->documentRoot);
-	this->documentRoot = openhat->resolveRelativePath(nodeConfig, node, this->documentRoot, "CWD");
+	std::string docRootRelativeTo = nodeConfig->getString("DocumentRootRelativeTo", "Plugin");
+	this->documentRoot = openhat->resolveRelativePath(nodeConfig, node, this->documentRoot, docRootRelativeTo, driverPath);
 	this->logDebug("Resolved document root to: " + this->documentRoot);
 	if (!Poco::File(this->documentRoot).isDirectory())
 		this->openhat->throwSettingsException("Resolved document root folder does not exist or is not a folder: " + documentRoot);

@@ -30,7 +30,7 @@ protected:
 	openhat::AbstractOpenHAT* openhat;
 
 public:
-	virtual void setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const std::string& node, openhat::ConfigurationView* config) override;
+	virtual void setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const std::string& node, openhat::ConfigurationView* config, const std::string& driverPath) override;
 
 	virtual void masterConnected(void) override;
 	virtual void masterDisconnected(void) override;
@@ -39,7 +39,7 @@ public:
 }	// end anonymous namespace
 
 
-void WindowsTestPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const std::string& node, openhat::ConfigurationView* config) {
+void WindowsTestPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const std::string& node, openhat::ConfigurationView* config, const std::string& driverPath) {
 	this->openhat = abstractOpenHAT;
 
 	Poco::AutoPtr<openhat::ConfigurationView> nodeConfig = this->openhat->createConfigView(config, node);

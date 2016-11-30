@@ -156,7 +156,7 @@ protected:
 	openhat::AbstractOpenHAT* openhat;
 
 public:
-	virtual void setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, openhat::ConfigurationView* config) override;
+	virtual void setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, openhat::ConfigurationView* config, const std::string& driverPath) override;
 
 	virtual void masterConnected(void) override;
 	virtual void masterDisconnected(void) override;
@@ -1082,7 +1082,7 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 }
 
 
-void WindowPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, openhat::ConfigurationView* config) {
+void WindowPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, openhat::ConfigurationView* config, const std::string& driverPath) {
 	this->openhat = openhat;
 
 	Poco::AutoPtr<openhat::ConfigurationView> nodeConfig = this->openhat->createConfigView(config, node);

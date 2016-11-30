@@ -629,7 +629,7 @@ void AbstractOpenHAT::setupGroup(ConfigurationView* groupConfig, const std::stri
 	this->addPortGroup(portGroup);
 }
 
-std::string AbstractOpenHAT::resolveRelativePath(ConfigurationView* config, const std::string& source, const std::string& path, const std::string defaultValue) {
+std::string AbstractOpenHAT::resolveRelativePath(ConfigurationView* config, const std::string& source, const std::string& path, const std::string& defaultValue, const std::string& manualPath) {
 	// determine path type
 	std::string relativeTo = this->getConfigString(config, source, "RelativeTo", defaultValue, false);
 
@@ -642,8 +642,28 @@ std::string AbstractOpenHAT::resolveRelativePath(ConfigurationView* config, cons
 			return absPath.toString();
 		}
 		return path;
-	} else
-	if (relativeTo == "Config") {
+	}
+	else if (relativeTo == "Plugin") {
+		Poco::Path filePath(path);
+		Poco::Path absPath(filePath.absolute());
+		// absolute path specified?
+		if (filePath.toString() == absPath.toString()) {
+			this->logWarning("Path specified as relative to Plugin, but absolute path given: '" + path + "'");
+			return absPath.toString();
+		}
+		// determine plugin-relative path depending on location of plugin file
+		std::string pluginFile = manualPath;
+		if (pluginFile == "")
+			this->throwSettingsException("Programming error: Plugin file path not specified");
+		Poco::Path pluginFilePath(pluginFile);
+		Poco::Path parentPath = pluginFilePath.parent();
+		this->logDebug("Resolving path '" + path + "' relative to plugin file path '" + parentPath.toString() + "'");
+		// append or replace new file path to path of previous config file
+		Poco::Path finalPath = parentPath.resolve(path);
+		this->logDebug("Resolved path: '" + finalPath.toString() + "'");
+		return finalPath.toString();
+	}
+	else if (relativeTo == "Config") {
 		Poco::Path filePath(path);
 		Poco::Path absPath(filePath.absolute());
 		// absolute path specified?
@@ -666,7 +686,7 @@ std::string AbstractOpenHAT::resolveRelativePath(ConfigurationView* config, cons
         if (relativeTo.empty())
             return path;
 
-    this->throwSettingsException("Unknown RelativeTo property specified; expected 'CWD' or 'Config'", relativeTo);
+    this->throwSettingsException("Unknown RelativeTo property specified; expected 'CWD', 'Config' or 'Plugin'", relativeTo);
 	return "";
 }
 
@@ -1115,7 +1135,7 @@ void AbstractOpenHAT::setupNode(ConfigurationView* config, const std::string& no
 		nodeConfig->setCheckUnused(false);
 
 		// init the plugin
-		plugin->setupPlugin(this, node, config);
+		plugin->setupPlugin(this, node, config, nodeDriver);
 
 	} else
 	if (nodeType == "Group") {

@@ -58,7 +58,7 @@ protected:
 	int mapAndLockPin(int pinNumber, std::string forNode);
 
 public:
-	virtual void setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, openhat::ConfigurationView* nodeConfig);
+	virtual void setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, openhat::ConfigurationView* nodeConfig, const std::string& driverPath);
 
 	virtual void masterConnected(void) override;
 	virtual void masterDisconnected(void) override;
@@ -711,7 +711,7 @@ int GertboardPlugin::mapAndLockPin(int pinNumber, std::string forNode) {
 	return internalPin;
 }
 
-void GertboardPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, openhat::ConfigurationView* config) {
+void GertboardPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, openhat::ConfigurationView* config, const std::string& driverPath) {
 	this->openhat = openhat;
 	this->nodeID = node;
 	this->expanderInitialized = false;

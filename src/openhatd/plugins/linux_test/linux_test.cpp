@@ -32,14 +32,14 @@ protected:
 	openhat::AbstractOpenHAT* openhat;
 
 public:
-	virtual void setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, openhat::ConfigurationView* config);
+	virtual void setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, openhat::ConfigurationView* config, const std::string& driverPath);
 
 	virtual void masterConnected(void) override;
 	virtual void masterDisconnected(void) override;
 };
 
 
-void LinuxTestOpenHATPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, openhat::ConfigurationView* config) {
+void LinuxTestOpenHATPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, openhat::ConfigurationView* config, const std::string& driverPath) {
 	this->openhat = openhat;
 
 	// add emulated test port

@@ -2,9 +2,12 @@
 # Creates a release file that includes plugins.
 # Pass DEBUG=1 to enable a debug build.
 
-include common.mk
+MAKEFILE = $(firstword $(MAKEFILE_LIST))
 
 # build specific settings
 
-CFLAGS += -static-libstdc++
+CFLAGS = -fPIC -shared -static-libstdc++
+
+include common.mk
+
 

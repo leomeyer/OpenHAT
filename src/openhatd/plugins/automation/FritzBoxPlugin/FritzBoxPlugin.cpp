@@ -727,7 +727,7 @@ void FritzBoxPlugin::getSwitchPower(FritzPort* port) {
 	powerPort->setPower(power);
 }
 
-void FritzBoxPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const std::string& node, openhat::ConfigurationView* config, const std::string& driverPath) {
+void FritzBoxPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const std::string& node, openhat::ConfigurationView* config, const std::string& /*driverPath*/) {
 	this->openhat = abstractOpenHAT;
 	this->nodeID = node;
 	this->sid = INVALID_SID;			// default; means not connected

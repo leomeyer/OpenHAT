@@ -90,6 +90,7 @@
     <None Include="fileinputtest.txt" />
     <None Include="testconfigs\current.json" />
     <None Include="testconfigs\dev.ini" />
+    <None Include="testconfigs\hello-world.ini" />
     <None Include="testconfigs\influxdb_test.ini" />
     <None Include="testconfigs\scene0.ini" />
     <None Include="testconfigs\scene1.ini" />
@@ -102,7 +103,6 @@
     <None Include="webdocroot\strings.js" />
     <None Include="webdocroot\units.json" />
     <None Include="webdocroot\utils.js" />
-    <None Include="win_openhatd.ini" />
     <None Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>

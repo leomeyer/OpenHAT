@@ -59,7 +59,6 @@
       <Filter>Ressourcendateien</Filter>
     </None>
     <None Include="webdocroot\openhatd.css" />
-    <None Include="win_openhatd.ini" />
     <None Include="testconfigs\scene0.ini">
       <Filter>Ressourcendateien\testconfigs</Filter>
     </None>
@@ -85,6 +84,9 @@
       <Filter>Ressourcendateien\testconfigs</Filter>
     </None>
     <None Include="testconfigs\dev.ini">
+      <Filter>Ressourcendateien\testconfigs</Filter>
+    </None>
+    <None Include="testconfigs\hello-world.ini">
       <Filter>Ressourcendateien\testconfigs</Filter>
     </None>
   </ItemGroup>

@@ -182,9 +182,9 @@ void AbstractOpenHAT::sayHello(void) {
 	if (this->logVerbosity == opdi::LogVerbosity::QUIET)
 		return;
 
-	this->logNormal(this->appName + " version " + this->to_string(this->majorVersion) + "." + this->to_string(this->minorVersion) + "." + this->to_string(this->patchVersion) + " (c) Leo Meyer 2015", opdi::LogVerbosity::NORMAL);
-	this->logVerbose("Build: " + std::string(__DATE__) + " " + std::string(__TIME__), opdi::LogVerbosity::VERBOSE);
-	this->logVerbose("Running as user: " + this->getCurrentUser(), opdi::LogVerbosity::VERBOSE);
+	this->logNormal(this->appName + " version " + this->to_string(this->majorVersion) + "." + this->to_string(this->minorVersion) + "." + this->to_string(this->patchVersion));
+	this->logVerbose("Build: " + std::string(__DATE__) + " " + std::string(__TIME__));
+	this->logDebug("Running as user: " + this->getCurrentUser());
 }
 
 void AbstractOpenHAT::showHelp(void) {
@@ -365,6 +365,12 @@ int AbstractOpenHAT::startup(const std::vector<std::string>& args, const std::ma
 	// load configuration, substituting environment parameters
 	configuration = this->readConfiguration(configFile, this->environment);
 
+	opdi::LogVerbosity savedVerbosity = this->logVerbosity;
+
+	// modify verbosity for the following output
+	if (this->logVerbosity == opdi::LogVerbosity::UNKNOWN)
+		this->logVerbosity = opdi::LogVerbosity::NORMAL;
+
 	this->sayHello();
 	this->logVerbose("Using configuration file: " + configFile);
 
@@ -377,6 +383,9 @@ int AbstractOpenHAT::startup(const std::vector<std::string>& args, const std::ma
 			++it;
 		}
 	}
+
+	// restore saved verbosity
+	this->logVerbosity = savedVerbosity;
 
 	std::string switchToUserName = this->setupGeneralConfiguration(configuration);
 
@@ -950,10 +959,10 @@ void AbstractOpenHAT::configureDialPort(ConfigurationView* portConfig, opdi::Dia
 	if (!stateOnly) {
 		this->configurePort(portConfig, port, 0);
 
-		int64_t min = portConfig->getInt64("Min", LLONG_MIN);
-		int64_t max = portConfig->getInt64("Max", LLONG_MAX);
+		int64_t min = portConfig->getInt64("Min", 0);
+		int64_t max = portConfig->getInt64("Max", 100);
 		if (min >= max)
-			this->throwSettingsException("Wrong dial port setting: Max must be greater than Min");
+			this->throwSettingsException("Wrong dial port setting: Max (" + to_string(max) + ") must be greater than Min (" + to_string(min) + ")");
 		int64_t step = portConfig->getInt64("Step", 1);
 		if (step < 1)
 			this->throwSettingsException("Wrong dial port setting: Step may not be negative or zero: " + to_string(step));
@@ -1238,10 +1247,10 @@ int AbstractOpenHAT::setupConnection(ConfigurationView* configuration, bool test
 	this->logVerbose(std::string("Setting up connection for slave: ") + this->slaveName);
 	Poco::AutoPtr<ConfigurationView> config = this->createConfigView(configuration, "Connection");
 
-	std::string connectionType = this->getConfigString(config, "Connection", "Type", "", true);
+	std::string connectionTransport = this->getConfigString(config, "Connection", "Transport", "", true);
 	this->connectionLogVerbosity = this->getConfigLogVerbosity(config, this->logVerbosity);
 
-	if (connectionType == "TCP") {
+	if (connectionTransport == "TCP") {
 		std::string interface_ = this->getConfigString(config, "Connection", "Interface", "*", false);
 
 		if (interface_ != "*")
@@ -1262,7 +1271,7 @@ int AbstractOpenHAT::setupConnection(ConfigurationView* configuration, bool test
 		return this->setupTCP(interface_, port);
 	}
 	else
-		this->throwSettingsException("Invalid configuration; unknown connection type", connectionType);
+		this->throwSettingsException("Invalid configuration; unknown connection transport", connectionTransport);
 	return OPDI_STATUS_OK;
 }
 

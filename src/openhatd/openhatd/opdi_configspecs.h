@@ -35,7 +35,7 @@ extern "C" {
 
 // Defines the maximum message length this config can receive.
 // Consumes this amount of bytes in RAM.
-#define OPDI_MESSAGE_BUFFER_SIZE		1024
+#define OPDI_MESSAGE_BUFFER_SIZE		32786
 
 // Defines the maximum message string length this config can receive.
 // Consumes this amount of bytes in RAM.

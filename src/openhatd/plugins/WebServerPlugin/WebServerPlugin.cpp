@@ -59,11 +59,14 @@ public:
 	WebServerPlugin(): opdi::DigitalPort("WebServerPlugin", OPDI_PORTDIRCAP_OUTPUT, 0), mgr() {
 		memset(&this->s_http_server_opts, 0, sizeof(mg_serve_http_opts));
 		this->httpPort = "8080";
-		this->documentRoot = ".";
+		this->documentRoot = "./webdocroot/";
 		this->enableDirListing = "yes";
 		this->indexFiles = "index.html";
 		this->jsonRpcUrl = "/api/jsonrpc";
 		this->nc = nullptr;
+
+		this->setMode(OPDI_DIGITAL_MODE_OUTPUT, opdi::Port::ChangeSource::CHANGESOURCE_INT);
+		this->setLine(1, opdi::Port::ChangeSource::CHANGESOURCE_INT);
 	};
 
 	virtual void setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, openhat::ConfigurationView* nodeConfig) override;
@@ -278,7 +281,6 @@ Poco::JSON::Object WebServerPlugin::jsonRpcSetDigitalState(struct mg_connection*
 
 	if (0 != strcmp(port->getType(), OPDI_PORTTYPE_DIGITAL))
 		throw Poco::InvalidArgumentException(std::string("Method setDigitalState: Specified port is not a digital port: ") + portIDStr);
-
 	Poco::Dynamic::Var line = object->get("line");
 	if (line.isEmpty())
 		throw Poco::InvalidArgumentException("Method setDigitalState: parameter line is missing");
@@ -287,7 +289,8 @@ Poco::JSON::Object WebServerPlugin::jsonRpcSetDigitalState(struct mg_connection*
 	if ((newLine != OPDI_DIGITAL_LINE_LOW) && (newLine != OPDI_DIGITAL_LINE_HIGH))
 		throw Poco::InvalidArgumentException(std::string("Method setDigitalState: Illegal value for line: ") + this->to_string((int)newLine));
 
-	((opdi::DigitalPort*)port)->setLine(newLine, opdi::Port::ChangeSource::CHANGESOURCE_USER);
+	if (!port->isReadonly())
+		((opdi::DigitalPort*)port)->setLine(newLine, opdi::Port::ChangeSource::CHANGESOURCE_USER);
 
 	return this->jsonGetPortInfo(port);
 }
@@ -314,7 +317,8 @@ Poco::JSON::Object WebServerPlugin::jsonRpcSetAnalogValue(struct mg_connection* 
 		throw Poco::InvalidArgumentException("Method setAnalogValue: parameter value is missing");
 	int32_t newValue = value.convert<int32_t>();
 
-	((opdi::AnalogPort*)port)->setValue(newValue, opdi::Port::ChangeSource::CHANGESOURCE_USER);
+	if (!port->isReadonly())
+		((opdi::AnalogPort*)port)->setValue(newValue, opdi::Port::ChangeSource::CHANGESOURCE_USER);
 
 	return this->jsonGetPortInfo(port);
 }
@@ -341,7 +345,8 @@ Poco::JSON::Object WebServerPlugin::jsonRpcSetDialPosition(struct mg_connection*
 		throw Poco::InvalidArgumentException("Method setDialPosition: parameter position is missing");
 	int64_t newPosition = position.convert<int64_t>();
 
-	((opdi::DialPort*)port)->setPosition(newPosition, opdi::Port::ChangeSource::CHANGESOURCE_USER);
+	if (!port->isReadonly())
+		((opdi::DialPort*)port)->setPosition(newPosition, opdi::Port::ChangeSource::CHANGESOURCE_USER);
 
 	return this->jsonGetPortInfo(port);
 }
@@ -368,7 +373,8 @@ Poco::JSON::Object WebServerPlugin::jsonRpcSetSelectPosition(struct mg_connectio
 		throw Poco::InvalidArgumentException("Method setSelectPosition: parameter position is missing");
 	uint16_t newPosition = position.convert<uint16_t>();
 
-	((opdi::SelectPort*)port)->setPosition(newPosition, opdi::Port::ChangeSource::CHANGESOURCE_USER);
+	if (!port->isReadonly())
+		((opdi::SelectPort*)port)->setPosition(newPosition, opdi::Port::ChangeSource::CHANGESOURCE_USER);
 
 	return this->jsonGetPortInfo(port);
 }
@@ -575,22 +581,10 @@ void WebServerPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::
 
 	// get web server configuration
 	this->httpPort = nodeConfig->getString("Port", this->httpPort);
-	// determine document root; default is the configuration's directory
+	// determine document root; default is the current directory
 	this->documentRoot = nodeConfig->getString("DocumentRoot", this->documentRoot);
-	/*
-	// determine application-relative path depending on location of config file
-	std::string configFilePath = config->getString(OPENHAT_CONFIG_FILE_SETTING, "");
-	if (configFilePath == "")
-		this->throwSettingsException("Programming error: Configuration file path not specified in config settings");
-	Poco::Path filePath(configFilePath);
-	Poco::Path absPath(filePath.absolute());
-	Poco::Path parentPath = absPath.parent();
-	// append document root to path of previous config file (or replace it)
-	Poco::Path finalPath = parentPath.resolve(this->documentRoot);
-	this->documentRoot = finalPath.toString();
+	this->documentRoot = openhat->resolveRelativePath(nodeConfig, node, this->documentRoot, "CWD");
 	this->logDebug("Resolved document root to: " + this->documentRoot);
-	*/
-	this->documentRoot = openhat->resolveRelativePath(nodeConfig, node, this->documentRoot, "Config");
 	if (!Poco::File(this->documentRoot).isDirectory())
 		this->openhat->throwSettingsException("Resolved document root folder does not exist or is not a folder: " + documentRoot);
 		
@@ -649,9 +643,12 @@ void WebServerPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::
 	this->openhat->portRefreshed += Poco::delegate(this, &WebServerPlugin::onPortRefreshed);
 }
 
-uint8_t WebServerPlugin::doWork(uint8_t /*canSend*/) {
-	// call Mongoose work function
-	mg_mgr_poll(&this->mgr, 1);
+uint8_t WebServerPlugin::doWork(uint8_t canSend) {
+	opdi::DigitalPort::doWork(canSend);
+
+	if (this->line == 1)
+		// call Mongoose work function
+		mg_mgr_poll(&this->mgr, 1);
 	
 	return OPDI_STATUS_OK;
 }

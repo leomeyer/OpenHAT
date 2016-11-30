@@ -14,21 +14,6 @@ The PATCH component increases when bugs are fixed or new functions are added wit
 
 New development takes place on the master branch of the Git repository. Whenever a new version is released a Git branch is made with this version number and the version number on the master branch is advanced. Fixes on the version branches require the creation of a patch tag with an increased patch number.
 
-### Time in OpenHAT
-
-OpenHAT is not a real time system. For operations that must be regularly timed (such as periodic refreshes of port information, timer actions, pulses etc.) the most finely grained unit is the millisecond. Some settings do have to be specified in milliseconds, others in seconds (depending on what makes more sense).
-
-Measuring time is platform dependent. On Windows the time resolution may easily be reduced to 10-16 milliseconds. On Linux the time granularity is usually better.
-
-After startup, OpenHAT periodically iterates through all ports that have been created and registered during the initialization process. This is called the doWork loop. Depending on the number of ports and how they are configured an iteration of the doWork loop requires a certain amount of time to process. The length of the doWork iterations determines the speed on which ports can act; for example, if you specify a Pulse port with a duration of 10 milliseconds while the doWork loop already requires 20 milliseconds to run, the Pulse port will not be able to keep up its 10 milliseconds duration. Instead, it will run with a lower time resolution.
-
-In analogy to computer game programming, the number of doWork iterations per seconds are called "frames per second" or fps. Having OpenHAT run at a high fps rate gives you a finer granularity of the time slices and consequently more precision, but most of the time this is not necessary. It also consumes more CPU cycles and more power in turn. OpenHAT allows you to specify a target fps rate that the system tries to attain by putting the process to sleep for the rest of the time if the doWork loop runs faster than required. This is done by measuring the current doWork duration and comparing it against a set target fps rate. The sleep time is adjusted based on this comparison. It may take quite some time until the defined target fps rate is actually reached (easily one hour or so). For a long-running server this is usually not a problem.
-
-Generally it is recommended to set the fps rate fairly low, to maybe 10 or 20. This saves CPU power but still gives you a resolution of 50 to 100 milliseconds which is enough for most applications. In Debug log verbosity, OpenHAT outputs a warning if the doWork loop consumes a lot of CPU time.
-
-All OpenHAT ports should try to do as little as possible in the doWork loop. Some actions in OpenHAT need to be performed independently of the doWork loop because they require more work or employ some kind of blocking. These functions are usually implemented using separate threads. For port implementors who use threads it is important to know that everything that modifies OpenHAT port state must only be done in the doWork loop which is called from the main thread.
-
-However, some operations that must be done on the main thread may cause the doWork iteration to delay for a time that is longer (maybe much longer) than the specified fps rate. An example is the WebServerPlugin which serves incoming requests in the doWork method. So, while time in OpenHAT (as obtained by the internal function opdi_get_time_ms) is guaranteed to increase monotonically, the intervals between doWork invocations may vary greatly. This point should be taken into account when configuring port settings and developing OpenHAT plugins or ports. On Windows, due to the time granularity being 10 ms or more, two or more subsequent doWork iterations may even seem to run at the same time as reported by the opdi_get_time_ms function.
 
 ### Operating system compatibility
 
@@ -45,25 +30,6 @@ Compiling OpenHAT on a Raspberry Pi unfortunately is not feasible, so it require
 
 Only the binaries for the Raspberry Pi are compiled in "release mode", i. e. without debug symbols and with optimizations for speed and size. In general, OpenHAT binaries should be statically linked to avoid problems with shared libraries. Plugins, however, are provided as dynamic libraries that are linked at runtime.
 
-### Logging
-
-* Log levels (LogVerbosity)
-
-The log level determines the amount of logging output. The following log levels are (somewhat loosely) defined (from lowest to highest, a higher log level includes the lower levels):
-
-QUIET: The absolute minimum. Only warnings and errors are logged.
-
-NORMAL: Fairly minimal logging with limited information. Recommended setting when a system is stable.
-
-VERBOSE: Recommended for testing if some amount of information is required. Will log non-regular events (i. e. events that occur on user interaction, or happen infrequently) plus some technical information.
-
-DEBUG: Will additionally log regularly occurring events plus more detailed technical information, but not from the inner doWork loop. Can produce a large amount of log messages. Recommended if you need additional hints about system behaviour, but not for normal operation. Will also log the OPDI message streams if a master is connected.
-
-EXTREME: Will additionally output messages from the inner doWork loop. This level will generate log messages in every frame and will quickly produce lots of output. Recommended for isolated testing only.
-
-* Individual ports can override the global log level
-
-The log level is globally configurable using the LogVerbosity ini file setting. Individual nodes or ports can specify their own log level which then takes precedence. This allows you to selectively increase or decrease log levels for certain ports.
 
 
 ### Environment

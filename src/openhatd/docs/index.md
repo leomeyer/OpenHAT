@@ -1,17 +1,17 @@
 
 #Introduction to openhatd
 
-openhatd, the Open Home Automation Toolkit server, is an open-source, cross-platform automation server written in C++11 for performance and small memory footprint. It can be configured for a variety of automation tasks and provides the following features:
+openhatd, the Open Home Automation Toolkit server, is an open-source, cross-platform automation server written in C++11. It can be configured for a variety of automation tasks and provides the following features:
 
 
  - Ideally suited for Raspberry Pi and other small Linux based systems
- - Configurable by text files in INI file format
+ - Configuration files in INI file format
  - Controllable via an Android app or HTML/Javascript (with a JSON-RPC web service API)
  - Supports a plugin architecture for extensibility
  - Controls a variety of actors, for example relays or dimmers
  - Accepts input from a variety of sources, for example switches, buttons, and A/D converters
  - Supports scenes for predefined combinations of settings
- - Stores user settings in a file for persistence over restarts
+ - Can store user settings for persistence over restarts
  - Has plugins for:
 	 - Raspberry Pi [Gertboard](https://www.sparkfun.com/products/retired/11773) I/O board utilizing an onboard ATMEGA as a port expander
 	 - Weather station support (interoperates with the Weewx open source weather station software, see: [http://weewx.com](http://weewx.com))
@@ -28,10 +28,10 @@ openhatd, the Open Home Automation Toolkit server, is an open-source, cross-plat
 	 - Fader for smooth control of e. g. dimmers
 	 - Statistical aggregator for calculations of means etc.
 	 - Trigger that is activated when inputs change
-	 - Connector to InfluxDB 
+	 - Connector to InfluxDB for collecting statistics
 	 -  and more
 
-OpenHAT allows you to monitor and control the state of sensors and actors such as lamps, fans, dimmers, windows and shutters, radio-controlled power sockets, weather sensors, electric, gas and water meters and many more.
+openhatd allows you to monitor and control the state of sensors and actors such as lamps, fans, dimmers, windows and shutters, radio-controlled power sockets, weather sensors, electric, gas and water meters and more.
 
 Typical use cases in home automation include:
 
@@ -43,7 +43,7 @@ Typical use cases in home automation include:
  - Show current weather conditions
  - Control heating equipment  
 
-OpenHAT is mostly licensed under the Mozilla Public License but may contain parts using other licenses. 
+openhatd is a part of the OpenHAT project. It is mostly licensed under the Mozilla Public License but may contain parts using other licenses. 
 
 ##Example Screenshots
 
@@ -61,4 +61,6 @@ You can test openhatd on Windows or Linux first before deploying it in a "real" 
 
 When openhatd has started you can open the web GUI using a browser. Go to [http://localhost:8080](http://localhost:8080).
 
-To control openhatd using an Android device, download and install AndroPDI Remote Control app on the device. You may have to temporarily allow the installation of third-party apps. Start the app and create a new device entry. Enter the name or IP address of the machine running openhatd as the host name. The default port is 13110. Tap the device entry to open a connection to openhatd. After connecting, tap it again to view the list of ports exposed by openhatd and play with them.
+To control openhatd using an Android device, download and install the AndroPDI Remote Control app on the device. You may have to temporarily allow the installation of third-party apps. Start the app and create a new device entry. Enter the name or IP address of the machine running openhatd as the host name. The default port is 13110. Tap the device entry to open a connection to openhatd. After connecting, tap it again to view the list of ports exposed by openhatd and play with them.
+
+To become familiar with the possibilities of openhatd please refer to [Basic Concepts](concepts.md).

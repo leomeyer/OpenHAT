@@ -7,3 +7,4 @@ include common.mk
 # build specific settings
 
 CFLAGS += -static-libstdc++
+

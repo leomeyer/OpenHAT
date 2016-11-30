@@ -68,6 +68,7 @@ POCOINCPATH = $(OPDI_CORE_PATH)/code/c/libraries/POCO/Util/include $(OPDI_CORE_P
 POCOLIBPATH = $(OPDI_CORE_PATH)/code/c/libraries/POCO/lib/Linux/x86_64
 
 # POCO libraries
+# default: dynamic linking
 POCOLIBS = -lPocoUtil -lPocoNet -lPocoFoundation -lPocoXML -lPocoJSON
 
 # ExprTk expression library path
@@ -130,12 +131,14 @@ plugins:
 	$(MAKE) -C ../plugins -f $(MAKEFILE)
 
 tar:
-	mkdir $(TARFOLDER)
-	cp $(TARGET) $(TARFOLDER)/$(BASENAME)
-	cp -r webdocroot $(TARFOLDER)
-	mkdir $(TARFOLDER)/plugins
+	mkdir -p $(TARFOLDER)
+	mkdir -p $(TARFOLDER)/bin
+	cp $(TARGET) $(TARFOLDER)/bin/$(BASENAME)
+	mkdir -p $(TARFOLDER)/plugins
+# TODO let plugin makefiles handle the packaging (?)
 	find ../plugins/ -name '*.so' -exec cp --parents {} $(TARFOLDER)/plugins \;
-	cp -r testconfigs $(TARFOLDER)
+	cp -r ../plugins/WebServerPlugin/webdocroot $(TARFOLDER)/plugins/WebServerPlugin
+	cp -r ../testconfigs $(TARFOLDER)
 	tar czf $(TARFOLDER).tar.gz $(TARFOLDER)
 	rm -rf $(TARFOLDER)
 

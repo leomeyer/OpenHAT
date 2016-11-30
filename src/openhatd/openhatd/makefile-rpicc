@@ -14,7 +14,7 @@ MAKEFILE = makefile-rpicc
 # POCO library path
 POCOLIBPATH = $(OPDI_CORE_PATH)/code/c/libraries/POCO/lib/Linux/ARM
 
-# POCO libraries
+# link POCO libraries statically
 POCOLIBS = $(POCOLIBPATH)/libPocoUtil.a $(POCOLIBPATH)/libPocoNet.a $(POCOLIBPATH)/libPocoFoundation.a $(POCOLIBPATH)/libPocoXML.a $(POCOLIBPATH)/libPocoJSON.a
 
 # The compiler to be used.

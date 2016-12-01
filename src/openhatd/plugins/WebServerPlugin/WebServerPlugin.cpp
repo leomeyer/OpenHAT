@@ -584,7 +584,7 @@ void WebServerPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::
 	// determine document root; default is the current plugin directory
 	this->documentRoot = nodeConfig->getString("DocumentRoot", this->documentRoot);
 	std::string docRootRelativeTo = nodeConfig->getString("DocumentRootRelativeTo", "Plugin");
-	this->documentRoot = openhat->resolveRelativePath(nodeConfig, node, this->documentRoot, docRootRelativeTo, driverPath);
+	this->documentRoot = openhat->resolveRelativePath(nodeConfig, node, this->documentRoot, docRootRelativeTo, driverPath, "DocumentRootRelativeTo");
 	this->logDebug("Resolved document root to: " + this->documentRoot);
 	if (!Poco::File(this->documentRoot).isDirectory())
 		this->openhat->throwSettingsException("Resolved document root folder does not exist or is not a folder: " + documentRoot);

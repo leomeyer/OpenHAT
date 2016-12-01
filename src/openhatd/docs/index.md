@@ -43,7 +43,7 @@ Typical use cases in home automation include:
  - Show current weather conditions
  - Control heating equipment  
 
-openhatd is a part of the OpenHAT project. It is mostly licensed under the Mozilla Public License but may contain parts using other licenses. 
+openhatd is a part of the [OpenHAT project](http://www.openhat.org). It is mostly licensed under the Mozilla Public License but may contain parts using other licenses. 
 
 ##Example Screenshots
 
@@ -57,7 +57,7 @@ openhatd is a part of the OpenHAT project. It is mostly licensed under the Mozil
 
 You can test openhatd on Windows or Linux first before deploying it in a "real" home automation system. Download and install the proper version for your operating system. Open a command line prompt, go to the installation directory and start openhatd:
 
-	$ openhatd -c get_started.ini
+	$ openhatd -c hello-world.ini
 
 When openhatd has started you can open the web GUI using a browser. Go to [http://localhost:8080](http://localhost:8080).
 

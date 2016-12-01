@@ -74,13 +74,13 @@ openhatd will listen to operating system signals to determine when it is about t
 
 openhatd uses the OPDI protocol to receive commands. The OPDI protocol defines a handshake procedure to establish a connection between devices. After connecting, the slave, in this case the openhatd server, sends a list of ports along with their properties to the controlling master. The master builds a GUI and allows the user to interact with it, for example to change values or switches. These commands are then transferred to the slave which updates its internal state.
 
-The OPDI protocol is a lightweight protocol originally designed for small devices like microcontrollers. It supports AES encryption and a username/password login mechanism. It does, however, not support an unlimited number of characters per message. Also, the number of ports is limited. The limits are set at compile time to reasonably high defaults so it's unlikely to run into problems unless you are using a very large number of ports.
+The OPDI protocol is a lightweight protocol originally designed for small devices like microcontrollers. It supports encryption and a username/password login mechanism. It does, however, not support an unlimited number of characters per message. Also, the number of ports is limited. The limits are set at compile time to reasonably high defaults so it's unlikely to run into problems unless you are using a very large number of ports.
 
 openhatd also contains a WebServer plugin that gives you an HTML/JavaScript GUI to interact with the server. This GUI does not have the restrictions of the OPDI protocol but is not as lightweight and therefore a little slower. The WebServer plugin also provides a JSON-RPC API. 
 
 ## Configuration<a name="configuration"></a>
 
-openhatd is configured using text files in the INI file format. This format defines **sections** in square brackets and properties in the format **key = value**:
+openhatd is configured using text files in the INI file format. This format defines **sections** in square brackets and properties in the format `key = value`:
 
 	[Example_Section]
 	Example_Key = Example_Value
@@ -95,11 +95,9 @@ To run openhatd you have to specify a configuration file using the `-c` command 
 
 	$ openhatd -c hello-world.ini
 
-Configuration files can [include](configuration#includes) other configuration files and there is a text replacement mechanism which allows the included files to specify certain [parameters](configuration#parameters). This makes it simple to reuse complex configurations.
+Configuration sections in openhatd ini files are referred to as ***nodes***. (The terms "node" and "section" mean roughly the same thing.)
 
-The configuration sections in openhatd ini files are referred to as ***nodes***. (The terms "node" and "section" mean roughly the same thing.) Nodes can refer to other nodes in the same configuration file, either implicitly or explicitly. You can imagine the nodes as elements of your automation model, and the connections between them as lines or edges, forming a graph that describes the automation model. Nodes are not identical with ports, though: A configuration node may result in the creation of more than one port, or none at all.
-
-The main configuration file must contain some required nodes and properties (properties are also called **settings**). These are the `General` node, the `Root` node and the `Connection` node. The `General` node tells openhatd about the basic properties of the system:
+The main configuration file must contain some required nodes and properties (properties are also called **settings**). These are the `General` node, the `Connection` node and the `Root` node. The `General` node tells openhatd about some basic properties of the system:
 
 	[General]
 	SlaveName = openhatd Hello World
@@ -145,7 +143,7 @@ When running the above example, openhatd's output will be something like:
 	[2016-11-29 12:00:32.495] openhatd version 0.1.0
 	[2016-11-29 12:00:32.520] Listening for a connection on TCP port 13110
 
-openhatd will warn about properties that are not used in the configuration. If you specify the `-d` command line flag (for "Debug") openhatd will output rather verbose information about how it reads the configuration settings.
+If you specify the `-d` command line flag (for "Debug") openhatd will output rather verbose information about how it reads the configuration settings.
 
 Open a browser and point it to [localhost:8080](http://localhost:8080). You should see the following GUI:
 
@@ -172,8 +170,6 @@ The log levels are somewhat loosely defined from lowest to highest (a higher log
  
 - `Extreme` (`-e` on the command line): Will additionally output messages from the inner doWork loop. This level will generate log messages in every frame and will quickly produce a lot of output. Recommended for isolated testing only.
  
-Individual nodes or ports can specify their own log levels which then take precedence. This allows you to selectively increase or decrease log levels for certain ports independent from the general configuration.
-
 For example, the log output in `Verbose` mode of the above example is:
 
 	[2016-11-29 16:42:52.801] openhatd version 0.1.0
@@ -187,6 +183,8 @@ For example, the log output in `Verbose` mode of the above example is:
 	[2016-11-29 16:42:52.862] Node setup complete, preparing ports
 	[2016-11-29 16:42:52.864] Setting up connection for slave: openhatd Hello World
 	[2016-11-29 16:42:52.870] Listening for a connection on TCP port 13110
+
+Individual nodes or ports can specify their own log levels which then take precedence. This allows you to selectively increase or decrease log levels for certain ports independent from the general configuration. The individual port log levels do even override the command line flag.
 
 
 ### Port Ordering

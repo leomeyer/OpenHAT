@@ -117,6 +117,7 @@ all: clean plugins $(TARGET) tar
 target: $(TARGET)
 
 $(TARGET): $(OBJECTS)
+	@echo $(CC)
 	$(CC) $(CFLAGS) $(OBJECTS) -o $@ $(POCOLIBS) $(LIBS)
 
 .cpp.o:
@@ -141,6 +142,14 @@ tar:
 	cp -r ../testconfigs $(TARFOLDER)
 	tar czf $(TARFOLDER).tar.gz $(TARFOLDER)
 	rm -rf $(TARFOLDER)
+
+tests:
+	./$(TARGET) -c hello-world.ini -t -q
+	./$(TARGET) -c ../testconfigs/dev.ini -t -q
+	./$(TARGET) -c ../testconfigs/linux_test.ini -t -q
+	./$(TARGET) -c ../testconfigs/weather_test.ini -t -q
+	./$(TARGET) -c ../testconfigs/window_test.ini -t -q
+	./$(TARGET) -c ../testconfigs/testconfig.ini -t -q
 
 clean:
 	find ../plugins/ -name '*.so' -exec rm {} \;

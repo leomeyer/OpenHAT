@@ -24,6 +24,7 @@ script:
 - export CXX=g++-4.9
 - export CC=gcc-4.9
 - make -C src/openhatd/openhatd/ CC=$CC
+- make -C src/openhatd/openhatd/ tests
 - export PATH=$(pwd)/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin:$PATH
 - make -C src/openhatd/openhatd/ -f makefile-rpicc
 - export SSHPASS=$RELEASE_UPLOAD_PASSWORD 

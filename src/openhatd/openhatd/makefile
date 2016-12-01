@@ -6,7 +6,13 @@ MAKEFILE = $(firstword $(MAKEFILE_LIST))
 
 # build specific settings
 
-CFLAGS = -fPIC -shared -static-libstdc++
+DEBUG = 1
+
+# The compiler to be used.
+CC = g++
+
+# Compiler flags.
+CFLAGS = -static-libstdc++
 
 include common.mk
 

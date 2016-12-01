@@ -104,13 +104,13 @@ std::string WeatherGaugePort::getDataElement(void){
 }
 
 void WeatherGaugePort::configure(openhat::ConfigurationView* nodeConfig, opdi::LogVerbosity defaultLogVerbosity, int defaultExpiry) {
-	openhat->configureDialPort(nodeConfig, this);
-	this->logVerbosity = openhat->getConfigLogVerbosity(nodeConfig, defaultLogVerbosity);
+	this->openhat->configureDialPort(nodeConfig, this);
+	this->logVerbosity = this->openhat->getConfigLogVerbosity(nodeConfig, defaultLogVerbosity);
 
-	this->dataElement = openhat->getConfigString(nodeConfig, this->ID(), "DataElement", "", true);
-	this->regexMatch = openhat->getConfigString(nodeConfig, this->ID(), "RegexMatch", "", false);
-	this->regexReplace = openhat->getConfigString(nodeConfig, this->ID(), "RegexReplace", "", false);
-	this->replaceBy = openhat->getConfigString(nodeConfig, this->ID(), "ReplaceBy", "", false);
+	this->dataElement = this->openhat->getConfigString(nodeConfig, this->ID(), "DataElement", "", true);
+	this->regexMatch = this->openhat->getConfigString(nodeConfig, this->ID(), "RegexMatch", "", false);
+	this->regexReplace = this->openhat->getConfigString(nodeConfig, this->ID(), "RegexReplace", "", false);
+	this->replaceBy = this->openhat->getConfigString(nodeConfig, this->ID(), "ReplaceBy", "", false);
 	this->numerator = nodeConfig->getInt("Numerator", this->numerator);
 	this->denominator = nodeConfig->getInt("Denominator", this->denominator);
 	this->expirySeconds = nodeConfig->getInt("Expiry", defaultExpiry);
@@ -258,10 +258,10 @@ public:
 	// weather data collection thread method
 	virtual void run(void);
 
-	virtual void setupPlugin(openhat::AbstractOpenHAT* openHAT, const std::string& node, openhat::ConfigurationView* config, const std::string& driverPath) override;
+	virtual void setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, openhat::ConfigurationView* config, const std::string& driverPath) override;
 };
 
-void WeatherPlugin::setupPlugin(openhat::AbstractOpenHAT* openHAT, const std::string& node, openhat::ConfigurationView* config, const std::string& /*driverPath*/) {
+void WeatherPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, openhat::ConfigurationView* config, const std::string& /*driverPath*/) {
 	this->openhat = openhat;
 	this->nodeID = node;
 	this->timeoutSeconds = 10;
@@ -270,10 +270,10 @@ void WeatherPlugin::setupPlugin(openhat::AbstractOpenHAT* openHAT, const std::st
 
 	Poco::AutoPtr<openhat::ConfigurationView> nodeConfig = this->openhat->createConfigView(config, node);
 
-	this->logVerbosity = openhat->getConfigLogVerbosity(nodeConfig, opdi::LogVerbosity::UNKNOWN);
+	this->logVerbosity = this->openhat->getConfigLogVerbosity(nodeConfig, opdi::LogVerbosity::UNKNOWN);
 
-	this->url = openHAT->getConfigString(nodeConfig, node, "Url", "", true);
-	this->provider = openHAT->getConfigString(nodeConfig, node, "Provider", "", true);
+	this->url = this->openhat->getConfigString(nodeConfig, node, "Url", "", true);
+	this->provider = this->openhat->getConfigString(nodeConfig, node, "Provider", "", true);
 
 	if (this->provider == "Weewx") {
 		// configure xpath for default skin
@@ -348,14 +348,14 @@ void WeatherPlugin::setupPlugin(openhat::AbstractOpenHAT* openHAT, const std::st
 		Poco::AutoPtr<openhat::ConfigurationView> portConfig = this->openhat->createConfigView(config, nodeName);
 
 		// get port type (required)
-		std::string portType = openHAT->getConfigString(portConfig, nodeName, "Type", "", true);
+		std::string portType = this->openhat->getConfigString(portConfig, nodeName, "Type", "", true);
 
 		if (portType == "WeatherGaugePort") {
 
 			WeatherGaugePort* port = new WeatherGaugePort(this->openhat, nodeName.c_str());
 			port->setGroup(group);
 			port->configure(portConfig, this->logVerbosity, this->dataValiditySeconds);
-			openhat->addPort(port);
+			this->openhat->addPort(port);
 			// add port to internal list
 			this->weatherPorts.push_back(port);
 		} else

@@ -135,6 +135,7 @@ tar:
 	mkdir -p $(TARFOLDER)
 	mkdir -p $(TARFOLDER)/bin
 	cp $(TARGET) $(TARFOLDER)/bin/$(BASENAME)
+	cp hello-world.ini $(TARFOLDER)/bin/
 	mkdir -p $(TARFOLDER)/plugins
 # TODO let plugin makefiles handle the packaging (?)
 	find ../plugins/ -name '*.so' -exec cp --parents {} $(TARFOLDER)/plugins \;

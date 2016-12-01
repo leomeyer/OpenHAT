@@ -121,11 +121,8 @@ void WeatherGaugePort::configure(openhat::ConfigurationView* nodeConfig, opdi::L
 }
 
 void WeatherGaugePort::prepare(void) {
-	this->setReadonly(true);
-	if (this->refreshMode == RefreshMode::REFRESH_NOT_SET)
-		// automatically refresh when the value changes
-		this->setRefreshMode(RefreshMode::REFRESH_AUTO);
 	opdi::DialPort::prepare();
+	this->setReadonly(true);
 }
 
 void WeatherGaugePort::extract(const std::string& rawValue) {

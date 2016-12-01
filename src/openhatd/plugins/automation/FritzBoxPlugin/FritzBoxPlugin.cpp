@@ -210,7 +210,7 @@ public:
 FritzDECT200Switch::FritzDECT200Switch(FritzBoxPlugin* plugin, const char* id) : opdi::DigitalPort(id, OPDI_PORTDIRCAP_OUTPUT, 0), FritzPort(id) {
 	this->plugin = plugin;
 	this->switchState = -1;	// unknown
-	this->refreshMode =RefreshMode::REFRESH_PERIODIC;
+	this->refreshMode = RefreshMode::REFRESH_PERIODIC;
 
 	this->setIcon("powersocket");
 }
@@ -265,7 +265,7 @@ void FritzDECT200Switch::setSwitchState(int8_t line) {
 FritzDECT200Power::FritzDECT200Power(FritzBoxPlugin* plugin, const char* id) : opdi::DialPort(id), FritzPort(id) {
 	this->plugin = plugin;
 	this->power = -1;	// unknown
-	this->refreshMode =RefreshMode::REFRESH_PERIODIC;
+	this->refreshMode = RefreshMode::REFRESH_PERIODIC;
 
 	this->minValue = 0;
 	this->maxValue = 2300000;	// measured in mW; 2300 W is maximum power load for the DECT200
@@ -346,7 +346,7 @@ void FritzDECT200Power::doRefresh(void) {
 FritzDECT200Energy::FritzDECT200Energy(FritzBoxPlugin* plugin, const char* id) : opdi::DialPort(id), FritzPort(id) {
 	this->plugin = plugin;
 	this->energy = -1;	// unknown
-	this->refreshMode =RefreshMode::REFRESH_PERIODIC;
+	this->refreshMode = RefreshMode::REFRESH_PERIODIC;
 
 	this->minValue = 0;
 	this->maxValue = 2147483647;	// measured in Wh

@@ -3,7 +3,6 @@ sudo: required
 language: cpp
 
 install:
-- touch test
 - git clone https://github.com/raspberrypi/tools.git --depth=1
 - export PATH=$(pwd)/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin:$PATH
 - pushd opdi_core/code/c/libraries/POCO
@@ -24,8 +23,7 @@ script:
 - export CXX=g++-4.9
 - export CC=gcc-4.9
 - make -C src/openhatd/openhatd/ CC=$CC
-- make -C src/openhatd/openhatd/ tests
 - export PATH=$(pwd)/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin:$PATH
 - make -C src/openhatd/openhatd/ -f makefile-rpicc
 - export SSHPASS=$RELEASE_UPLOAD_PASSWORD 
-- sshpass -e scp -P 1701 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no /home/travis/build/leomeyer/OpenHAT/src/openhatd/openhatd/*.tar.gz $RELEASE_UPLOAD_USER@$RELEASE_UPLOAD_HOST:~
+- make -C src/openhatd/openhatd/ tests && sshpass -e scp -P 1701 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no /home/travis/build/leomeyer/OpenHAT/src/openhatd/openhatd/*.tar.gz $RELEASE_UPLOAD_USER@$RELEASE_UPLOAD_HOST:~

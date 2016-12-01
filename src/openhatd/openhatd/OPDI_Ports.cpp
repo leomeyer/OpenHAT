@@ -339,6 +339,11 @@ void Port::prepare() {
 	// update flags (for example, OR other flags to current flag settings)
 	this->setFlags(this->flags);
 
+	// all ports have RefreshMode set to Auto unless specified otherwise
+	if (this->refreshMode == RefreshMode::REFRESH_NOT_SET)
+		// automatically refresh when the value changes
+		this->refreshMode = RefreshMode::REFRESH_AUTO;
+
 	// resolve change handlers
 	this->opdi->findDigitalPorts(this->ID(), "", this->onChangeIntPortsStr, this->onChangeIntPorts);
 	this->opdi->findDigitalPorts(this->ID(), "", this->onChangeUserPortsStr, this->onChangeUserPorts);
@@ -647,7 +652,7 @@ void DigitalPort::setMode(uint8_t mode, ChangeSource changeSource) {
 	}
 	if (newMode > -1) {
 		if (newMode != this->mode) {
-			this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO) && (changeSource != ChangeSource::CHANGESOURCE_USER);
+			this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
 			this->mode = newMode;
 			this->logDebug("DigitalPort Mode changed to: " + this->to_string((int)this->mode) + " by: " + this->getChangeSourceText(changeSource));
 		}
@@ -663,7 +668,7 @@ void DigitalPort::setLine(uint8_t line, ChangeSource changeSource) {
 		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
 	bool changed = (line != this->line);
 	if (changed) {
-		this->refreshRequired |= (this->refreshMode == RefreshMode::REFRESH_AUTO) && (changeSource != ChangeSource::CHANGESOURCE_USER);
+		this->refreshRequired |= (this->refreshMode == RefreshMode::REFRESH_AUTO);
 		this->line = line;
 		this->logDebug("DigitalPort Line changed to: " + this->to_string((int)this->line) + " by: " + this->getChangeSourceText(changeSource));
 	}
@@ -705,19 +710,19 @@ bool DigitalPort::hasError(void) const {
 
 #ifndef OPDI_NO_ANALOG_PORTS
 
-AnalogPort::AnalogPort(const char* id) : Port(id, OPDI_PORTTYPE_ANALOG, OPDI_PORTDIRCAP_BIDI, 0, nullptr) {
+AnalogPort::AnalogPort(const char* id) : Port(id, OPDI_PORTTYPE_ANALOG, OPDI_PORTDIRCAP_BIDI, 
+	// An analog port by default supports all resolutions
+	OPDI_ANALOG_PORT_RESOLUTION_8 | OPDI_ANALOG_PORT_RESOLUTION_9 | OPDI_ANALOG_PORT_RESOLUTION_10 | OPDI_ANALOG_PORT_RESOLUTION_11 | OPDI_ANALOG_PORT_RESOLUTION_12,
+	nullptr) {
 	this->mode = 0;
 	this->value = 0;
 	this->reference = 0;
 	this->resolution = 0;
 }
 
-AnalogPort::AnalogPort(const char* id, const char* dircaps, const int32_t flags) : Port(id, OPDI_PORTTYPE_ANALOG, dircaps, flags, nullptr) {
-
-	this->mode = 0;
-	this->value = 0;
-	this->reference = 0;
-	this->resolution = 0;
+AnalogPort::AnalogPort(const char* id, const char* dircaps, const int32_t flags) : AnalogPort(id) {
+	this->setDirCaps(dircaps);
+	this->flags = flags;
 }
 
 AnalogPort::~AnalogPort() {
@@ -727,7 +732,7 @@ void AnalogPort::setMode(uint8_t mode, ChangeSource changeSource) {
 	if (mode > 2)
 		throw PortError(this->ID() + ": Analog port mode not supported: " + this->to_string((int)mode));
 	if (mode != this->mode) {
-		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO) && (changeSource != ChangeSource::CHANGESOURCE_USER);
+		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
 		this->mode = mode;
 		this->logDebug("AnalogPort Mode changed to: " + this->to_string((int)this->mode) + " by: " + this->getChangeSourceText(changeSource));
 	}
@@ -754,7 +759,7 @@ void AnalogPort::setResolution(uint8_t resolution, ChangeSource changeSource) {
 		|| ((resolution == 12) && ((this->flags & OPDI_ANALOG_PORT_RESOLUTION_12) != OPDI_ANALOG_PORT_RESOLUTION_12)))
 		throw PortError(this->ID() + ": Analog port resolution not supported (port flags): " + this->to_string((int)resolution));
 	if (resolution != this->resolution) {
-		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO) && (changeSource != ChangeSource::CHANGESOURCE_USER);
+		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
 		this->resolution = resolution;
 		this->logDebug("AnalogPort Resolution changed to: " + this->to_string((int)this->resolution) + " by: " + this->getChangeSourceText(changeSource));
 	}
@@ -769,7 +774,7 @@ void AnalogPort::setReference(uint8_t reference, ChangeSource changeSource) {
 	if (reference > 2)
 		throw PortError(this->ID() + ": Analog port reference not supported: " + this->to_string((int)reference));
 	if (reference != this->reference) {
-		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO) && (changeSource != ChangeSource::CHANGESOURCE_USER);
+		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
 		this->reference = reference;
 		this->logDebug("AnalogPort Reference changed to: " + this->to_string((int)this->reference) + " by: " + this->getChangeSourceText(changeSource));
 	}
@@ -784,7 +789,7 @@ void AnalogPort::setValue(int32_t value, ChangeSource changeSource) {
 		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
 	bool changed = (newValue != this->value);
 	if (changed) {
-		this->refreshRequired |= (this->refreshMode == RefreshMode::REFRESH_AUTO) && (changeSource != ChangeSource::CHANGESOURCE_USER);
+		this->refreshRequired |= (this->refreshMode == RefreshMode::REFRESH_AUTO);
 		this->value = newValue;
 		this->logDebug("AnalogPort Value changed to: " + this->to_string((int)this->value) + " by: " + this->getChangeSourceText(changeSource));
 	}
@@ -911,7 +916,7 @@ void SelectPort::setPosition(uint16_t position, ChangeSource changeSource) {
 		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
 	bool changed = (position != this->position);
 	if (changed) {
-		this->refreshRequired |= (this->refreshMode == RefreshMode::REFRESH_AUTO) && (changeSource != ChangeSource::CHANGESOURCE_USER);
+		this->refreshRequired |= (this->refreshMode == RefreshMode::REFRESH_AUTO);
 		this->position = position;
 		this->logDebug("SelectPort Position changed to: " + this->to_string(this->position) + " by: " + this->getChangeSourceText(changeSource));
 	}
@@ -1012,7 +1017,7 @@ void DialPort::setPosition(int64_t position, ChangeSource changeSource) {
 		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
 	bool changed = (newPosition != this->position);
 	if (changed) {
-		this->refreshRequired |= (this->refreshMode == RefreshMode::REFRESH_AUTO) && (changeSource != ChangeSource::CHANGESOURCE_USER);
+		this->refreshRequired |= (this->refreshMode == RefreshMode::REFRESH_AUTO);
 		this->position = position;
 		this->logDebug("DialPort Position changed to: " + this->to_string(this->position) + " by: " + this->getChangeSourceText(changeSource));
 	}

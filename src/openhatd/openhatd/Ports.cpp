@@ -1980,6 +1980,8 @@ void CounterPort::configure(ConfigurationView* nodeConfig) {
 }
 
 void CounterPort::prepare() {
+	this->logDebug("Preparing port");
+	opdi::DialPort::prepare();
 	// start incrementing from now
 	this->lastActionTime = opdi_get_time_ms();
 }
@@ -2328,6 +2330,9 @@ void InfluxDBPort::configure(ConfigurationView * portConfig) {
 }
 
 void InfluxDBPort::prepare() {
+	this->logDebug("Preparing port");
+	opdi::DigitalPort::prepare();
+
 	this->lastLogTime = opdi_get_time_ms();
 
 	this->openhat->findPorts(this->ID(), "Ports", this->portStr, this->ports);

@@ -86,18 +86,18 @@
   <ItemGroup>
     <None Include="..\doc\complex_example_1.ini" />
     <None Include="..\doc\complex_example_2.ini" />
+    <None Include="..\testconfigs\current.json" />
+    <None Include="..\testconfigs\dev.ini" />
+    <None Include="..\testconfigs\gertboard.ini" />
+    <None Include="..\testconfigs\influxdb_test.ini" />
+    <None Include="..\testconfigs\scene0.ini" />
+    <None Include="..\testconfigs\scene1.ini" />
+    <None Include="..\testconfigs\testconfig.ini" />
+    <None Include="..\testconfigs\test_include.ini" />
+    <None Include="..\testconfigs\weather_test.ini" />
+    <None Include="..\testconfigs\window_test.ini" />
     <None Include="exectest.bat" />
     <None Include="fileinputtest.txt" />
-    <None Include="testconfigs\current.json" />
-    <None Include="testconfigs\dev.ini" />
-    <None Include="testconfigs\hello-world.ini" />
-    <None Include="testconfigs\influxdb_test.ini" />
-    <None Include="testconfigs\scene0.ini" />
-    <None Include="testconfigs\scene1.ini" />
-    <None Include="testconfigs\testconfig.ini" />
-    <None Include="testconfigs\test_include.ini" />
-    <None Include="testconfigs\weather_test.ini" />
-    <None Include="testconfigs\window_test.ini" />
     <None Include="webdocroot\openhatd.css" />
     <None Include="ReadMe.txt" />
   </ItemGroup>
@@ -143,9 +143,6 @@
     <ClCompile Include="SunRiseSet.cpp" />
     <ClCompile Include="TimerPort.cpp" />
     <ClCompile Include="WindowsOpenHAT.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="testconfigs\openhat-persistent.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

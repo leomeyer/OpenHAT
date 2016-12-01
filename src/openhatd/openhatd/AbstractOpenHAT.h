@@ -218,7 +218,8 @@ public:
 
 	virtual void setupGroup(ConfigurationView* groupConfig, const std::string& group);
 
-	virtual std::string resolveRelativePath(ConfigurationView* config, const std::string& source, const std::string& path, const std::string& defaultValue, const std::string& manualPath = "");
+	virtual std::string resolveRelativePath(ConfigurationView* config, const std::string& source, const std::string& path, 
+		const std::string& defaultValue, const std::string& manualPath = "", const std::string& settingName = "RelativeTo");
 
 	virtual void setupInclude(ConfigurationView* groupConfig, ConfigurationView* parentConfig, const std::string& node);
 

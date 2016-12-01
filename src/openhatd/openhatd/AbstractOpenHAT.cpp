@@ -72,7 +72,7 @@ AbstractOpenHAT::AbstractOpenHAT(void) {
 	this->monSecondPos = 0;
 	this->monSecondStats = (uint64_t*)malloc(this->maxSecondStats * sizeof(uint64_t));
 	this->totalMicroseconds = 0;
-	this->targetFramesPerSecond = 200;
+	this->targetFramesPerSecond = 20;
 	this->waitingCallsPerSecond = 0;
 	this->framesPerSecond = 0;
 	this->allowHiddenPorts = true;
@@ -502,17 +502,8 @@ std::string AbstractOpenHAT::setupGeneralConfiguration(ConfigurationView* config
 	std::string persistentFile = this->getConfigString(general, "General", "PersistentConfig", "", false);
 	if (persistentFile != "") {
 		// determine CWD-relative path depending on location of config file
-		std::string configFilePath = general->getString(OPENHAT_CONFIG_FILE_SETTING, "");
-		if (configFilePath == "")
-			this->throwSettingsException("Programming error: Configuration file path not specified in config settings");
-
-		Poco::Path filePath(configFilePath);
-		Poco::Path absPath(filePath.absolute());
-		Poco::Path parentPath = absPath.parent();
-		// append or replace new config file path to path of previous config file
-		Poco::Path finalPath = parentPath.resolve(persistentFile);
-		persistentFile = finalPath.toString();
-		Poco::File file(finalPath);
+		persistentFile = this->resolveRelativePath(general, "RelativeTo", persistentFile, "CWD");
+		Poco::File file(persistentFile);
 
 		// the persistent configuration is not an INI file (because POCO can't write INI files)
 		// but a "properties-format" file
@@ -629,9 +620,9 @@ void AbstractOpenHAT::setupGroup(ConfigurationView* groupConfig, const std::stri
 	this->addPortGroup(portGroup);
 }
 
-std::string AbstractOpenHAT::resolveRelativePath(ConfigurationView* config, const std::string& source, const std::string& path, const std::string& defaultValue, const std::string& manualPath) {
+std::string AbstractOpenHAT::resolveRelativePath(ConfigurationView* config, const std::string& source, const std::string& path, const std::string& defaultValue, const std::string& manualPath, const std::string& settingName) {
 	// determine path type
-	std::string relativeTo = this->getConfigString(config, source, "RelativeTo", defaultValue, false);
+	std::string relativeTo = this->getConfigString(config, source, settingName, defaultValue, false);
 
 	if (relativeTo == "CWD") {
 		Poco::Path filePath(path);
@@ -766,7 +757,9 @@ void AbstractOpenHAT::configurePort(ConfigurationView* portConfig, opdi::Port* p
 	} else if (portDirCaps == "Bidi") {
 		port->setDirCaps(OPDI_PORTDIRCAP_BIDI);
 	} else if (portDirCaps != "")
-		this->throwSettingsException("Unknown DirCaps specified; expected 'Input', 'Output' or 'Bidi'", portDirCaps);
+		this->throwSettingsException(port->ID() + ": Unknown DirCaps specified; expected 'Input', 'Output' or 'Bidi'", portDirCaps);
+
+/*	port flags are managed internally
 
 	int flags = portConfig->getInt("Flags", -1);
 	if (flags >= 0) {
@@ -776,7 +769,7 @@ void AbstractOpenHAT::configurePort(ConfigurationView* portConfig, opdi::Port* p
 		// avoid calling setFlags unnecessarily because subclasses may implement specific behavior
 		if (defaultFlags > 0)
 			port->setFlags(defaultFlags);
-
+*/
 	std::string refreshMode = this->getConfigString(portConfig, port->ID(), "RefreshMode", "", false);
 	if (refreshMode == "Off") {
 		port->setRefreshMode(opdi::Port::RefreshMode::REFRESH_OFF);
@@ -788,14 +781,14 @@ void AbstractOpenHAT::configurePort(ConfigurationView* portConfig, opdi::Port* p
 		port->setRefreshMode(opdi::Port::RefreshMode::REFRESH_AUTO);
 	} else
 		if (refreshMode != "")
-			this->throwSettingsException("Unknown RefreshMode specified; expected 'Off', 'Periodic' or 'Auto': " + refreshMode);
+			this->throwSettingsException(port->ID() + ": Unknown RefreshMode specified; expected 'Off', 'Periodic' or 'Auto': " + refreshMode);
 
 	if (port->getRefreshMode() == opdi::Port::RefreshMode::REFRESH_PERIODIC) {
 		int time = portConfig->getInt("RefreshTime", -1);
 		if (time >= 0) {
 			port->setPeriodicRefreshTime(time);
 		} else {
-			this->throwSettingsException("A RefreshTime > 0 must be specified in Periodic refresh mode: " + to_string(time));
+			this->throwSettingsException(port->ID() + ": A RefreshTime > 0 must be specified in Periodic refresh mode: " + to_string(time));
 		}
 	}
 

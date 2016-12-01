@@ -1,6 +1,6 @@
 # Basic Concepts
 
-In order to work with openhatd it is necessary to understand some basic concepts. This will also give you some understanding of openhatd's flexibility and limitations.
+In order to use openhatd it is necessary to understand some basic concepts. This will also give you some understanding of openhatd's flexibility and limitations.
 
 ## Ports
 
@@ -25,6 +25,8 @@ Basically, ports are of five different types:
 
 ### Digital Port
 
+![](images/digital_port.png)
+
 The Digital port is the most elementary port type. A Digital port has a **Mode** and a **Line** state. Modes can be **Input** and **Output**, and the line can be either **Low** or **High**. Mode and Line default to Input and Low.
 
 The Digital port is modeled after a digital I/O pin of a microcontroller. The important thing here is that a Digital port's state is always known, and it is either Low or High. Basically, the Digital port models a switch. In openhatd it is used for "things that can be on or off", no matter whether the state of these things is controlled directly by a user or by internal functions, or whether the Digital port is a physical actor, an internal variable or behavioral component or reflects the state of some outside sensor (by reading its state from some driver).
@@ -33,10 +35,14 @@ Typical examples of Digital ports are LEDs or relays (output only), and switches
 
 ### Analog Port
 
+![](images/analog_port.png)
+
 The Analog port is modeled after the the properties of an A/D or D/A port of a microcontroller. Its value ranges from 0 to 2^n - 1, with n being a value between 8 and 12 inclusively.
 The Analog port also has a **Reference** setting (internal/external), and a **Mode** (input/output). The Analog port is less useful in an openhatd automation context because it is modeled so close to the metal. In most cases it is better to use a Dial port instead.
 
 ### Dial Port
+
+![](images/dial_port.png)
 
 The Dial port is the most versatile and flexible port. It represents a 64 bit signed integer value referred to as **Position**. There's a **Minimum**, **Maximum** and a **Step** setting which limit the possible values of a Dial port to a meaningful range; for example, to represent an ambient temperature in degrees Celsius you could limit the range to -50..50. The defaults are 0, 100 and 1 for Minimum, Maximum and Step.
 
@@ -46,7 +52,9 @@ Dial ports can represent numeric information as well as dates and times. As usua
 
 ### Select Port
 
-The Select port represents a set of distinct **labeled** options. The currently selected option number is referred to as **Position**. Its most useful application is to present the user with a choice; however, the Select port can also have internal uses. The most important difference to the Digital port is that the Select port does not necessarily have a known state. Take, for example, a radio controlled power socket. The radio control is one-way only in most cases, so there is no way to know whether the power socket is actually on or off; its state is essentially unknown. Such a device should not be modeled with a Digital port as a Digital port must have a known state. It can, however, be conveniently modeled using a Select port with three options: Unknown, Off, and On. If the user selects Off or On the command is sent to the socket via radio, but the Select port's state will not reflect the user's choice but instead remain Unknown.
+![](images/select_port.png)
+
+The Select port represents a set of distinct **labeled options**. The currently selected option number is referred to as **Position**, starting with 0. Its most useful application is to present the user with a choice; however, the Select port can also have internal uses. The most important difference to the Digital port is that the Select port does not necessarily have a known state. Take, for example, a radio controlled power socket. The radio control is one-way only in most cases, so there is no way to know whether the power socket is actually on or off; its state is essentially unknown. Such a device should not be modeled with a Digital port as a Digital port must have a known state. It can, however, be conveniently modeled using a Select port with three options: Unknown, Off, and On. If the user selects Off or On the command is sent to the socket via radio, but the Select port's state will not reflect the user's choice but instead remain Unknown.
 
 A Select port supports up to 65535 different labels (or states), but for practical purposes it is recommended to keep this number as low as possible.
 
@@ -60,41 +68,51 @@ At startup openhatd reads the specified configuration file and builds up a list 
 
 Once preparation is complete openhatd will enter the running phase. In this phase openhatd listens on a specified interface for control connections from other devices (using the OPDI protocol, see below). It also periodically iterates through all ports that have been created and registered during the initialization process. This is called the **doWork loop**. The doWork loop gives each port the possibility to check for necessary actions or system changes that require any reactions. 
 
-openhatd will listen to operating system signals to determine when it is about to be terminated. After it receives a termination or interrupt signal it will loop through all ports to give them a chance to perform cleanups or persistence tasks before the program finally exits.  
+openhatd will listen to operating system signals to determine when it is about to be terminated. After it receives a termination or interrupt signal it will loop through all ports to give them a chance to perform cleanups or persistence tasks before the program finally exits. 
 
-openhatd uses the OPDI protocol to receive commands. The OPDI protocol defines a handshake procedure to establish a connection between devices. After connecting, the slave, in this case the openhatd server, will transfer a list of ports along with their properties to the controlling master. The master builds a GUI and allows the user to interact with it, for example to change values or switches. These commands are then transferred to the slave which updates its internal state.
+### The OPDI protocol
 
-The OPDI protocol supports AES encryption and a username/password login mechanism. It does, however, not support an unlimited number of characters per message. Also, the number of ports is limited. The limits are set at compile time to reasonably high defaults so it's unlikely to run into problems unless you are using a very large number of ports.
+openhatd uses the OPDI protocol to receive commands. The OPDI protocol defines a handshake procedure to establish a connection between devices. After connecting, the slave, in this case the openhatd server, sends a list of ports along with their properties to the controlling master. The master builds a GUI and allows the user to interact with it, for example to change values or switches. These commands are then transferred to the slave which updates its internal state.
 
-openhatd also contains a WebServer plugin that gives you a HTML/JavaScript GUI to interact with the server. This GUI does not have the restrictions of the OPDI protocol but is not as lightweight and therefore a little slower.
+The OPDI protocol is a lightweight protocol originally designed for small devices like microcontrollers. It supports AES encryption and a username/password login mechanism. It does, however, not support an unlimited number of characters per message. Also, the number of ports is limited. The limits are set at compile time to reasonably high defaults so it's unlikely to run into problems unless you are using a very large number of ports.
 
-## Configuration
+openhatd also contains a WebServer plugin that gives you an HTML/JavaScript GUI to interact with the server. This GUI does not have the restrictions of the OPDI protocol but is not as lightweight and therefore a little slower. The WebServer plugin also provides a JSON-RPC API. 
+
+## Configuration<a name="configuration"></a>
 
 openhatd is configured using text files in the INI file format. This format defines **sections** in square brackets and properties in the format **key = value**:
 
 	[Example_Section]
 	Example_Key = Example_Value
 
-The character encoding for configuration files is UTF-8. This encoding is also internally used for all text in openhatd. The line endings may either be Windows (CRLF) or Unix (LF).
+The character encoding for configuration files is UTF-8. This encoding is also internally used for all text in openhatd. The line endings may either be Windows (CRLF) or Unix (LF). Values are normally trimmed for whitespace. If blanks are required to appear at the beginning or end of a value they must be put in quotes:
 
-To run openhatd you have to a configuration file using the `-c` command line option:
+	Key = "Value: "
+
+See [Configuration Details](configuration) for more information.
+
+To run openhatd you have to specify a configuration file using the `-c` command line option:
 
 	$ openhatd -c hello-world.ini
 
-Configuration files can include other configuration files and there is a text replacement mechanism which allows the included files to specify certain parameters. This makes it simple to reuse complex configurations.
+Configuration files can [include](configuration#includes) other configuration files and there is a text replacement mechanism which allows the included files to specify certain [parameters](configuration#parameters). This makes it simple to reuse complex configurations.
 
-The configuration sections in openhatd ini files are referred to as ***nodes***. (The terms "node" and "section" mean roughly the same thing.) Nodes can refer to other nodes in the same configuration file, either implicitly or explicitly. You can imagine the nodes as elements of your automation model, and the connections between them as lines or edges, forming a graph that describes the automation model.
+The configuration sections in openhatd ini files are referred to as ***nodes***. (The terms "node" and "section" mean roughly the same thing.) Nodes can refer to other nodes in the same configuration file, either implicitly or explicitly. You can imagine the nodes as elements of your automation model, and the connections between them as lines or edges, forming a graph that describes the automation model. Nodes are not identical with ports, though: A configuration node may result in the creation of more than one port, or none at all.
 
 The main configuration file must contain some required nodes and properties (properties are also called **settings**). These are the `General` node, the `Root` node and the `Connection` node. The `General` node tells openhatd about the basic properties of the system:
 
 	[General]
 	SlaveName = openhatd Hello World
 
+[More information about the General section](configuration#general)
+
 The `Connection` node specifies the connection settings to be used by the OPDI protocol implementation:
 
 	[Connection]
 	Transport = TCP
 	Port = 13110
+
+[More information about the Connection section](configuration#connection)
 
 Finally, the `Root` node specifies the nodes that are used for the automation model:
 
@@ -103,7 +121,7 @@ Finally, the `Root` node specifies the nodes that are used for the automation mo
 	World = 2
 	WebServer = 3
 
-The `Root` section here specifies that the `Hello`, `World` and the `WebServer` nodes should be evaluated (the setting value is a number specifying the order).
+The `Root` section here specifies that the `Hello`, `World` and the `WebServer` nodes should be evaluated in this order (the setting value must be a number specifying the position in the list; it is not required that these numbers be unique).
 
 	[Hello]
 	Type = DigitalPort
@@ -135,7 +153,7 @@ Open a browser and point it to [localhost:8080](http://localhost:8080). You shou
 
 If you have the AndroPDI Remote Control app for Android, you can connect to openhatd by adding a new TCP/IP device and entering your test PC's host name.
 
-### Log Verbosity
+### Log Verbosity<a name="logVerbosity"></a>
 
 openhatd can be configured to output more or less information about its operation using the `LogVerbosity` setting in the `General` section, or command line flags. The last command line flag counts and takes precedence over the configuration file setting.  
 
@@ -179,7 +197,7 @@ Sometimes it may be necessary to change the internal ordering of ports independe
 
 ### Groups
 
-A port can be assigned to exactly one group. Groups have an ID, a label and a parent group which allows you to construct hierarchies of groups. How exactly groups are presented to the user is up to a GUI implementation; however, the intended way is to show a tree of labels for the user to choose, and to display all ports of the selected group node and all of its sub-groups.
+A port can be assigned to exactly one group. Groups have an ID, a label and an optional parent group which allows you to construct hierarchies of groups. How exactly groups are presented to the user is up to a GUI implementation; however, the intended way is to show a tree of labels for the user to choose from, and to display all ports of the selected group node and all of its sub-groups.
 
 Groups are defined as nodes in the `Root` section. Their `Type` is set to `Group`. This example defines two groups, `MainGroup` and `DigitalPorts`:
 
@@ -226,9 +244,9 @@ The persistent configuration file does not use the INI file format (for technica
 
 	section.property = value
 
-### Units
+### Unit Specifications<a name="unitSpecifications"></a>
 
-Units are a very important concept in openhatd. A port's unit specification tells a UI how to present the value to the user. Units apply to numeric values only, i. e. they are useful with Analog and Dial ports. They are not used for internal purposes in openhatd, so they are basically tags or labels that can be anything and they are not validated; but as they are hints for client UIs you should make sure that UIs understand the specified units. 
+Units are a very important concept in openhatd. A port's unit specification tells a UI how to present the value to the user. Units apply to numeric values only, i. e. they are useful with Analog and Dial ports. They are not validated or used for internal purposes in openhatd, so they are basically tags or labels that can be anything; but as they are hints for client UIs you should make sure that UIs understand the specified units. 
 
 Units are specified for ports using the `Unit` setting. Example:
 
@@ -254,13 +272,13 @@ Units and unit formats are localized, meaning they are stored in locale-dependen
 	electricPower_mW_in_mW:
         layout=dial_port_row_noslider;icon=powermeter;label=Electric Power (mW);formatString=%.0f mW
  
-Without going too much into the details here you can see that the unit formats contain a layout hint, an icon and default label specification, a simple conversion (denominator=1000) plus format strings that specify different numbers of decimals.
+Without going too much into the details here you can see that the unit formats contain a layout hint, an icon and default label specification, a simple conversion (`denominator=1000`) plus format strings that specify different numbers of decimals.
 
 
 
 ## Time in openhatd
 
-openhatd is not a real time system. For operations that must be regularly timed (such as periodic refreshes of port information, timer actions, pulses etc.) the most finely grained unit is the millisecond. Some settings do have to be specified in milliseconds, others in seconds (depending on what makes more sense). However, there is no guarantee that a specified duration in openhatd is exact, but it is guaranteed not to be shorter.
+openhatd is not a real time system. For operations that must be regularly timed (such as periodic refreshes of port state, timer actions, pulses etc.) the most finely grained unit is the millisecond. Some settings do have to be specified in milliseconds, others in seconds (depending on what makes more sense). However, there is no guarantee that a specified duration in openhatd is exact, but it is guaranteed not to be shorter.
 
 Measuring time is platform dependent. On Windows the time resolution may be reduced to 10-16 milliseconds. On Linux the granularity is usually better.
 

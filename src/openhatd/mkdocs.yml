@@ -5,6 +5,7 @@ pages:
     - Download and installation: download.md
     - Documentation:
         - Basic Concepts: concepts.md
+        - Configuration Details: configuration.md
         - Advanced Ports: ports.md
         - Details: details.md
         - Ports:

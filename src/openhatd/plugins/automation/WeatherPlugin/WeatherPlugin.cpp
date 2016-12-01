@@ -261,7 +261,7 @@ public:
 	virtual void setupPlugin(openhat::AbstractOpenHAT* openHAT, const std::string& node, openhat::ConfigurationView* config, const std::string& driverPath) override;
 };
 
-void WeatherPlugin::setupPlugin(openhat::AbstractOpenHAT* openHAT, const std::string& node, openhat::ConfigurationView* config, const std::string& driverPath) {
+void WeatherPlugin::setupPlugin(openhat::AbstractOpenHAT* openHAT, const std::string& node, openhat::ConfigurationView* config, const std::string& /*driverPath*/) {
 	this->openhat = openhat;
 	this->nodeID = node;
 	this->timeoutSeconds = 10;

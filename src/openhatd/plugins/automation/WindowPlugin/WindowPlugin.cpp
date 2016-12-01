@@ -1082,7 +1082,7 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 }
 
 
-void WindowPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, openhat::ConfigurationView* config, const std::string& driverPath) {
+void WindowPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, openhat::ConfigurationView* config, const std::string& /*driverPath*/) {
 	this->openhat = openhat;
 
 	Poco::AutoPtr<openhat::ConfigurationView> nodeConfig = this->openhat->createConfigView(config, node);

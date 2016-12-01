@@ -2,14 +2,12 @@
 # Creates a release file that includes plugins.
 # Pass DEBUG=1 to enable a debug build.
 
+MAKEFILE = $(firstword $(MAKEFILE_LIST))
+
 # Architecture, used for creating the release file
 ARCH = rpi
 
-include common.mk
-
 # build specific settings
-
-MAKEFILE = makefile-rpicc
 
 # POCO library path
 POCOLIBPATH = $(OPDI_CORE_PATH)/code/c/libraries/POCO/lib/Linux/ARM
@@ -22,3 +20,6 @@ CC = arm-linux-gnueabihf-g++
 
 # Compiler flags.
 CFLAGS += -Wno-narrowing -Wl,-z,defs
+
+include common.mk
+

@@ -21,7 +21,7 @@ VERSION = $(subst ",,$(VERSIONRAW))
 # build identification; if not specified, it is "current"
 BUILD ?= current
 
-MAKEFILE = makefile
+MAKEFILE ?= makefile
 
 APP_PATH = .
 
@@ -65,11 +65,11 @@ SRC += ./AbstractOpenHAT.cpp ./Ports.cpp ./openhat_linux.cpp
 POCOINCPATH = $(OPDI_CORE_PATH)/code/c/libraries/POCO/Util/include $(OPDI_CORE_PATH)/code/c/libraries/POCO/Foundation/include $(OPDI_CORE_PATH)/code/c/libraries/POCO/Net/include
 
 # POCO library path
-POCOLIBPATH = $(OPDI_CORE_PATH)/code/c/libraries/POCO/lib/Linux/x86_64
+POCOLIBPATH ?= $(OPDI_CORE_PATH)/code/c/libraries/POCO/lib/Linux/x86_64
 
 # POCO libraries
 # default: dynamic linking
-POCOLIBS = -lPocoUtil -lPocoNet -lPocoFoundation -lPocoXML -lPocoJSON
+POCOLIBS ?= -lPocoUtil -lPocoNet -lPocoFoundation -lPocoXML -lPocoJSON
 
 # ExprTk expression library path
 EXPRTK = ../../../libraries/exprtk
@@ -81,23 +81,23 @@ SRC += $(LIBCTB)/src/fifo.cpp $(LIBCTB)/src/getopt.cpp $(LIBCTB)/src/iobase.cpp 
 SRC += $(LIBCTB)/src/linux/timer.cpp $(LIBCTB)/src/portscan.cpp $(LIBCTB)/src/serportx.cpp
 
 # Additional libraries
-LIBS = -lpthread -ldl -lrt
+LIBS += -lpthread -ldl -lrt
 
 # The compiler to be used.
-CC = g++
+CC ?= g++
 
 # List any extra directories to look for include files here.
 # Each directory must be separated by a space.
 EXTRAINCDIRS = $(CPATH) $(CPPPATH) $(MPATH) $(PPATHBASE) $(PPATH) $(POCOINCPATH) $(CONIOINCPATH) $(EXPRTK) $(LIBCTBINC) .
 
 # Place -I options here
-CINCS =
+CINCS +=
 
 # Defines
-CDEFINES = -Dlinux
+CDEFINES += -Dlinux
 
 # Compiler flags.
-CFLAGS = -Wall -Wextra $(CDEFS) $(CINCS) -L $(POCOLIBPATH) $(CDEFINES) -Wno-unused-parameter
+CFLAGS += -Wall -Wextra $(CDEFS) $(CINCS) -L $(POCOLIBPATH) $(CDEFINES) -Wno-unused-parameter
 CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS)) -std=c++11 -O2
 
 # Debug flags

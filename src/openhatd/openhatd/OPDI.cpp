@@ -462,7 +462,7 @@ void OPDI::findPortIDs(const std::string & spec, std::vector<std::string>& resul
 					throw Poco::InvalidArgumentException("Port ID specification error: 'id=' must be followed by something");
 				// construct a regex
 				try {
-					Poco::RegularExpression regex(rSpec);
+					Poco::RegularExpression regex(rSpec, Poco::RegularExpression::Options::RE_CASELESS);
 					// go through all ports, check their IDs
 					auto ite = this->getPorts().end();
 					for (auto it = this->getPorts().begin(); it != ite; ++it)
@@ -480,7 +480,7 @@ void OPDI::findPortIDs(const std::string & spec, std::vector<std::string>& resul
 					throw Poco::InvalidArgumentException("Port ID specification error: 'group=' must be followed by something");
 				// construct a regex
 				try {
-					Poco::RegularExpression regex(rSpec);
+					Poco::RegularExpression regex(rSpec, Poco::RegularExpression::Options::RE_CASELESS);
 					// go through all ports, check their groups
 					auto ite = this->getPorts().end();
 					for (auto it = this->getPorts().begin(); it != ite; ++it)
@@ -498,7 +498,7 @@ void OPDI::findPortIDs(const std::string & spec, std::vector<std::string>& resul
 					throw Poco::InvalidArgumentException("Port ID specification error: 'tag=' must be followed by something");
 				// construct a regex
 				try {
-					Poco::RegularExpression regex(rSpec);
+					Poco::RegularExpression regex(rSpec, Poco::RegularExpression::Options::RE_CASELESS);
 					// go through all ports, check their tags
 					auto ite = this->getPorts().end();
 					for (auto it = this->getPorts().begin(); it != ite; ++it) {

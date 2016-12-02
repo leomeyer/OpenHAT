@@ -1,15 +1,12 @@
-# Basic Concepts
-
 In order to use openhatd it is necessary to understand some basic concepts. This will also give you some understanding of openhatd's flexibility and limitations.
 
-## Ports
+## Ports <a name="ports"></a>
 
 The basic automation building block in openhatd is called a **Port**. Everything in openhatd revolves around the configuration of ports, their current state and their connections to other ports. Ports encapsulate simple or advanced behavior and get or provide information from or to other ports. It is the combination of ports that makes complex automation behavior possible.
 
 You can think of ports as internal variables of the system. Ports can be exposed on a user interface, giving read-only or writable access to the user. openhatd can automatically log the values of ports. At the same time, ports do implement the system's functionality, for example window operation state machines, weather data file parsing etc.
 
 There are different types of ports in openhatd. To be able to model automation behavior with ports you'll have to understand these different types of ports and their properties and functions. The basic properties of all types of ports are:
-
 
  - A unique **ID** which is a text string preferably without blanks and special characters, for example "Window1"
  - A **hidden** flag which decides whether to display this port on a user interface or not
@@ -21,9 +18,11 @@ There are different types of ports in openhatd. To be able to model automation b
  - A **refresh mode** that decides how changes in the port's state affect the connected user interfaces
  - Freely assignable **tag** values
 
+Ports can have **errors**. This is normal because many ports interact with resources of the environment or external components that may fail or become unavailable. openhatd provides mechanisms to gracefully deal with these errors. See [Port Overview - Errors](ports/port_errors) for more details. 
+
 Basically, ports are of five different types:
 
-### Digital Port
+### <a name="digital_port"></a>Digital Port
 
 ![](images/digital_port.png)
 
@@ -33,14 +32,14 @@ The Digital port is modeled after a digital I/O pin of a microcontroller. The im
 
 Typical examples of Digital ports are LEDs or relays (output only), and switches or buttons (input only). However, most higher-level functions in openhatd are also modeled as Digital ports, thus giving you the ability to switch these functions on or off. For example, a Pulse port can periodically change the state of one or more Digital ports (its "outputs"). The Pulse port itself is again a Digital port, and it will only be active if its Line state is High. Thus, you can switch the Pulse port on or off using a user interface, or the Pulse port can again be controlled by any other port that accepts a Digital port as an output. In this way you can connect elementary blocks together to form complex behavior.
 
-### Analog Port
+### <a name="analog_port"></a>Analog Port
 
 ![](images/analog_port.png)
 
 The Analog port is modeled after the the properties of an A/D or D/A port of a microcontroller. Its value ranges from 0 to 2^n - 1, with n being a value between 8 and 12 inclusively.
 The Analog port also has a **Reference** setting (internal/external), and a **Mode** (input/output). The Analog port is less useful in an openhatd automation context because it is modeled so close to the metal. In most cases it is better to use a Dial port instead.
 
-### Dial Port
+### <a name="dial_port"></a>Dial Port
 
 ![](images/dial_port.png)
 
@@ -50,7 +49,7 @@ openhatd does not do floating point arithmetics internally. You therefore cannot
 
 Dial ports can represent numeric information as well as dates and times. As usual with openhatd ports, the value of a Dial port might be set by a user, or it might be the result of an internal calculation, or it might reflect the state of some hardware or other external component (like the content of a file). The best way to initially think about a Dial port is as of a universal numeric variable.
 
-### Select Port
+### <a name="select_port"></a>Select Port
 
 ![](images/select_port.png)
 
@@ -58,42 +57,48 @@ The Select port represents a set of distinct **labeled options**. The currently 
 
 A Select port supports up to 65535 different labels (or states), but for practical purposes it is recommended to keep this number as low as possible.
 
-### Streaming Port
+### <a name="streaming_port"></a>Streaming Port
 
 A Streaming port can be used to transfer text or binary data. Its use in openhatd, for now, is very limited.
 
-## Operation
+## Server Process Lifecycle
 
-At startup openhatd reads the specified configuration file and builds up a list of ports that are to be used for the automation model. This is called the configuration phase. Once all ports have been configured openhatd will reorder them according to the configuration and enter the preparation phase. During this phase each port is given the opportunity to initialize itself, allocate necessary resources, and, most importantly, resolve references to other ports that have been specified. Any errors during configuration and preparation cause openhatd to exit.
+At startup openhatd reads the specified configuration file and builds up a list of ports that are to be used for the automation model. This is called the **configuration phase**. Once all ports have been configured openhatd will reorder them according to the configuration and enter the **preparation phase**. During this phase each port is given the opportunity to initialize itself, allocate necessary resources, and, most importantly, resolve references to other ports that have been specified. Any errors during configuration and preparation cause openhatd to exit.
 
-Once preparation is complete openhatd will enter the running phase. In this phase openhatd listens on a specified interface for control connections from other devices (using the OPDI protocol, see below). It also periodically iterates through all ports that have been created and registered during the initialization process. This is called the **doWork loop**. The doWork loop gives each port the possibility to check for necessary actions or system changes that require any reactions. 
+Once preparation is complete openhatd will enter the **running phase**. In this phase openhatd listens for control connections from other devices (using the OPDI protocol, see below). It also periodically iterates through all ports that have been created and registered during the initialization process. This is called the **doWork loop**. The doWork loop gives each port the possibility to check for necessary actions or system changes that require any reactions. 
 
 openhatd will listen to operating system signals to determine when it is about to be terminated. After it receives a termination or interrupt signal it will loop through all ports to give them a chance to perform cleanups or persistence tasks before the program finally exits. 
 
-### The OPDI protocol
+## Time in openhatd
 
-openhatd uses the OPDI protocol to receive commands. The OPDI protocol defines a handshake procedure to establish a connection between devices. After connecting, the slave, in this case the openhatd server, sends a list of ports along with their properties to the controlling master. The master builds a GUI and allows the user to interact with it, for example to change values or switches. These commands are then transferred to the slave which updates its internal state.
+openhatd is not a real time system. For operations that must be regularly timed (such as periodic refreshes of port state, timer actions, pulses etc.) the most finely grained unit is the millisecond. Some settings do have to be specified in milliseconds, others in seconds (depending on what makes more sense). However, there is no guarantee that a specified duration in openhatd is exact, but it is guaranteed not to be shorter.
+
+Measuring time is platform dependent. On Windows the time resolution may be reduced to 10-16 milliseconds. On Linux the granularity is usually better.
+
+Depending on the number of ports and how they are configured an iteration of the doWork loop requires a certain amount of time to process. The length of the doWork iterations determines the response delay in which ports can act; for example, if you specify a Pulse port with a duration of 100 milliseconds while a doWork iteration already requires 200 milliseconds to run, the Pulse port will not be able to keep up its 100 milliseconds duration. Instead, it will run with a lower time resolution which means that the pulses will be longer than specified.
+
+In analogy to computer game programming, the number of doWork iterations per seconds are called "frames per second" or **fps**. Having openhatd run at a high fps rate gives you a finer granularity of the time slices and consequently more precision. It also consumes more CPU cycles and more power in turn, and most of the time it is not really necessary. openhatd allows you to specify a target fps rate that the system tries to attain by putting the process to sleep for the rest of the time if the doWork loop runs faster than required. This is done by measuring the current doWork duration and comparing it against a set target fps rate. The sleep time is adjusted based on this comparison. It may take quite some time until the defined target fps rate is actually reached (easily one hour or so). For a long-running server this is usually not a problem. This mechanism currently works on Linux only.
+
+Generally it is recommended to set the fps rate fairly low, to maybe 10 or 20 (this is the default value). Doing so saves CPU power while still giving you a resolution of 50 to 100 milliseconds which is enough for most applications. In Debug log verbosity, openhatd will output warnings if the doWork loop consumes a lot of CPU time.
+
+## The OPDI protocol
+
+openhatd uses the OPDI protocol to receive commands. The OPDI protocol defines a handshake procedure to establish a connection between devices. After connecting, the slave, in this case the openhatd server, sends a list of ports along with their properties to the controlling master. The master builds a user interface from this data and allows the user to interact with it, for example to change values or switch states. These commands are then transferred to the slave which updates its internal state.
 
 The OPDI protocol is a lightweight protocol originally designed for small devices like microcontrollers. It supports encryption and a username/password login mechanism. It does, however, not support an unlimited number of characters per message. Also, the number of ports is limited. The limits are set at compile time to reasonably high defaults so it's unlikely to run into problems unless you are using a very large number of ports.
 
 openhatd also contains a WebServer plugin that gives you an HTML/JavaScript GUI to interact with the server. This GUI does not have the restrictions of the OPDI protocol but is not as lightweight and therefore a little slower. The WebServer plugin also provides a JSON-RPC API. 
 
-## Configuration<a name="configuration"></a>
+## Configuration Files<a name="configuration"></a>
 
 openhatd is configured using text files in the INI file format. This format defines **sections** in square brackets and properties in the format `key = value`:
 
 	[Example_Section]
 	Example_Key = Example_Value
 
-The character encoding for configuration files is UTF-8. This encoding is also internally used for all text in openhatd. The line endings may either be Windows (CRLF) or Unix (LF). Values are normally trimmed for whitespace. If blanks are required to appear at the beginning or end of a value they must be put in quotes:
+The character encoding for configuration files is UTF-8. This encoding is used internally for all text in openhatd. The line endings may either be Windows (CRLF) or Unix (LF). Values are normally trimmed for whitespace. If blanks are required to appear at the beginning or end of a value they must be put in quotes:
 
 	Key = "Value: "
-
-See [Configuration Details](configuration) for more information.
-
-To run openhatd you have to specify a configuration file using the `-c` command line option:
-
-	$ openhatd -c hello-world.ini
 
 Configuration sections in openhatd ini files are referred to as ***nodes***. (The terms "node" and "section" mean roughly the same thing.)
 
@@ -119,7 +124,7 @@ Finally, the `Root` node specifies the nodes that are used for the automation mo
 	World = 2
 	WebServer = 3
 
-The `Root` section here specifies that the `Hello`, `World` and the `WebServer` nodes should be evaluated in this order (the setting value must be a number specifying the position in the list; it is not required that these numbers be unique).
+This example `Root` section specifies that the `Hello`, `World` and the `WebServer` nodes should be evaluated in this order (the setting value must be a number specifying the position in the list; it is not required that these numbers be unique).
 
 	[Hello]
 	Type = DigitalPort
@@ -136,7 +141,11 @@ The `Root` section here specifies that the `Hello`, `World` and the `WebServer` 
 
 The most important setting of these nodes is the `Type` setting. This setting tells openhatd how to deal with this node. Nodes do not always correspond with ports in the automation model. A node specification can result in one or more ports, or no ports at all, depending on its type and function.
 
-In this example, the node `Hello` specifies a simple Digital port that is configured as an output. The output mode has an effect on the GUI in that it displays an interactive element while the input mode does not. `World` defines a Dial port with default settings. `WebServer` specifies that a plugin called "WebServerPlugin" should be loaded using the dynamic library at the specified path. The path is relative to the current working directory of the openhatd executable. The WebServer is itself a Digital port which is only active if its Line is High; to avoid the user inadvertently disabling the WebServer via the UI we set it to read-only.
+In this example, the node `Hello` specifies a simple Digital port that is configured as an output. The output mode has an effect on the GUI in that it displays an interactive element while the input mode does not. `World` defines a Dial port with default settings. `WebServer` specifies that a plugin called "WebServerPlugin" should be loaded using the dynamic library at the specified path. The path is relative to the current working directory of the openhatd executable. The WebServer provides access to an HTML GUI and is itself a Digital port which is only active if its Line is High; to avoid the user inadvertently disabling the WebServer via the UI we set it to read-only.
+
+To run openhatd you have to specify a configuration file using the `-c` command line option:
+
+	$ openhatd -c hello-world.ini
 
 When running the above example, openhatd's output will be something like:
 
@@ -149,9 +158,11 @@ Open a browser and point it to [localhost:8080](http://localhost:8080). You shou
 
 ![](images/Hello_World_Screenshot.png)
 
+You should be able to change the settings of the "Hello" and the "World" port by clicking on the UI (JavaScript needs to be enabled).
+
 If you have the AndroPDI Remote Control app for Android, you can connect to openhatd by adding a new TCP/IP device and entering your test PC's host name.
 
-### Log Verbosity<a name="logVerbosity"></a>
+## Log Verbosity <a name="logVerbosity"></a>
 
 openhatd can be configured to output more or less information about its operation using the `LogVerbosity` setting in the `General` section, or command line flags. The last command line flag counts and takes precedence over the configuration file setting.  
 
@@ -164,11 +175,11 @@ The log levels are somewhat loosely defined from lowest to highest (a higher log
 
 - `Normal` (default, no special command line flag): Fairly minimal logging with limited information. Use this setting when a system is stable and you expect no issues.
  
-- `Verbose` (`-v` on the command line): Recommended for testing if some amount of information is required. Will log non-regular events (i. e. events that occur due to user interaction, or happen infrequently) plus some technical information. Suitable for monitoring a system in production when issues are expected.
+- `Verbose` (`-v` on the command line): Recommended if some amount of information is required. Will log important non-regular events (i. e. events that occur due to user interaction, or happen infrequently) plus some technical information. Suitable for monitoring a system in production when issues are expected.
  
-- `Debug` (`-d` on the command line): Will additionally log regularly occurring events plus more detailed technical information, but not from within the doWork loop. Logs access to configuration settings which is especially useful when troubleshooting included configuration files with substituted parameters. Can produce a large amount of log messages. Recommended if you need additional hints about system behaviour, but not for normal operation. Will also log the OPDI message streams if a master is connected.
+- `Debug` (`-d` on the command line): Will additionally log less imortant regular events plus more detailed technical information, but not from within the doWork loop. Logs access to configuration settings which is especially useful when troubleshooting included configuration files with substituted parameters. Can produce a large amount of log messages. Recommended for testing or troublehooting if you need additional hints about system behaviour, but not for normal operation.
  
-- `Extreme` (`-e` on the command line): Will additionally output messages from the inner doWork loop. This level will generate log messages in every frame and will quickly produce a lot of output. Recommended for isolated testing only.
+- `Extreme` (`-e` on the command line): Will additionally output messages from the inner doWork loop. This level will generate log messages in every frame and will quickly produce a lot of output. Recommended for isolated testing in very special circumstances.
  
 For example, the log output in `Verbose` mode of the above example is:
 
@@ -184,18 +195,17 @@ For example, the log output in `Verbose` mode of the above example is:
 	[2016-11-29 16:42:52.864] Setting up connection for slave: openhatd Hello World
 	[2016-11-29 16:42:52.870] Listening for a connection on TCP port 13110
 
-Individual nodes or ports can specify their own log levels which then take precedence. This allows you to selectively increase or decrease log levels for certain ports independent from the general configuration. The individual port log levels do even override the command line flag.
+Individual nodes or ports can specify their own log levels which then take precedence. This allows you to selectively increase or decrease log levels for certain ports independent from the general configuration. The individual port log levels do even override the command line flag. Use them for debugging and testing only.
 
+## Groups
 
-### Port Ordering
+Groups are useful if there are many ports and you need some kind of logical structure to make them more manageable. A port can be assigned to exactly one group. Groups have an ID, a label and an optional parent group which allows you to construct hierarchies of groups. How exactly groups are presented to the user is up to a GUI implementation; however, the intended way is to show a tree of labels for the user to choose from, and to display the ports of the selected group node and all of its sub-groups.
 
-The `Root` section's values specify the order in which nodes are processed. This roughly corresponds with the internal ordering of ports, which can be relevant for the doWork loop. It also influences the ordering of ports on a GUI.
+Here's an example for group usage:
 
-Sometimes it may be necessary to change the internal ordering of ports independent of the order of their creation. You can specify a port's property `OrderID` to re-assign the order number. If the number specified here is higher than the internal order counter subsequently created ports will be auto-numbered with higher OrderIDs, which means they will appear after the port that has been assigned manually.
+![](images/HTML_GUI_Automation.png)
 
-### Groups
-
-A port can be assigned to exactly one group. Groups have an ID, a label and an optional parent group which allows you to construct hierarchies of groups. How exactly groups are presented to the user is up to a GUI implementation; however, the intended way is to show a tree of labels for the user to choose from, and to display all ports of the selected group node and all of its sub-groups.
+The groups are displayed on the left. Selecting a group shows only the ports associated with this group and its sub-groups.
 
 Groups are defined as nodes in the `Root` section. Their `Type` is set to `Group`. This example defines two groups, `MainGroup` and `DigitalPorts`:
 
@@ -220,9 +230,11 @@ Port nodes can refer to groups by specifying the `Group` property:
 
 `DigitalPorts` is a sub-group of `MainGroup`, meaning that if `MainGroup` is selected on a GUI all of its ports will be shown as well. If, however, `DigitalPorts` is selected only its own ports are displayed.    
 
-### Persistence
+## Persistent Settings
 
-The state of ports can be persisted, i. e. saved to an external file, whenever the port state changes. This allows an automation model to store user preferences that are permanent over reboots or process restarts. It does not matter whether the state change is the result of a user interaction or of an internal function; however, it is recommended to persist the state of ports that are changed by the user only. State persistence requires loading and saving of files with the corresponding disk I/O, and if many changes need to be saved it not only introduces additional system load but may also wear out SD cards or other storage media unneccessarily.
+The state of ports can be persisted, i. e. saved to a separate configuration file, whenever the port state changes. This allows an automation model to store user preferences that are permanent over reboots or process restarts. It does not matter whether the state change is the result of a user interaction or of an internal function; however, it is recommended to persist the state of ports that are changed by the user only. State persistence requires loading and saving of files with the corresponding disk I/O, and if many changes need to be saved it not only introduces additional system load but may also wear out SD cards or other storage media unneccessarily.
+
+Ports update the persistent configuration file whenever some relevant state changes occur. For a Digital port for example, this is the change of Mode and Line. For a Dial port it is the change of its value.
 
 The persistence file must be defined in the `General` section:
 
@@ -242,9 +254,12 @@ The persistent configuration file does not use the INI file format (for technica
 
 	section.property = value
 
-### Unit Specifications<a name="unitSpecifications"></a>
+On systems that use an SD card as their primary storage care should be taken to put the persistent configuration file into a ramdisk and save/restore to/from SD card on stopping and starting the openhatd service to reduce SD card wear.
 
-Units are a very important concept in openhatd. A port's unit specification tells a UI how to present the value to the user. Units apply to numeric values only, i. e. they are useful with Analog and Dial ports. They are not validated or used for internal purposes in openhatd, so they are basically tags or labels that can be anything; but as they are hints for client UIs you should make sure that UIs understand the specified units. 
+
+## Unit Specifications <a name="unitSpecifications"></a>
+
+Units are a very important concept in openhatd. A port's unit specification tells a user interface how to present the value to the user. Units apply to numeric values only, i. e. they are useful with Analog and Dial ports. They are not validated or used for internal purposes in openhatd, so they are basically tags or labels that can be anything; but as they are hints for client UIs you should make sure that UIs understand the specified units. 
 
 Units are specified for ports using the `Unit` setting. Example:
 
@@ -272,20 +287,17 @@ Units and unit formats are localized, meaning they are stored in locale-dependen
  
 Without going too much into the details here you can see that the unit formats contain a layout hint, an icon and default label specification, a simple conversion (`denominator=1000`) plus format strings that specify different numbers of decimals.
 
+## Localization
 
+openhatd provides localized GUIs that can take a user's language and other preferences into account. However, there are some items like labels, error details or other messages that are generated by the server. As the server does not know about the locales of users it cannot provide localized texts to all of them.
 
-## Time in openhatd
+openhatd partly supports the localization of these items and it is planned to improve this further. The restriction is that there is one server locale and all localized resources will be provided according to the rules of this locale.
 
-openhatd is not a real time system. For operations that must be regularly timed (such as periodic refreshes of port state, timer actions, pulses etc.) the most finely grained unit is the millisecond. Some settings do have to be specified in milliseconds, others in seconds (depending on what makes more sense). However, there is no guarantee that a specified duration in openhatd is exact, but it is guaranteed not to be shorter.
+## Data Logging and Visualization
 
-Measuring time is platform dependent. On Windows the time resolution may be reduced to 10-16 milliseconds. On Linux the granularity is usually better.
+Most of the time, if you run an automation system, you are interested in time series data. openhatd provides several ways to log data. For one, you can use a [Logger port](ports/logger_port) to regularly append the state of selected ports to a CSV file. You can then process this data using any specialized tools you like.
 
-Depending on the number of ports and how they are configured an iteration of the doWork loop requires a certain amount of time to process. The length of the doWork iterations determines the response delay in which ports can act; for example, if you specify a Pulse port with a duration of 10 milliseconds while the doWork loop already requires 20 milliseconds to run, the Pulse port will not be able to keep up its 10 milliseconds duration. Instead, it will run with a lower time resolution which means that the pulses will be longer than specified.
+Additionally, openhatd provides the [InfluxDB port](ports/influxdb_port) which can send data to an [InfluxDB](https://www.influxdata.com/time-series-platform/influxdb/) instance via its HTTP API. InfluxDB is an open source time series database which is very easy to setup and manage.
 
-In analogy to computer game programming, the number of doWork iterations per seconds are called "frames per second" or **fps**. Having openhatd run at a high fps rate gives you a finer granularity of the time slices and consequently more precision. It also consumes more CPU cycles and more power in turn, and most of the time it is not really necessary. openhatd allows you to specify a target fps rate that the system tries to attain by putting the process to sleep for the rest of the time if the doWork loop runs faster than required. This is done by measuring the current doWork duration and comparing it against a set target fps rate. The sleep time is adjusted based on this comparison. It may take quite some time until the defined target fps rate is actually reached (easily one hour or so). For a long-running server this is usually not a problem. This mechanism currently works on Linux only.
+InfluxDB data can be conveniently visualized using the open source tool [Grafana](http://grafana.org/). Grafana supports InfluxDB out of the box and allows you to configure dashboards and graph panels within minutes to create beautiful representations of your automation data.
 
-Generally it is recommended to set the fps rate fairly low, to maybe 10 or 20. This saves CPU power but still gives you a resolution of 50 to 100 milliseconds which is enough for most applications. In Debug log verbosity, openhatd outputs a warning if the doWork loop consumes a lot of CPU time.
-
-All openhatd ports should try to do as little as possible in the doWork loop. Some actions in openhatd need to be performed independently of the doWork loop because they require more work or employ some kind of blocking. These functions are usually implemented using separate threads. For port implementors who use threads it is important to know that everything that modifies openhatd port state must only be done in the doWork loop which is called from the main thread.
-
-However, some operations that must be done on the main thread may cause the doWork iteration to delay for a time that is longer (maybe much longer) than the specified fps rate. An example is the WebServerPlugin which serves incoming requests in the doWork method. So, while time in openhatd (as obtained by the internal function opdi_get_time_ms) is guaranteed to increase monotonically, the intervals between doWork invocations may vary greatly. This point should be taken into account when configuring port settings and developing openhatd plugins or ports. On Windows, due to the time granularity being 10 ms or more, two or more subsequent doWork iterations may even seem to run at the same time as reported by the opdi_get_time_ms function.

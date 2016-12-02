@@ -10,3 +10,11 @@
 .dep/
 *.db
 *.opendb
+*.ilk
+*.obj
+*.dll
+*.lib
+*.pdb
+*.exp
+*.idb
+*.log

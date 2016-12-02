@@ -5,10 +5,12 @@ pages:
     - Download and installation: download.md
     - Documentation:
         - Basic Concepts: concepts.md
-        - Configuration Details: configuration.md
-        - Advanced Ports: ports.md
+        - Port Overview: ports.md
+        - Configuration: configuration.md
+        - Automation Examples: automation_examples.md
         - Details: details.md
         - Ports:
+            - Basic Ports: ports/basic_ports.md
             - Logic Port: ports/logic_port.md
             - Pulse Port: ports/pulse_port.md
             - Selector Port: ports/selector_port.md

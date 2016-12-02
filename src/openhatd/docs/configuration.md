@@ -230,4 +230,15 @@ If the `RefreshMode` setting is `Periodic`, this required setting specifies the 
 
 The unit specification tells GUIs how the port can be displayed. See [Unit Specifications](concepts#unitSpecifications) for more details.
 
-### 
+### `Tags` <a name="tags"></a>
+
+Port tags are a list of tag names separated by space. Tags can be used to select sets of ports using [port list specifications](ports#port_lists). Other than that, tags have no internal purpose, and they are not communicated to GUIs.
+
+A good use case for this is a `log` tag. A Logger port, for example, can then specify all ports to be logged using a single `tag=log` specification.
+
+### Port Ordering
+
+The `Root` section's values specify the order in which nodes are processed. This roughly corresponds with the internal ordering of ports, which can be relevant for the doWork loop. It also influences the ordering of ports on a GUI.
+
+Sometimes it may be necessary to change the internal ordering of ports independent of the order of their creation. You can specify a port's property `OrderID` to re-assign the order number. If the number specified here is higher than the internal order counter subsequently created ports will be auto-numbered with higher OrderIDs, which means they will appear after the port that has been assigned manually.
+

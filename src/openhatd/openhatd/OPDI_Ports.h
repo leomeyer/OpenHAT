@@ -612,7 +612,7 @@ public:
 *   The port name can be optionally followed by a slash (/) plus a double value that specifies the value
 *   in case the port returns an error. This allows for a reasonable reaction in case port errors are to
 *   be expected. If this value is omitted the error will be propagated via an exception to the caller
-*   which must then be react to the error condition. The error default can be prohibited.
+*   which must then be react to the error condition. 
 *   Syntax examples:
 *   10               - fixed value 10
 *   MyPort1          - dynamic value of MyPort1

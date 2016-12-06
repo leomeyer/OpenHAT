@@ -1,4 +1,8 @@
-site_name: openhatd <br>Open Home Automation Toolkit Server
+site_name: openhatd __VERSION__<br>Open Home Automation Toolkit Server
+strict: true
+site_url: https://openhat.org/openhatd
+site_description: openhatd home automation server documentation
+site_dir: openhatd-docs-__VERSION__
 theme: readthedocs
 pages:
     - Introduction to openhatd: index.md
@@ -34,5 +38,8 @@ pages:
                 - Gertboard Plugin: plugins/rpi/gertboard/gertboard_plugin.md
                 - RemoteSwitch Plugin: plugins/rpi/remoteswitch_plugin.md
     - Feedback: feedback.md
+    - Building: building.md
+    - Contributing: contributing.md
 extra_css:
     - extra.css
+copyright: <p style="font-size:small">Copyright <a href="http://openhat.org">openhat.org</a> contributors. Found something unclear, wrong or missing? Please <a href="https://github.com/leomeyer/OpenHAT/issues/new?title=openhatd%20Documentation%3A%20">open an issue</a>!</p>

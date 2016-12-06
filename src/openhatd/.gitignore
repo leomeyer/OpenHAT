@@ -1,5 +1,5 @@
 Debug/
 Release/
 .vs/
-*.so
-
+*.so*
+/openhatd-docs*

@@ -17,7 +17,7 @@ A Pulse port is a Digital port that can generate periodic pulses with a defined 
 
 A Selector port is a bridge between a Digital port and a Select port. If it is set to High it will select a certain position from the Select port. It will also be High if the Select port is in that position, and Low otherwise.
 
-The Selector port is used when certain conditions should result in the selection of 
+The Selector port is used when certain conditions should result in the selection of a specified label, or if the choice of a certain label should influence other ports. 
 
 ## [Error Detector Port](ports/error_detector_port)
 

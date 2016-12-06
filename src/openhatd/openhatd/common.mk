@@ -100,9 +100,16 @@ CDEFINES += -Dlinux
 CFLAGS += -Wall -Wextra $(CDEFS) $(CINCS) -L $(POCOLIBPATH) $(CDEFINES) -Wno-unused-parameter
 CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS)) -std=c++11 -O2
 
+# Linker flags
+# Make resulting binaries look for shared objects in the current directory
+LDFLAGS += -Wl,-rpath=$$ORIGIN
+
+# POCO library version
+POCO_LIBVERSION = $(shell cat $(POCOLIBPATH)/../../../libversion)
+
 # Debug flags
 DEBUG ?= 0
-ifeq (DEBUG, 1)
+ifeq ($(DEBUG),1)
 	CFLAGS += -ggdb -ftrapv -fsanitize=undefined
 else
     CFLAGS += -DNDEBUG
@@ -118,7 +125,7 @@ target: $(TARGET)
 
 $(TARGET): $(OBJECTS)
 	@echo $(CC)
-	$(CC) $(CFLAGS) $(OBJECTS) -o $@ $(POCOLIBS) $(LIBS)
+	$(CC) $(CFLAGS) $(OBJECTS) -o $@ $(POCOLIBS) $(LIBS) $(LDFLAGS)
 
 .cpp.o:
 	@echo
@@ -135,6 +142,9 @@ tar:
 	mkdir -p $(TARFOLDER)
 	mkdir -p $(TARFOLDER)/bin
 	cp $(TARGET) $(TARFOLDER)/bin/$(BASENAME)
+ifeq ($(INCLUDE_POCO_SO),1)
+	cp $(POCOLIBPATH)/*.so.$(POCO_LIBVERSION) $(TARFOLDER)/bin
+endif
 	cp hello-world.ini $(TARFOLDER)/bin/
 	mkdir -p $(TARFOLDER)/plugins
 # TODO let plugin makefiles handle the packaging (?)

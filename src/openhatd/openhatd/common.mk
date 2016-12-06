@@ -102,7 +102,7 @@ CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS)) -std=c++11 -O2
 
 # Linker flags
 # Make resulting binaries look for shared objects in the current directory
-LDFLAGS += -Wl,-rpath=$$ORIGIN
+LDFLAGS += -Wl,-rpath,'$$ORIGIN'
 
 # POCO library version
 POCO_LIBVERSION = $(shell cat $(POCOLIBPATH)/../../../libversion)

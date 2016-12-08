@@ -5,6 +5,8 @@
 # Program file name
 BASENAME = $(shell basename $(CURDIR))
 
+DEBUG ?= 0
+
 # Architecture, used for creating the release file
 ARCH ?= x86_64
 
@@ -69,7 +71,11 @@ POCOLIBPATH ?= $(OPDI_CORE_PATH)/code/c/libraries/POCO/lib/Linux/x86_64
 
 # POCO libraries
 # default: dynamic linking
-POCOLIBS ?= -lPocoUtil -lPocoNet -lPocoFoundation -lPocoXML -lPocoJSON
+ifeq ($(DEBUG),1)
+	POCOLIBS ?= -lPocoUtild -lPocoNetd -lPocoFoundationd -lPocoXMLd -lPocoJSONd
+else
+	POCOLIBS ?= -lPocoUtil -lPocoNet -lPocoFoundation -lPocoXML -lPocoJSON
+endif
 
 # ExprTk expression library path
 EXPRTK = ../../../libraries/exprtk
@@ -108,7 +114,6 @@ LDFLAGS += -Wl,-rpath,'$$ORIGIN'
 POCO_LIBVERSION = $(shell cat $(POCOLIBPATH)/../../../libversion)
 
 # Debug flags
-DEBUG ?= 0
 ifeq ($(DEBUG),1)
 	CFLAGS += -ggdb -ftrapv -fsanitize=undefined
 else
@@ -147,23 +152,36 @@ docs:
 	tar czf openhatd-docs-$(VERSION).tar.gz ../openhatd-docs-$(VERSION)
 
 tar:	docs
+	@echo Preparing tar folder...
 	mkdir -p $(TARFOLDER)
 	mkdir -p $(TARFOLDER)/bin
+	@echo Copying main binary...
 	cp $(TARGET) $(TARFOLDER)/bin/$(BASENAME)
 ifeq ($(INCLUDE_POCO_SO),1)
+	@echo Copying POCO libraries...
+ifeq ($(DEBUG),1)
+	cp $(POCOLIBPATH)/*d.so.$(POCO_LIBVERSION) $(TARFOLDER)/bin
+else
 	cp $(POCOLIBPATH)/*.so.$(POCO_LIBVERSION) $(TARFOLDER)/bin
+	find $(TARFOLDER)/bin/ -type f -name '*d.so.*' -exec rm {} \;		
+endif
 endif
 	cp hello-world.ini $(TARFOLDER)/bin/
+	@echo Preparing plugin folder...
 	mkdir -p $(TARFOLDER)/plugins
 # TODO let plugin makefiles handle the packaging (?)
 	find ../plugins/ -name '*.so' -exec cp --parents {} $(TARFOLDER)/plugins \;
 	cp -r ../plugins/WebServerPlugin/webdocroot $(TARFOLDER)/plugins/WebServerPlugin
+	@echo Copying testconfigs...
 	cp -r ../testconfigs $(TARFOLDER)
+	@echo Preparing documentation folder...
 	mkdir -p $(TARFOLDER)/doc
 	cp -r ../openhatd-docs-$(VERSION)/* $(TARFOLDER)/doc/
 	find $(TARFOLDER)/doc/ -type f -name '*.vsdx' -exec rm {} \;
+	@echo Making tar...
 	tar czf $(TARFOLDER).tar.gz $(TARFOLDER)
 	rm -rf $(TARFOLDER)
+	@echo tar complete.
 
 tests:
 	./$(TARGET) -c hello-world.ini -t -q

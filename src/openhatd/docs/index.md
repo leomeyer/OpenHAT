@@ -66,6 +66,9 @@ You can test openhatd on Windows or Linux first before deploying it in a "real" 
 
 When openhatd has started you can open the web GUI using a browser. Go to [http://localhost:8080](http://localhost:8080).
 
-To control openhatd using an Android device, download and install the AndroPDI Remote Control app on the device. You may have to temporarily allow the installation of third-party apps. Start the app and create a new device entry. Enter the name or IP address of the machine running openhatd as the host name. The default port is 13110. Tap the device entry to open a connection to openhatd. After connecting, tap it again to view the list of ports exposed by openhatd and play with them.
+To control openhatd using an Android device, download and install the AndroPDI Remote Control app on the device. You may have to temporarily allow the installation of third-party apps. Start the app and create a new TCP/IP device entry. Enter the name or IP address of the machine running openhatd as the host name. The default port is 13110. Tap the device entry to open a connection to openhatd. After connecting, tap it again to view the list of ports exposed by openhatd and play with them.
 
 To become familiar with the possibilities of openhatd please start with [Basic Concepts](concepts). You should then read up on the [ports](ports) provided by openhatd and how to [configure](configuration) the system before having a look at the [automation examples](automation_examples).
+
+## More information
+

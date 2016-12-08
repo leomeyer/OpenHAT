@@ -102,7 +102,7 @@ CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS)) -std=c++11 -O2
 
 # Linker flags
 # Make resulting binaries look for shared objects in the current directory
-LDFLAGS += -Wl,-rpath=$$ORIGIN
+LDFLAGS += -Wl,-rpath,'$$ORIGIN'
 
 # POCO library version
 POCO_LIBVERSION = $(shell cat $(POCOLIBPATH)/../../../libversion)
@@ -138,7 +138,15 @@ $(TARGET): $(OBJECTS)
 plugins:
 	$(MAKE) -C ../plugins -f $(MAKEFILE)
 
-tar:
+docs:
+	mv -f ../mkdocs.yml ../mkdocs.yml.orig
+	sed "s/__VERSION__/$(VERSION)/g" < ../mkdocs.yml.orig > ../mkdocs.yml
+	cd .. && mkdocs build
+	rm -f ../mkdocs.yml
+	mv -f ../mkdocs.yml.orig ../mkdocs.yml
+	tar czf openhatd-docs-$(VERSION).tar.gz ../openhatd-docs-$(VERSION)
+
+tar:	docs
 	mkdir -p $(TARFOLDER)
 	mkdir -p $(TARFOLDER)/bin
 	cp $(TARGET) $(TARFOLDER)/bin/$(BASENAME)
@@ -151,6 +159,9 @@ endif
 	find ../plugins/ -name '*.so' -exec cp --parents {} $(TARFOLDER)/plugins \;
 	cp -r ../plugins/WebServerPlugin/webdocroot $(TARFOLDER)/plugins/WebServerPlugin
 	cp -r ../testconfigs $(TARFOLDER)
+	mkdir -p $(TARFOLDER)/doc
+	cp -r ../openhatd-docs-$(VERSION)/* $(TARFOLDER)/doc/
+	find $(TARFOLDER)/doc/ -type f -name '*.vsdx' -exec rm {} \;
 	tar czf $(TARFOLDER).tar.gz $(TARFOLDER)
 	rm -rf $(TARFOLDER)
 

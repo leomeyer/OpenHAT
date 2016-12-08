@@ -1,29 +1,15 @@
-//    This file is part of an OPDI reference implementation.
-//    see: Open Protocol for Device Interaction
+//    Copyright (C) 2009-2016 OpenHAT contributors (https://openhat.org, https://github.com/openhat-org)
 //
-//    Copyright (C) 2011 Leo Meyer (leo@leomeyer.de)
-//
-//    This program is free software: you can redistribute it and/or modify
-//    it under the terms of the GNU General Public License as published by
-//    the Free Software Foundation, either version 3 of the License, or
-//    (at your option) any later version.
-//
-//    This program is distributed in the hope that it will be useful,
-//    but WITHOUT ANY WARRANTY; without even the implied warranty of
-//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//    GNU General Public License for more details.
-//
-//    You should have received a copy of the GNU General Public License
-//    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
     
 /************************************************************************/
 /*                                                                      */
 /*                  Timer0 helper routines                   			*/
 /*                  Supports a clock reference and interrupt chaining.	*/
 /*                                                                      */
-/* Code License: GNU GPL												*/
 /************************************************************************/
-// Leo Meyer, 02/2010
 
 #include <stddef.h>
 #include <avr/io.h>

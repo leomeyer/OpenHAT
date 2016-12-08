@@ -1,7 +1,4 @@
-//    This file is part of an OPDI reference implementation.
-//    see: Open Protocol for Device Interaction
-//
-//    Copyright (C) 2011-2016 Leo Meyer (leo@leomeyer.de)
+//    Copyright (C) 2011-2016 OpenHAT contributors (https://openhat.org, https://github.com/openhat-org)
 //    All rights reserved.
 
 /* This Source Code Form is subject to the terms of the Mozilla Public

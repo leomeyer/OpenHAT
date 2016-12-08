@@ -183,6 +183,7 @@ void AbstractOpenHAT::sayHello(void) {
 		return;
 
 	this->logNormal(this->appName + " version " + this->to_string(this->majorVersion) + "." + this->to_string(this->minorVersion) + "." + this->to_string(this->patchVersion));
+	this->logNormal("Copyright (c) OpenHAT contributors (https://openhat.org, https://github.com/openhat-org)");
 	this->logVerbose("Build: " + std::string(__DATE__) + " " + std::string(__TIME__));
 	this->logDebug("Running as user: " + this->getCurrentUser());
 }

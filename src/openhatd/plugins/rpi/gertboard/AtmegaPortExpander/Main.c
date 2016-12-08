@@ -1,8 +1,8 @@
-//--------------------------------------------------------------------------------------
-// 
-// Code License: GNU GPL
-//--------------------------------------------------------------------------------------
-// Leo Meyer, leomeyer@gmx.de, 2015
+//    Copyright (C) 2011-2016 OpenHAT contributors (https://openhat.org, https://github.com/openhat-org)
+//
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #define F_CPU 	F_OSC
  

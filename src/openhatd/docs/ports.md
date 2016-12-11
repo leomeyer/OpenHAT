@@ -35,11 +35,11 @@ A Scene Select port lets you select one of several pre-defined so-called scenes.
 
 A File port is a Digital port which, while its Line is High, monitors the content of a specified file. If the file's content changes it is being read and the result is set to a certain specified "value port", possibly applying some transformations. If the value port is not read-only any changes in its value are written to the specified file.
 
-The File port is an important port which allows the OpenHAT automation to receive input from its surroundings in a generic way, i. e. without the need for specialized drivers.
+The File port is an important port which allows openhatd to receive input from its surroundings in a generic way, i. e. without the need for specialized drivers.
 
 ## [Exec Port](ports/exec_port)
 
-The Exec port is a Digital port which, when it is set to High, executes a predefined operating system command. As a File Input port provides input to an OpenHAT instance, the Exec port allows OpenHAT to interact with the environment in a generic way; for example, send an email, execute maintenance scripts, or interact with proprietary hardware via command line tools. The Exec port can pass information about the current state of ports to the called program.
+The Exec port is a Digital port which, when it is set to High, executes a predefined operating system command. As a File Input port provides input to an openhatd instance, the Exec port allows openhatd to interact with the environment in a generic way; for example, send an email, execute maintenance scripts, or interact with proprietary hardware via command line tools. The Exec port can pass information about the current state of ports to the called program.
 
 ## [Aggregator Port](ports/aggregator_port)
 
@@ -114,20 +114,20 @@ Examples:
 
 ## Value Resolvers
 
-Some ports expect a numeric value as a parameter. You can either specify this value in the configuration, in which case it remains fixed as long as openhatd is running, or use a so-called **value resolver** to tell openhatd to use the current runtime value of another port as the parameter value. This allows for more complex interactions between ports. It is up to a port's implementation whether a value resolver can be used for a certain parameter or not.
+Most port parameters expect numeric values as their settings. You can either specify these values directly in the configuration, in which case they remain fixed as long as openhatd is running, or use a so-called **value resolver** to tell openhatd to use the current runtime value of another ports as the parameter value. This allows for more complex interactions between ports. It is up to a port's implementation whether a value resolver can be used for a certain parameter or not.
 
 For example, a Fader port used for dimming lights might choose to take the current value of a dimmer port as a starting point for gradually fading out to zero. Providing a fixed value might have the unwanted effect of starting out at a higher value which would make the light brighter before fading out. To avoid this the value can be provided to the Fader port not only as a numeric value but as a port reference (a value resolver), too.
 
 A value resolver specification has the following syntax:
 
 - either a numeric value,
-- or an expression of type `<PortID>[(scale_factor)][/(error_value)]`
+- or an expression of type `<PortID>[(scale_factor)][/(error_value)]` with the parts in brackets being optional.
 
 Examples:
 
 *   `10`               - fixed value 10
 *   `MyPort1`          - value of MyPort1
-*   `MyPort1(100)`     - value of MyPort1, multiplied by 100
+*   `MyPort1(0.1)`     - value of MyPort1, multiplied by 0.1
 *   `MyPort1/0`        - value of MyPort1, 0 in case of an error
 *   `MyPort1(100)/0`   - value of MyPort1, multiplied by 100, 0 in case of an error
 
@@ -136,8 +136,8 @@ If an error value is not specified any errors will be propagated to the port tha
 You can specify any port type (except Streaming ports) in a value resolver. The following rules apply:
 
 * A Digital port's value is either 0 (Low) or 1 (High).
-* An Analog port's value is its relative value within the range 0..1. In most cases a scale factor will need to be provided to map the value to a useful range.
+* An Analog port's value is its relative value within the range 0..1. In most cases a scale factor will need to be provided to map the value to a useful range (because most port parameters are integer values).
 * A Dial port's value is its current position.
-* A Select port's value is the number of its currently selected label.
+* A Select port's value is the number of its currently selected label (0-based).
 
 If you require more sophisticated calculations consider using an [Expression port](ports/expression_port).

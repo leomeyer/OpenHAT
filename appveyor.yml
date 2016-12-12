@@ -1,17 +1,9 @@
 install:
   - git submodule update --init --recursive
   - copy opdi_core\code\c\libraries\POCO_patches\* opdi_core\code\c\libraries\POCO\
-  - opdi_core\code\c\libraries\POCO\buildwin 140 build all both Win32 nosamples notests
+  - cd opdi_core\code\c\libraries\POCO\
+  - buildwin 140 build all both Win32 nosamples notests
   - pip install mkdocs
-
-platform:
-  - x86
-  
-configuration:
-  - Release
-  
-matrix:
-  fast_finish: true
 
 build:
   project: src\openhatd\openhatd.sln

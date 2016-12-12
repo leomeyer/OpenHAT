@@ -75,6 +75,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;WINDOW_EXPORTS;POCO_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>../../../../../opdi_core/code/c/common;../../../../../opdi_core/code/c/platforms;../../../../../opdi_core/code/c/platforms/win32;../../../../../opdi_core/code/c/libraries/POCO/Foundation/include;../../../../../opdi_core/code/c/libraries/POCO/Util/include;../../../../../opdi_core/code/c/libraries/POCO/Net/include;../../../../../opdi_core/code/c/libraries/POCO/JSON/include;../../../../../opdi_core/code/c/libraries/POCO/XML/include;../../../../../opdi_core/code/c/common/cppwrapper;../../../openhatd;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

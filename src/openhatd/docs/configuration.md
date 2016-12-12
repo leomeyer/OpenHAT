@@ -37,17 +37,75 @@ An include node has an associated parameters node that is required to have the n
 	MyParam1 = MyValue1 
 	MyParam2 = MyValue2 
 
+In `MyInclude.ini`, all occurrences of the string `$MyParam1` will be replaced by `MyValue1`, and `$MyParam2` by `MyValue2` correspondingly.  
+
+An included configuration file must have its own `Root` node which is evaluated just like the `Root` node of the main configuration file. Included files can in turn include other files. If you include a file recursively openhatd will enter an infinite loop.
+
+Include files are meant to avoid repeating common combinations of ports that differ only in IDs, labels and other minor parameters. One use case is to have a Select port together with an Exec port that triggers a shell script when the selection changes. If you need more than one combination like this it may make sense to outsource them to an include file. You can also employ another neat trick which involves making the include file executable (on Linux) and code the script to be executed at the beginning of the include file. This keeps code and configuration together. The following example accepts the parameters `$Name`, `$Label`, `$Group` and `$Command` (note that `$1`, `$2`, `$DEVICE` and `$COMMAND` are shell script variables; these are not replaced unless they are present in the environment or the include file parameters, so take care how you name your parameters).
+
+Filename: select\_remote\_arducom.ini
+	
+	#!/bin/bash
+	
+	DEVICE=<device_ip>
+	COMMAND=$2
+	
+	if [ "$1" = "1" ]
+	then
+		# switch on
+		arducom -d $DEVICE -c $COMMAND -p 00
+	elif [ "$1" = "2" ]
+	then
+		# switch off
+		arducom -d $DEVICE -c $COMMAND -p 01
+	else
+		echo "parameter value not supported: $1"
+	fi
+	
+	exit
+	
+	# openhatd configuration part
+	
+	[Root]
+	
+	$Name_Select = 1
+	$Name_Exec = 2
+	
+	[$Name_Select]
+	Type = SelectPort
+	Label = $Label
+	Group = $Group
+	OnChangeUser = $Name_Exec
+	OnChangeInternal = $Name_Exec
+	
+	[$Name_Select.Items]
+	Switch = 0
+	On = 1
+	Off = 2
+	
+	[$Name_Exec]
+	Type = Exec
+	Program = select_remote_arducom.ini
+	Parameters = $$Name_Select $Command
+	ResetTime = 1000
+	Hidden = true
+
+The purpose of this file is to provide a Select port plus an associated Exec port that is triggered when the selection is changed. The select port will execute the configuration file itself as a shell script. Because of the `exit` command the openhatd configuration part will not be executed by the shell.
+
+The shell script's parameters are the current value of the Select port and the value of the $Command parameter at include file load time. Now this involves a bit of trickery; note the `$$Name_Select` part which will be resolved in two stages: `$Name` will be replaced at include file load time; what remains is the ID of the Select port, for example `$Switch_Select`. When the Exec port is about to execute the script it replaces this value with the current position of the referenced Select port and passes the parameter string to the script which receives this value as its first parameter, `$1`.
+
+
 ## Relative Paths
 
-Some nodes in openhatd require the specification of filenames, for example include files or dynamic plugin libraries. Absolute paths can be used in all cases but this is rarely a good choice. However, relative paths are ambiguous: it is not always clear what they are relative to.
+Some nodes in openhatd require the specification of filenames, for example include files or dynamic plugin libraries. Absolute paths can be used in all cases but this is rarely a good choice. However, relative paths can be ambiguous: it is not always clear what they are relative to.
 
 Most openhatd path specifications therefore support the `RelativeTo` setting. If this setting is specified it must be either `CWD` which means the current working directory, or `Config`, which is the location of the current configuration file. A third setting, `Plugin`, is used internally by plugins to specify locations relative to the current plugin shared library. The default value depends on the context.
 
-The openhatd project folder structure is designed to be identical for development and production systems. This means that configuration files designed for testing during development can be used tor production testing without changes. If you are building your own configurations you should have a look at these configuration files (they are located in the folder `testconfigs`) to understand how relative paths should be used.
+The openhatd project folder structure is designed to be identical for development and production systems. This means that configuration files designed for testing during development can be used for production testing without changes. If you are building your own configurations you should have a look at these configuration files (they are located in the folder `testconfigs`) to understand how relative paths should be used.
 
 In many cases it is a good choice to keep additional resources (for example, a custom HTML GUI) relative to the main configuration file. Program components, such as plugins, should be located relative to the current working directory to conform to the project structure.     
 
-To specify a path relative to the current working directory the above example can be changed to:
+To specify a path relative to the current working directory the above include file example can be changed to:
 
 	[IncludeNode1]
 	Type = Include

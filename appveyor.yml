@@ -33,7 +33,7 @@ deploy:
     # FTP deployment provider settings
   - provider: FTP
     protocol: ftp
-    host:  %FTP_UPLOAD_HOST%
-    username: %FTP_UPLOAD_USER%
-    password: %FTP_UPLOAD_PASSWORD%
+    host: $(FTP_UPLOAD_HOST)
+    username: $(FTP_UPLOAD_USER)
+    password: $(FTP_UPLOAD_PASSWORD)
     debug: true     # show complete FTP log

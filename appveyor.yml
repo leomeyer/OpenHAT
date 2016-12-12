@@ -21,7 +21,7 @@ after_build:
   - release.bat
 
 artifacts:
-  - path: %APPVEYOR_BUILD_FOLDER%\src\openhatd\openhatd\*.zip
+  - path: $(APPVEYOR_BUILD_FOLDER)\src\openhatd\openhatd\*.zip
  
 notifications:
   - provider: Email

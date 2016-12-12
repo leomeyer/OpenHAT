@@ -1,17 +1,3 @@
-## Versioning and compatibility
-
-Releases of openhatd follow the versioning scheme MAJOR.MINOR.PATCH:
-
-The MAJOR component increases with very major changes in program architecture and/or release status.
-
-The MINOR component is increased when additional features are added that may break backwards compatibility with existing plugins. A different MINOR number likely means that the Application Binary Interface (ABI), probably the memory layout of the important classes, has changed. It is not safe to use versions of plugins which have been compiled against a different MINOR number.
-
-The PATCH component increases when bugs are fixed or new functions are added without changing the ABI. Plugins with a different PATCH number are safe. 
-
-## Development and release branches
-
-New development takes place on the master branch of the Git repository. Whenever a new version is released a Git branch is made with this version number and the version number on the master branch is advanced. Fixes on the version branches require the creation of a patch tag with an increased patch number.
-
 
 ## Operating system compatibility
 

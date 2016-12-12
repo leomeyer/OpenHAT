@@ -37,6 +37,7 @@ pages:
             - Raspberry Pi:
                 - Gertboard Plugin: plugins/rpi/gertboard/gertboard_plugin.md
                 - RemoteSwitch Plugin: plugins/rpi/remoteswitch_plugin.md
+        - Deploying openhatd: deployment.md
     - Feedback: feedback.md
     - Contributing: contributing.md
     - Development: development.md

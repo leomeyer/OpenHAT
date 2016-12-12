@@ -1,8 +1,8 @@
-## Download latest stable release
+## openhatd latest stable release
 
 There is no latest stable release yet. Please refer to the [release plan](release_plan).
 
-## Download current development version
+## openhatd current development version
 
 - Linux: [openhatd-linux-x86_64-0.1.0-current.tar.gz](https://openhat.org/downloads/openhatd-linux-x86_64-0.1.0-current.tar.gz)
 - Raspberry Pi: [openhatd-linux-rpi-0.1.0-current.tar.gz](https://openhat.org/downloads/openhatd-linux-rpi-0.1.0-current.tar.gz)
@@ -24,10 +24,10 @@ A special installation routine is not required.
 
 The folder contents are:
 
-	bin/: main executable, shared libraries (on Windows and Linux), and hello-world.ini
-	plugins/: plugin shared object folders
-	testconfigs/: a number of test configurations that can be used as templates
-	docs/: offline HTML documentation
+- `bin/`: main executable, shared libraries (on Windows and Linux), and hello-world.ini
+- `plugins/`: plugin shared object folders
+- `testconfigs/`: a number of test configurations that can be used as templates
+- `docs/`: offline HTML documentation
 
 To run openhat, go to the `bin` folder and execute it:
 
@@ -39,13 +39,14 @@ Installing the AndroPDI Remote Control requires you to temporarily allow the ins
 
 The Raspberry Pi package may also work on other ARM devices. Plugins may be specific to the Raspberry Pi, however. openhatd has been tested and confirmed to work on the following systems:
 
-	- Raspberry Pi models B and B+ (Raspbian)
-	- Raspberry Pi (Raspbian)
-	- NanoPi NEO (FriendlyARM's image based on UbuntuCore)
+- Raspberry Pi models B and B+ (Raspbian)
+- Raspberry Pi (Raspbian)
+- NanoPi NEO (FriendlyARM's image based on UbuntuCore)
 
 ## Building from source
 
-See [building openhatd](building).
+See [Development](development).
 
-## Older versions
+## Previous releases
 
+There are currently no previous releases.

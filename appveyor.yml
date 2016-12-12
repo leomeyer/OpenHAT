@@ -11,6 +11,8 @@ install:
   - pip install mkdocs
   - set /p "OPENHATD_VERSION=" < src\openhatd\openhatd\VERSION
 
+configuration: Release
+
 build:
   project: src\openhatd\openhatd.sln
 

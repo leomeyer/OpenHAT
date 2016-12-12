@@ -25,7 +25,7 @@ notifications:
     to:
       - maintainer@openhat.org
     on_build_status_changed: true
-	
+
 deploy:
     # FTP deployment provider settings
   - provider: FTP

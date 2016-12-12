@@ -1,4 +1,5 @@
 install:
+  - cd c:\projects\openhat
   - copy opdi_core\code\c\libraries\POCO_patches\* opdi_core\code\c\libraries\POCO\
   - opdi_core\code\c\libraries\POCO\buildwin 140 build all both Win32 nosamples notests
   - pip install mkdocs

@@ -1,14 +1,37 @@
+
+
+clone_depth: 1
+
 install:
   - git submodule update --init --recursive
   - copy opdi_core\code\c\libraries\POCO_patches\* opdi_core\code\c\libraries\POCO\
   - cd opdi_core\code\c\libraries\POCO\
   - buildwin 140 build all both Win32 nosamples notests
   - pip install mkdocs
+  - set /p "OPENHATD_VERSION=" < src\openhatd\openhatd\VERSION
 
 build:
   project: src\openhatd\openhatd.sln
-  
+
+after_build:
+  - cd src\openhatd\openhatd
+  - release.bat
+
+artifacts:
+  - path: src\openhatd\openhatd\*.zip
+ 
 notifications:
   - provider: Email
     to:
       - maintainer@openhat.org
+    on_build_status_changed: true
+	
+deploy:
+    # FTP deployment provider settings
+  - provider: FTP
+    protocol: ftp
+    host: $FTP_UPLOAD_HOST
+    username: $FTP_UPLOAD_USER
+    password: $FTP_UPLOAD_PASSWORD
+    debug: true     # show complete FTP log
+	

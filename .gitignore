@@ -18,3 +18,5 @@
 *.exp
 *.idb
 *.log
+*.iobj
+*.ipdb

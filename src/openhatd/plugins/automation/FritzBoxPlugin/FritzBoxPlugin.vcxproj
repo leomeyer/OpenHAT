@@ -47,7 +47,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>$(ProjectDir)$(Configuration)\</OutDir>
+    <OutDir>$(ProjectDir)\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -75,14 +75,14 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;WINDOW_EXPORTS;POCO_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../../../../../opdi_core/code/c/common;../../../../../opdi_core/code/c/platforms;../../../../../opdi_core/code/c/platforms/win32;../../../../libraries/POCO/Foundation/include;../../../../libraries/POCO/Util/include;../../../../libraries/POCO/Net/include;../../../../libraries/POCO/XML/include;../../../../../opdi_core/code/c/common/cppwrapper;../../../openhatd;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../../../../opdi_core/code/c/common;../../../../../opdi_core/code/c/platforms;../../../../../opdi_core/code/c/platforms/win32;../../../../../opdi_core/code/c/libraries/POCO/Foundation/include;../../../../../opdi_core/code/c/libraries/POCO/Util/include;../../../../../opdi_core/code/c/libraries/POCO/Net/include;../../../../../opdi_core/code/c/libraries/POCO/XML/include;../../../../../opdi_core/code/c/common/cppwrapper;../../../openhatd;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>../../../../libraries/POCO/lib;</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>../../../../../opdi_core/code/c/libraries/POCO/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

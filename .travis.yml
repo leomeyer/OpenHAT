@@ -30,3 +30,8 @@ script:
 - make -C src/openhatd/openhatd/ CC=$CC
 - export SSHPASS=$RELEASE_UPLOAD_PASSWORD 
 - make -C src/openhatd/openhatd/ tests && sshpass -e scp -P $RELEASE_UPLOAD_PORT -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no /home/travis/build/openhat-org/OpenHAT/src/openhatd/openhatd/*.tar.gz $RELEASE_UPLOAD_USER@$RELEASE_UPLOAD_HOST:~
+
+notifications:
+  email:
+    recipients:
+      - maintainer@openhat.org

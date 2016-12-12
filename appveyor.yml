@@ -5,8 +5,9 @@ clone_depth: 1
 install:
   - git submodule update --init --recursive
   - copy opdi_core\code\c\libraries\POCO_patches\* opdi_core\code\c\libraries\POCO\
-  - cd opdi_core\code\c\libraries\POCO\
-  - buildwin 140 build all both Win32 nosamples notests
+  - pushd opdi_core\code\c\libraries\POCO\
+  - buildwin 140 build static_mt release Win32 nosamples notests
+  - popd
   - pip install mkdocs
   - set /p "OPENHATD_VERSION=" < src\openhatd\openhatd\VERSION
 

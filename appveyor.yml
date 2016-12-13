@@ -19,9 +19,9 @@ build:
 after_build:
   - cd src\openhatd\openhatd
   - release.bat
-  - echo open $(FTP_UPLOAD_HOST)>upload.ftp
-  - echo $(FTP_UPLOAD_USER)>>upload.ftp
-  - echo $(FTP_UPLOAD_PASSWORD)>>upload.ftp
+  - echo open %FTP_UPLOAD_HOST%>upload.ftp
+  - echo %FTP_UPLOAD_USER%>>upload.ftp
+  - echo %FTP_UPLOAD_PASSWORD%>>upload.ftp
   - echo mput *.zip>>upload.ftp
   - echo quit>>upload.ftp
   - ftp -s:upload.ftp

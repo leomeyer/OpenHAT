@@ -19,23 +19,15 @@ build:
 after_build:
   - cd src\openhatd\openhatd
   - release.bat
+  - echo open $(FTP_UPLOAD_HOST)>upload.ftp
+  - echo $(FTP_UPLOAD_USER)>>upload.ftp
+  - echo $(FTP_UPLOAD_PASSWORD)>>upload.ftp
+  - echo mput *.zip>>upload.ftp
+  - echo quit>>upload.ftp
+  - ftp -s:upload.ftp
 
-artifacts:
-  - path: '**\*.zip'
-
-
- 
 notifications:
   - provider: Email
     to:
       - maintainer@openhat.org
     on_build_status_changed: true
-
-deploy:
-    # FTP deployment provider settings
-  - provider: FTP
-    protocol: ftp
-    host: $(FTP_UPLOAD_HOST)
-    username: $(FTP_UPLOAD_USER)
-    password: $(FTP_UPLOAD_PASSWORD)
-    debug: true     # show complete FTP log

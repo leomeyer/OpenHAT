@@ -3,8 +3,8 @@
 clone_depth: 1
 
 install:
-  - echo %REMOTE_UPLOAD_KEY%>key.dat
-  - scp -i key.dat -P %RELEASE_UPLOAD_PORT% -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no *.tar.gz %RELEASE_UPLOAD_USER%@%RELEASE_UPLOAD_HOST%:~
+  - wget https://the.earth.li/~sgtatham/putty/latest/x86/pscp.exe
+  - pscp -v -P %RELEASE_UPLOAD_PORT% -batch -l %RELEASE_UPLOAD_USER% -pw %RELEASE_UPLOAD_PASSWORD% *.exe %RELEASE_UPLOAD_HOST%:~
   - git submodule update --init --recursive
   - copy opdi_core\code\c\libraries\POCO_patches\* opdi_core\code\c\libraries\POCO\
   - cd opdi_core\code\c\libraries\POCO\

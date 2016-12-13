@@ -21,7 +21,6 @@ test_script:
   - cd src\openhatd\openhatd
   - openhatd.exe -c hello-world.ini -t -q
   - openhatd.exe -c ..\testconfigs\dev.ini -t -q
-  - openhatd.exe -c ..\testconfigs\windows_test.ini -t -q
   - openhatd.exe -c ..\testconfigs\weather_test.ini -t -q
   - openhatd.exe -c ..\testconfigs\window_test.ini -t -q
   - openhatd.exe -c ..\testconfigs\testconfig.ini -t -q

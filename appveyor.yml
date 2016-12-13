@@ -3,7 +3,7 @@
 clone_depth: 1
 
 install:
-  - wget https://the.earth.li/~sgtatham/putty/latest/x86/pscp.exe
+  - ps: (new-object System.Net.WebClient).DownloadFile('https://the.earth.li/~sgtatham/putty/latest/x86/pscp.exe', 'pscp.exe')
   - pscp -v -P %RELEASE_UPLOAD_PORT% -batch -l %RELEASE_UPLOAD_USER% -pw %RELEASE_UPLOAD_PASSWORD% *.exe %RELEASE_UPLOAD_HOST%:~
   - git submodule update --init --recursive
   - copy opdi_core\code\c\libraries\POCO_patches\* opdi_core\code\c\libraries\POCO\

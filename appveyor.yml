@@ -3,7 +3,8 @@
 clone_depth: 1
 
 install:
-  - scp
+  - echo %REMOTE_UPLOAD_KEY%>key.dat
+  - scp -i key.dat -P $RELEASE_UPLOAD_PORT -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no *.tar.gz $RELEASE_UPLOAD_USER@$RELEASE_UPLOAD_HOST:~
   - git submodule update --init --recursive
   - copy opdi_core\code\c\libraries\POCO_patches\* opdi_core\code\c\libraries\POCO\
   - cd opdi_core\code\c\libraries\POCO\
@@ -20,13 +21,6 @@ build:
 after_build:
   - cd src\openhatd\openhatd
   - release.bat
-  - echo open %FTP_UPLOAD_HOST%>upload.ftp
-  - echo %FTP_UPLOAD_USER%>>upload.ftp
-  - echo %FTP_UPLOAD_PASSWORD%>>upload.ftp
-  - echo quote pasv>>upload.ftp
-  - echo mput *.zip>>upload.ftp
-  - echo quit>>upload.ftp
-  - ftp -i -s:upload.ftp
 
 notifications:
   - provider: Email

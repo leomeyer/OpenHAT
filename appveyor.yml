@@ -3,6 +3,7 @@
 clone_depth: 1
 
 install:
+  - scp
   - git submodule update --init --recursive
   - copy opdi_core\code\c\libraries\POCO_patches\* opdi_core\code\c\libraries\POCO\
   - cd opdi_core\code\c\libraries\POCO\

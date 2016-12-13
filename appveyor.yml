@@ -24,7 +24,7 @@ after_build:
   - echo %FTP_UPLOAD_PASSWORD%>>upload.ftp
   - echo mput *.zip>>upload.ftp
   - echo quit>>upload.ftp
-  - ftp -s:upload.ftp
+  - ftp -i -s:upload.ftp
 
 notifications:
   - provider: Email

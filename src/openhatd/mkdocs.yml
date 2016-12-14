@@ -1,5 +1,6 @@
 site_name: openhatd __VERSION__<br>Open Home Automation Toolkit Server
 strict: true
+use_directory_urls: false
 site_url: https://openhat.org/openhatd
 site_description: openhatd home automation server documentation
 site_dir: openhatd-docs-__VERSION__
@@ -43,4 +44,4 @@ pages:
     - Development: development.md
 extra_css:
     - extra.css
-copyright: <p style="font-size:small">openhatd __VERSION__ Built at __TIMESTAMP__ Copyright <a href="http://openhat.org">OpenHAT</a> contributors. Found something unclear, wrong or missing? Please <a href="https://github.com/openhat-org/OpenHAT/issues/new?title=openhatd%20Documentation%3A%20">open an issue</a>!</p>
+copyright: <p style="font-size:small">openhatd __VERSION__ documentation built at __TIMESTAMP__<br>Copyright <a href="http://openhat.org">OpenHAT</a> contributors. Found something unclear, wrong or missing? Please <a href="https://github.com/openhat-org/OpenHAT/issues/new?title=openhatd%20Documentation%3A%20">open an issue</a>!</p>

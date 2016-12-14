@@ -1,5 +1,6 @@
 site_name: OpenHAT - The Open Home Automation Toolkit
 strict: true
+use_directory_urls: false
 site_url: https://openhat.org
 site_description: OpenHAT Open Home Automation Toolkit documentation
 site_dir: OpenHAT-docs

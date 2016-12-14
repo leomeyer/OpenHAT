@@ -20,6 +20,9 @@ TARGET = $(BASENAME)-$(PLATFORM)-$(ARCH)
 VERSIONRAW = $(shell cat VERSION)
 VERSION = $(subst ",,$(VERSIONRAW))
 
+# current timestamp
+TIMESTAMP = $(shell date)
+
 # build identification; if not specified, it is "current"
 BUILD ?= current
 

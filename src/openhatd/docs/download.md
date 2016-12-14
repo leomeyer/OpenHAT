@@ -27,7 +27,7 @@ The folder contents are:
 - `bin/`: main executable, shared libraries (on Windows and Linux), and hello-world.ini
 - `plugins/`: plugin shared object folders
 - `testconfigs/`: a number of test configurations that can be used as templates
-- `docs/`: offline HTML documentation
+- `doc/`: offline HTML documentation
 
 To run openhat, go to the `bin` folder and execute it:
 

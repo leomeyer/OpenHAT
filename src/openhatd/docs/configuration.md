@@ -2,7 +2,7 @@
 
 This document explains how openhatd processes configuration files. It also covers the details about the common configuration sections of an openhatd main configuration file, and common settings of ports. Information about how advanced ports or plugins are configured is provided with their respective documentation.
 
-Please also see [general information about configuration files](concepts#configuration). 
+Please also see [general information about configuration files](concepts.md#configuration). 
 
 ## Configuration Parameters<a name="parameters"></a>
 
@@ -17,7 +17,7 @@ When opening a configuration file openhatd performs a case-sensitive text substi
 	4. `CWD`: The absolute path of the current working directory
 4. When including configuration files, all parameters that are specified with the include directive (see below).
 
-Placeholders that have no corresponding parameter are not replaced. In [log verbosity](concepts#logVerbosity) Debug and Extreme all access to configuration settings is logged. This allows for easy inspection of actual settings values at runtime.
+Placeholders that have no corresponding parameter are not replaced. In [log verbosity](concepts.md#logVerbosity) Debug and Extreme all access to configuration settings is logged. This allows for easy inspection of actual settings values at runtime.
 
 ## Including Configuration Files<a name="includes"></a>
 
@@ -129,7 +129,7 @@ Required. The `SlaveName` is the name of the openhatd server instance as display
 
 ### `LogVerbosity`
 
-The LogVerbosity specifies the logging detail and the amount of diagnostic output that openhatd will generate. It accepts one of the [log level constants](concepts#logVerbosity) as its value. The default is `Normal`.
+The LogVerbosity specifies the logging detail and the amount of diagnostic output that openhatd will generate. It accepts one of the [log level constants](concepts.md#logVerbosity) as its value. The default is `Normal`.
 
 ### `PersistentConfig`
 
@@ -286,11 +286,11 @@ If the `RefreshMode` setting is `Periodic`, this required setting specifies the 
 
 ### `Unit` 
 
-The unit specification tells GUIs how the port can be displayed. See [Unit Specifications](concepts#unitSpecifications) for more details.
+The unit specification tells GUIs how the port can be displayed. See [Unit Specifications](concepts.md#unitSpecifications) for more details.
 
 ### `Tags` <a name="tags"></a>
 
-Port tags are a list of tag names separated by space. Tags can be used to select sets of ports using [port list specifications](ports#port_lists). Other than that, tags have no internal purpose, and they are not communicated to GUIs.
+Port tags are a list of tag names separated by space. Tags can be used to select sets of ports using [port list specifications](ports.md#port_lists). Other than that, tags have no internal purpose, and they are not communicated to GUIs.
 
 A good use case for this is a `log` tag. A Logger port, for example, can then specify all ports to be logged using a single `tag=log` specification.
 

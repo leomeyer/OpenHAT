@@ -1,67 +1,67 @@
 
-All ports in openhatd are built upon one of the [basic port types](concepts#ports). The ports described here implement specific functionality, extending the capabilities of the basic types.
+All ports in openhatd are built upon one of the [basic port types](concepts.md#ports). The ports described here implement specific functionality, extending the capabilities of the basic types.
 
 Please see [Automation Examples](automation_examples.md) to understand how to combine ports to model automation behavior. 
 
 At the end of this document you will find information about [port errors](#port_errors), [port list specifications](#port_lists) and [value resolvers](#value_resolvers).
 
-## [Logic Port](ports/logic_port)
+## [Logic Port](ports/logic_port.md)
 
 The Logic port allows you to process the state of one or more Digital ports by applying a logic function (OR, AND, XOR, ATLEAST(n), ATMOST(n), EXACT(n) and their inversions). The Logic port is a Digital port whose state reflects the current result of its logic function. The result can also be applied to other Digital ports.
 
-## [Pulse Port](ports/pulse_port)
+## [Pulse Port](ports/pulse_port.md)
 
 A Pulse port is a Digital port that can generate periodic pulses with a defined period and duty cycle. Period and duty cycle can be determined from other port's values at runtime. The output can be sent to Digital ports (inverted and non-inverted). Its maximum frequency depends on your system but in most cases would not exceed 100 Hz, so it's not really suitable for dimming lights or LEDs like a "real" PWM. It should be used for blinking lights (status indicators) or periodic actions that do not repeat very quickly.
 
-## [Selector Port](ports/selector_port)
+## [Selector Port](ports/selector_port.md)
 
 A Selector port is a bridge between a Digital port and a Select port. If it is set to High it will select a certain position from the Select port. It will also be High if the Select port is in that position, and Low otherwise.
 
 The Selector port is used when certain conditions should result in the selection of a specified label, or if the choice of a certain label should influence other ports. 
 
-## [Error Detector Port](ports/error_detector_port)
+## [Error Detector Port](ports/error_detector_port.md)
 
 An Error Detector is a Digital Port that is High when at least one of a list of ports has an error. The different types of errors of ports, and what it exactly means if a port has an error, are explained below.
 
-## [Fader Port](ports/fader_port)
+## [Fader Port](ports/fader_port.md)
 
 A Fader port can fade Analog or Dial ports in or out. You can specify a number of options such as the fader mode (linear or exponential), the start and end values, and what happens when the Fader port is switched off. The Fader port is itself a Digital port, and it will begin its fading operation at the moment its state is set to High.
 
-## [Scene Select Port](ports/scene_select_port)
+## [Scene Select Port](ports/scene_select_port.md)
 
 A Scene Select port lets you select one of several pre-defined so-called scenes. A scene is just a specification of the states of some ports in the system. These can be defined in a configuration file that is being applied when the corresponding option is selected.
 
-## [File Port](ports/file_port)
+## [File Port](ports/file_port.md)
 
 A File port is a Digital port which, while its Line is High, monitors the content of a specified file. If the file's content changes it is being read and the result is set to a certain specified "value port", possibly applying some transformations. If the value port is not read-only any changes in its value are written to the specified file.
 
 The File port is an important port which allows openhatd to receive input from its surroundings in a generic way, i. e. without the need for specialized drivers.
 
-## [Exec Port](ports/exec_port)
+## [Exec Port](ports/exec_port.md)
 
 The Exec port is a Digital port which, when it is set to High, executes a predefined operating system command. As a File Input port provides input to an openhatd instance, the Exec port allows openhatd to interact with the environment in a generic way; for example, send an email, execute maintenance scripts, or interact with proprietary hardware via command line tools. The Exec port can pass information about the current state of ports to the called program.
 
-## [Aggregator Port](ports/aggregator_port)
+## [Aggregator Port](ports/aggregator_port.md)
 
 An Aggregator port can collect data about a specified Dial port over time and perform some statistical calculations. It can also provide historical data which can be used by the UI to display a graph or other information.
 
-## [Counter Port](ports/counter_port)
+## [Counter Port](ports/counter_port.md)
 
 A Counter port is a Dial port whose value increments either linearly with time in specified intervals, or with events detected by a Trigger port.
 
-## [Trigger Port](ports/trigger_port)
+## [Trigger Port](ports/trigger_port.md)
 
 A Trigger port can detect specified events on one or more Digital ports, for example, whether they are set to High or Low, or toggled. It can in turn set the state of specified output ports when this action occurs, or increment a specified Counter port. A Trigger port is itself a Digital port which operates only if its Line is High.
 
-## [Timer Port](ports/timer_port)
+## [Timer Port](ports/timer_port.md)
 
 A Timer port is a Digital port that switches other Digital ports on or off according to one or more scheduled events. Events can be scheduled in different ways: once, in recurring intervals, periodically at predefined date/time patterns, astronomically (sunrise/sunset), or manually.
 
-## [Expression Port](ports/expression_port)
+## [Expression Port](ports/expression_port.md)
 
 An Expression port is a very versatile component that allows you to evaluate formulas or even small programs depending on the state of other ports, including value transformations, comparisons, and more complex formulas. Ports can be referred to in the formula by using their IDs as variable names. The result of the expression can be assigned to an output port. The Expression port uses the Exprtk library whose documentation can be found here: http://www.partow.net/programming/exprtk/
 
-## [InfluxDB Port](ports/influxdb_port)
+## [InfluxDB Port](ports/influxdb_port.md)
 
 
 ## Port Errors <a name="port_errors"></a>
@@ -89,7 +89,7 @@ How a port reacts to other ports' errors is specified in the port's documentatio
 
 Many ports connect to other ports, mostly as inputs or outputs. For example, a Logic port's output is expected to be a number of other Digital ports in the automation model. Internally these ports need to build a list of their connected ports. This list must be provided in the configuration.
 
-There are a number of rules you can use when specifying port lists. Ports can be included or excluded based on their IDs, their group membership, or their [tag values](configuration#tags).
+There are a number of rules you can use when specifying port lists. Ports can be included or excluded based on their IDs, their group membership, or their [tag values](configuration.md#tags).
 
 Port list specifications are a space-separated list that allow the following components:
 
@@ -140,4 +140,4 @@ You can specify any port type (except Streaming ports) in a value resolver. The 
 * A Dial port's value is its current position.
 * A Select port's value is the number of its currently selected label (0-based).
 
-If you require more sophisticated calculations consider using an [Expression port](ports/expression_port).
+If you require more sophisticated calculations consider using an [Expression port](ports/expression_port.md).

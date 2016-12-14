@@ -1,6 +1,6 @@
 ## openhatd latest stable release
 
-There is no latest stable release yet. Please refer to the [release plan](release_plan).
+There is no latest stable release yet. Please refer to the [release plan](release_plan.md).
 
 ## openhatd current development version
 
@@ -45,7 +45,7 @@ The Raspberry Pi package may also work on other ARM devices. Plugins may be spec
 
 ## Building from source
 
-See [Development](development).
+See [Development](development.md).
 
 ## Previous releases
 

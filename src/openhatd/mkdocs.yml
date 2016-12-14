@@ -28,6 +28,9 @@ pages:
             - Counter Port: ports/counter_port.md
             - Trigger Port: ports/trigger_port.md
             - InfluxDB Port: ports/influxdb_port.md
+            - Exec Port: ports/exec_port.md
+            - Timer Port: ports/timer_port.md
+            - Expression Port: ports/expression_port.md
         - Plugins:
             - General:
                 - Web Server Plugin: plugins/webserver_plugin.md 
@@ -42,6 +45,7 @@ pages:
     - Feedback: feedback.md
     - Contributing: contributing.md
     - Development: development.md
+    - Release Plan: release_plan.md
 extra_css:
     - extra.css
 copyright: <p style="font-size:small">openhatd __VERSION__ documentation built at __TIMESTAMP__<br>Copyright <a href="http://openhat.org">OpenHAT</a> contributors. Found something unclear, wrong or missing? Please <a href="https://github.com/openhat-org/OpenHAT/issues/new?title=openhatd%20Documentation%3A%20">open an issue</a>!</p>

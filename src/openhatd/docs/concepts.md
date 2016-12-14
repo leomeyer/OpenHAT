@@ -18,7 +18,7 @@ There are different types of ports in openhatd. To be able to model automation b
  - A **refresh mode** that decides how changes in the port's state affect the connected user interfaces
  - Freely assignable **tag** values
 
-Ports can have **errors**. This is normal because many ports interact with resources of the environment or external components that may fail or become unavailable. openhatd provides mechanisms to gracefully deal with these errors. See [Port Overview - Errors](ports/port_errors) for more details. 
+Ports can have **errors**. This is normal because many ports interact with resources of the environment or external components that may fail or become unavailable. openhatd provides mechanisms to gracefully deal with these errors. See [Port Overview - Errors](ports.md#port_errors) for more details. 
 
 Basically, ports are of five different types:
 
@@ -107,7 +107,7 @@ The main configuration file must contain some required nodes and properties (pro
 	[General]
 	SlaveName = openhatd Hello World
 
-[More information about the General section](configuration#general)
+[More information about the General section](configuration.md#general)
 
 The `Connection` node specifies the connection settings to be used by the OPDI protocol implementation:
 
@@ -115,7 +115,7 @@ The `Connection` node specifies the connection settings to be used by the OPDI p
 	Transport = TCP
 	Port = 13110
 
-[More information about the Connection section](configuration#connection)
+[More information about the Connection section](configuration.md#connection)
 
 Finally, the `Root` node specifies the nodes that are used for the automation model:
 
@@ -295,9 +295,9 @@ openhatd partly supports the localization of these items and it is planned to im
 
 ## Data Logging and Visualization
 
-Most of the time, if you run an automation system, you are interested in time series data. openhatd provides several ways to log data. For one, you can use a [Logger port](ports/logger_port) to regularly append the state of selected ports to a CSV file. You can then process this data using any specialized tools you like.
+Most of the time, if you run an automation system, you are interested in time series data. openhatd provides several ways to log data. For one, you can use a [Logger port](ports/logger_port.md) to regularly append the state of selected ports to a CSV file. You can then process this data using any specialized tools you like.
 
-Additionally, openhatd provides the [InfluxDB port](ports/influxdb_port) which can send data to an [InfluxDB](https://www.influxdata.com/time-series-platform/influxdb/) instance via its HTTP API. InfluxDB is an open source time series database which is very easy to setup and manage.
+Additionally, openhatd provides the [InfluxDB port](ports/influxdb_port.md) which can send data to an [InfluxDB](https://www.influxdata.com/time-series-platform/influxdb/) instance via its HTTP API. InfluxDB is an open source time series database which is very easy to setup and manage.
 
 InfluxDB data can be conveniently visualized using the open source tool [Grafana](http://grafana.org/). Grafana supports InfluxDB out of the box and allows you to configure dashboards and graph panels within minutes to create beautiful representations of your automation data.
 

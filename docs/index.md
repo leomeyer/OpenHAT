@@ -2,7 +2,7 @@
 
 OpenHAT is an open source project that aims to help you build your own home automation with inexpensive equipment like Raspberry Pis and Arduinos. OpenHAT provides:
 
-- [openhatd](https://openhat.org/openhatd) - an automation server software used to control automation projects,
+- [openhatd](openhatd/openhatd-docs-0.1.0) - an automation server software used to control automation projects,
 - [Arducom](https://github.com/leomeyer/Arducom) - a communication library for Arduinos, useful for data logging and control purposes,
 - instructions on how to build your own automation projects using readily available electronics.
 

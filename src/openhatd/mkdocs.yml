@@ -13,7 +13,6 @@ pages:
         - Port Overview: ports.md
         - Configuration: configuration.md
         - Automation Examples: automation_examples.md
-        - Details: details.md
         - Ports:
             - Basic Ports: ports/basic_ports.md
             - Logic Port: ports/logic_port.md

@@ -60,7 +60,7 @@ Automatically collected history data on the Web GUI:
 
 ## Getting started
 
-You can test openhatd on Windows or Linux first before deploying it in a "real" home automation system. [Download and install](download.md) the proper version for your operating system. Open a command line prompt, go to the installation directory and start openhatd:
+You can test openhatd on Windows or Linux first before deploying it in a "real" home automation system. [Download and install](download.md) the proper version for your operating system. Open a command line prompt, go to the `bin` directory and start openhatd:
 
 	$ openhatd -c hello-world.ini
 

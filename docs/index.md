@@ -4,6 +4,7 @@ OpenHAT is an open source project that aims to help you build your own home auto
 
 - [openhatd](openhatd/openhatd-docs-0.1.0) - an automation server software used to control automation projects,
 - [Arducom](https://github.com/leomeyer/Arducom) - a communication library for Arduinos, useful for data logging and control purposes,
+- AndroPDI, an app for remote-controlling devices for Android,
 - instructions on how to build your own automation projects using readily available electronics.
 
 ### Is it for you?

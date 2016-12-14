@@ -145,7 +145,7 @@ plugins:
 
 docs:
 	mv -f ../mkdocs.yml ../mkdocs.yml.orig
-	sed "s/__VERSION__/$(VERSION)/g" < ../mkdocs.yml.orig > ../mkdocs.yml
+	sed "s/__VERSION__/$(VERSION)/g;s/__TIMESTAMP__/$(TIMESTAMP)/g" < ../mkdocs.yml.orig > ../mkdocs.yml
 	cd .. && mkdocs build
 	rm -f ../mkdocs.yml
 	mv -f ../mkdocs.yml.orig ../mkdocs.yml

@@ -5,12 +5,12 @@ There is no latest stable release yet. Please refer to the [release plan](releas
 ## openhatd current development version
 
 - Linux: [openhatd-linux-x86_64-0.1.0-current.tar.gz](https://openhat.org/downloads/openhatd-linux-x86_64-0.1.0-current.tar.gz)
-- Raspberry Pi: [openhatd-linux-rpi-0.1.0-current.tar.gz](https://openhat.org/downloads/openhatd-linux-rpi-0.1.0-current.tar.gz)
+- Raspberry Pi: [openhatd-linux-armhf-0.1.0-current.tar.gz](https://openhat.org/downloads/openhatd-linux-armhf-0.1.0-current.tar.gz)
 - Windows: [openhatd-windows-0.1.0-current.zip](https://openhat.org/downloads/openhatd-windows-0.1.0-current.zip)
 
 - Offline HTML documentation: [openhatd-docs-0.1.0-current.tar.gz](https://openhat.org/downloads/openhatd-docs-0.1.0-current.tar.gz)
 
-- AndroPDI Remote Control: [AndroPDI-0.1-0.apk](https://openhat.org/downloads/AndroPDI-0.1-0.apk)
+- AndroPDI Remote Control: [AndroPDI-0.1.0.apk](https://openhat.org/downloads/AndroPDI-0.1-0.apk)
 
 ## Installation
 

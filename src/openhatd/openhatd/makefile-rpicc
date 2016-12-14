@@ -5,7 +5,7 @@
 MAKEFILE = $(firstword $(MAKEFILE_LIST))
 
 # Architecture, used for creating the release file
-ARCH = rpi
+ARCH = armhf
 
 # build specific settings
 

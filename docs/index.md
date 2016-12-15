@@ -23,6 +23,8 @@ OpenHAT is for people who like building things themselves rather than relying on
 - Integrates with the operating system for data acquisition and control
 - Uses a plugin mechanism for practically unlimited extensibility and support of third-party products
 
-### Screenshots
+### Application Example
+
+<a href="images/application_example.png">![](images/application_example.png)</a>
 
 

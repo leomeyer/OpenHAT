@@ -8,7 +8,7 @@ There is no latest stable release yet. Please refer to the [release plan](releas
 - Raspberry Pi: [openhatd-linux-armhf-0.1.0-current.tar.gz](https://openhat.org/downloads/openhatd-linux-armhf-0.1.0-current.tar.gz) ([MD5](https://openhat.org/downloads/openhatd-linux-armhf-0.1.0-current.tar.gz.md5))
 - Windows: [openhatd-windows-0.1.0-current.zip](https://openhat.org/downloads/openhatd-windows-0.1.0-current.zip) ([MD5](https://openhat.org/downloads/openhatd-windows-0.1.0-current.zip.md5))
 
-- Offline HTML documentation: [openhatd-docs-0.1.0-current.tar.gz](https://openhat.org/downloads/openhatd-docs-0.1.0-current.tar.gz) ([MD5](https://openhat.org/downloads/openhatd-docs-0.1.0-current.tar.gz.md5))
+- Offline HTML documentation: [openhatd-docs-0.1.0-current.tar.gz](https://openhat.org/downloads/openhatd-docs-0.1.0-current.tar.gz)
 
 - AndroPDI Remote Control: [AndroPDI-0.1.0.apk](https://openhat.org/downloads/AndroPDI-0.1-0.apk)
 

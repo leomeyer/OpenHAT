@@ -153,6 +153,7 @@ docs:
 	rm -f ../mkdocs.yml
 	mv -f ../mkdocs.yml.orig ../mkdocs.yml
 	tar czf openhatd-docs-$(VERSION).tar.gz ../openhatd-docs-$(VERSION)
+	md5sum openhatd-docs-$(VERSION).tar.gz > openhatd-docs-$(VERSION).tar.gz.md5
 
 tar:	docs
 	@echo Preparing tar folder...

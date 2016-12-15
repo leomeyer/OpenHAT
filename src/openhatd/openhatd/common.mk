@@ -184,7 +184,9 @@ endif
 	@echo Making tar...
 	tar czf $(TARFOLDER).tar.gz $(TARFOLDER)
 	rm -rf $(TARFOLDER)
-	@echo tar complete.
+	@echo Calculating checksum...
+	md5sum $(TARFOLDER).tar.gz > $(TARFOLDER).tar.gz.md5
+	@echo Done.
 
 tests:
 	./$(TARGET) -c hello-world.ini -t -q
@@ -201,5 +203,5 @@ clean:
 	rm -f $(MPATH)/*.o
 	rm -f $(TARGET)
 	rm -rf $(TARFOLDER)
-
+	rm -f $(TARFOLDER).tar.gz*
 

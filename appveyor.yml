@@ -29,7 +29,7 @@ test_script:
 after_test:
   - cd src\openhatd\openhatd
   - release.bat
-  - pscp -v -P %RELEASE_UPLOAD_PORT% -batch -l %RELEASE_UPLOAD_USER% -pw %RELEASE_UPLOAD_PASSWORD% -hostkey %RELEASE_UPLOAD_HOSTKEY% openhatd*.zip %RELEASE_UPLOAD_HOST%:.
+  - pscp -v -P %RELEASE_UPLOAD_PORT% -batch -l %RELEASE_UPLOAD_USER% -pw %RELEASE_UPLOAD_PASSWORD% -hostkey %RELEASE_UPLOAD_HOSTKEY% openhatd*.zip* %RELEASE_UPLOAD_HOST%:.
   - cd %APPVEYOR_BUILD_FOLDER%
 
 notifications:

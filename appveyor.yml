@@ -25,7 +25,7 @@ test_script:
   - openhatd.exe -c ..\testconfigs\window_test.ini -t -q
   - openhatd.exe -c ..\testconfigs\testconfig.ini -t -q
   - cd %APPVEYOR_BUILD_FOLDER%
-  
+
 after_test:
   - cd src\openhatd\openhatd
   - release.bat
@@ -36,4 +36,6 @@ notifications:
   - provider: Email
     to:
       - maintainer@openhat.org
+    on_build_success: false
+    on_build_failure: false
     on_build_status_changed: true

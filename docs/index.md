@@ -21,10 +21,10 @@ OpenHAT is for people who like building things themselves rather than relying on
 - Supports beautiful metrics dashboards using [InfluxDB](https://www.influxdata.com/time-series-platform/influxdb/) and [Grafana](http://grafana.org/)
 - Automates everything using an automation model configured in a simple text file
 - Integrates with the operating system for data acquisition and control
-- Uses a plugin mechanism for practically unlimited extensibility and support of third-party products
+- Uses a plugin mechanism for extensibility and support of third-party products
 
 ### Application Example
 
-<a href="images/application_example.png">![](images/application_example.png)</a>
+<a href="images/application_example.jpeg">![](images/application_example.jpeg)</a>
 
 

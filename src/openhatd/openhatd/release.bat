@@ -46,3 +46,8 @@ del doc_exclude
 7z a %ZIPFOLDER%.zip %ZIPFOLDER%
 rmdir /s /q %ZIPFOLDER%
 @echo zip complete.
+
+@echo Calculating checksum...
+md5sum %ZIPFOLDER%.zip > %ZIPFOLDER%.zip.md5
+
+@echo Done.

@@ -16,7 +16,7 @@ DEBUG = 0
 CC = g++
 
 # Compiler flags.
-CFLAGS += -static-libstdc++ -m32
+CFLAGS += -static-libstdc++ -m32 -Wl,-L,/usr/lib32
 
 # POCO library path
 POCOLIBPATH = $(OPDI_CORE_PATH)/code/c/libraries/POCO/lib/Linux/i386

@@ -60,7 +60,7 @@ CDEFINES = -Dlinux
 # Compiler flags.
 CFLAGS = -Wall $(CDEFS) $(CINCS) -L $(POCOLIBPATH) $(CDEFINES)
 CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS)) -O2 -std=c++11 -static-libstdc++
-CFLAGS += -Wl,-z,defs -m32
+CFLAGS += -Wl,-z,defs -m32 -Wl,-L,/usr/lib32
 
 OBJECTS = $(SRC)
 

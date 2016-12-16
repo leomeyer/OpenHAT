@@ -4,6 +4,9 @@
 
 MAKEFILE = $(firstword $(MAKEFILE_LIST))
 
+# Architecture, used for creating the release file
+ARCH = i386
+
 # build specific settings
 
 # DEBUG = 1 will produce very large binaries!
@@ -13,7 +16,10 @@ DEBUG = 0
 CC = g++
 
 # Compiler flags.
-CFLAGS += -static-libstdc++
+CFLAGS += -static-libstdc++ -m32
+
+# POCO library path
+POCOLIBPATH = $(OPDI_CORE_PATH)/code/c/libraries/POCO/lib/Linux/i386
 
 # include POCO libraries with package
 INCLUDE_POCO_SO = 1

@@ -1,5 +1,7 @@
 sudo: required
 
+arch: i686
+
 language: cpp
 
 install:
@@ -8,6 +10,7 @@ install:
 - cp -r opdi_core/code/c/libraries/POCO_patches/* opdi_core/code/c/libraries/POCO/
 - pushd opdi_core/code/c/libraries/POCO
 - ./build_poco_rpi.sh
+- ./build_poco_i386.sh
 - ./build_poco.sh
 - popd
 - sudo pip install mkdocs
@@ -19,6 +22,8 @@ addons:
     packages:
     - gcc-4.9
     - g++-4.9
+    - libc6-dev-i386
+    - gcc-multilib
     - sshpass
     - python-pip
 

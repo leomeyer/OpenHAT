@@ -4,7 +4,8 @@ There is no latest stable release yet. Please refer to the [release plan](releas
 
 ## openhatd current development version
 
-- Linux: [openhatd-linux-x86_64-0.1.0-current.tar.gz](https://openhat.org/downloads/openhatd-linux-x86_64-0.1.0-current.tar.gz) ([MD5](https://openhat.org/downloads/openhatd-linux-x86_64-0.1.0-current.tar.gz.md5))
+- Linux 32 bit: [openhatd-linux-i386-0.1.0-current.tar.gz](https://openhat.org/downloads/openhatd-linux-i386-0.1.0-current.tar.gz) ([MD5](https://openhat.org/downloads/openhatd-linux-i386-0.1.0-current.tar.gz.md5))
+- Linux 64 bit: [openhatd-linux-x86_64-0.1.0-current.tar.gz](https://openhat.org/downloads/openhatd-linux-x86_64-0.1.0-current.tar.gz) ([MD5](https://openhat.org/downloads/openhatd-linux-x86_64-0.1.0-current.tar.gz.md5))
 - Raspberry Pi: [openhatd-linux-armhf-0.1.0-current.tar.gz](https://openhat.org/downloads/openhatd-linux-armhf-0.1.0-current.tar.gz) ([MD5](https://openhat.org/downloads/openhatd-linux-armhf-0.1.0-current.tar.gz.md5))
 - Windows: [openhatd-windows-0.1.0-current.zip](https://openhat.org/downloads/openhatd-windows-0.1.0-current.zip) ([MD5](https://openhat.org/downloads/openhatd-windows-0.1.0-current.zip.md5))
 

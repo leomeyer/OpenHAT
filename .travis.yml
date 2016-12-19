@@ -9,7 +9,7 @@ install:
 - export PATH=$(pwd)/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin:$PATH
 - cp -r opdi_core/code/c/libraries/POCO_patches/* opdi_core/code/c/libraries/POCO/
 - pushd opdi_core/code/c/libraries/POCO
-- ./build_poco_rpi.sh
+#- ./build_poco_rpi.sh
 - ./build_poco_i386.sh
 - ./build_poco.sh
 - popd
@@ -20,6 +20,7 @@ addons:
     sources:
     - ubuntu-toolchain-r-test
     packages:
+    - gcc-multilib
     - gcc-4.9
     - g++-4.9
     - gcc-4.9-multilib

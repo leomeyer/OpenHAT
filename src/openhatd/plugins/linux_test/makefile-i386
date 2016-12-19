@@ -38,8 +38,8 @@ POCOINCPATH = $(OPDI_CORE_PATH)/code/c/libraries/POCO/Util/include $(OPDI_CORE_P
 # POCO library path
 POCOLIBPATH = $(OPDI_CORE_PATH)/code/c/libraries/POCO/lib/Linux/i386
 
-# POCO libraries
-POCOLIBS = -lPocoUtil -lPocoNet -lPocoFoundation 
+# POCO libraries, statically linked
+POCOLIBS = $(POCOLIBPATH)/libPocoUtil.a $(POCOLIBPATH)/libPocoNet.a $(POCOLIBPATH)/libPocoXML.a $(POCOLIBPATH)/libPocoFoundation.a
 
 # Additional libraries
 LIBS = -lpthread -lrt

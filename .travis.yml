@@ -37,7 +37,7 @@ script:
 - md5sum OpenHAT-docs.tar.gz > OpenHAT-docs.tar.gz.md5
 - sshpass -e scp -P $RELEASE_UPLOAD_PORT -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no OpenHAT-docs.tar.gz* $RELEASE_UPLOAD_USER@$RELEASE_UPLOAD_HOST:~/.documentation
 - export CXX=g++-4.9
-- export CC=gcc-4.9
+- export CC=g++-4.9
 - export PATH=$(pwd)/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin:$PATH
 #- make -C src/openhatd/openhatd/ -f makefile-rpicc
 - make -C src/openhatd/openhatd/ -f makefile-i386 CC=$CC

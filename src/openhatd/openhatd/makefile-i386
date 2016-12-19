@@ -19,7 +19,7 @@ CC = g++
 CFLAGS += -static-libstdc++ -m32
 
 # Linker flags
-LDFLAGS += -Wl,-L,/usr/lib32 -Wl,-lc++
+LDFLAGS += -Wl,-L,/usr/lib32
 
 # POCO library path
 POCOLIBPATH = $(OPDI_CORE_PATH)/code/c/libraries/POCO/lib/Linux/i386

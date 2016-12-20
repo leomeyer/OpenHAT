@@ -15,7 +15,7 @@ install:
 configuration: Release
 
 build:
-  project: openhatd\src\openhatd.sln
+  project: openhatd\openhatd.sln
 
 test_script:
   - cd openhatd\src

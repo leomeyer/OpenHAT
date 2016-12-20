@@ -2115,12 +2115,18 @@ uint8_t TriggerPort::doWork(uint8_t canSend)  {
 			if ((*it).get<1>() != UNKNOWN) {
 				// state change?
 				switch (this->triggerType) {
-				case RISING_EDGE: if (((*it).get<1>() == LOW) && (line == 1))
-									changeDetected = true; break;
-				case FALLING_EDGE: if (((*it).get<1>() == HIGH) && (line == 0)) 
-									changeDetected = true; break;
-				case BOTH: if ((*it).get<1>() != (line == 1 ? HIGH : LOW)) 
-									changeDetected = true; break;
+				case RISING_EDGE: 
+					if (((*it).get<1>() == LOW) && (line == 1))
+						changeDetected = true;
+					break;
+				case FALLING_EDGE: 
+					if (((*it).get<1>() == HIGH) && (line == 0)) 
+						changeDetected = true;
+					break;
+				case BOTH: 
+					if ((*it).get<1>() != (line == 1 ? HIGH : LOW)) 
+						changeDetected = true;
+					break;
 				}
 			}
 			// remember current state

@@ -10,15 +10,15 @@ install:
   - buildwin 140 build static_mt release Win32 nosamples notests
   - cd %APPVEYOR_BUILD_FOLDER%
   - pip install mkdocs
-  - set /p "OPENHATD_VERSION=" < src\openhatd\openhatd\VERSION
+  - set /p "OPENHATD_VERSION=" < openhatd\src\VERSION
 
 configuration: Release
 
 build:
-  project: src\openhatd\openhatd.sln
+  project: openhatd\src\openhatd.sln
 
 test_script:
-  - cd src\openhatd\openhatd
+  - cd openhatd\src
   - openhatd.exe -c hello-world.ini -t -q
   - openhatd.exe -c ..\testconfigs\dev.ini -t -q
   - openhatd.exe -c ..\testconfigs\weather_test.ini -t -q
@@ -27,7 +27,7 @@ test_script:
   - cd %APPVEYOR_BUILD_FOLDER%
 
 after_test:
-  - cd src\openhatd\openhatd
+  - cd openhatd\src
   - release.bat
   - pscp -v -P %RELEASE_UPLOAD_PORT% -batch -l %RELEASE_UPLOAD_USER% -pw %RELEASE_UPLOAD_PASSWORD% -hostkey %RELEASE_UPLOAD_HOSTKEY% openhatd*.zip* %RELEASE_UPLOAD_HOST%:.
   - cd %APPVEYOR_BUILD_FOLDER%

@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25123.0
 MinimumVisualStudioVersion = 14.0.25123.0
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "openhatd", "openhatd\openhatd.vcxproj", "{6E43BF59-A05B-4DE9-9249-822AE3F4D42C}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "openhatd", "src\openhatd.vcxproj", "{6E43BF59-A05B-4DE9-9249-822AE3F4D42C}"
 	ProjectSection(ProjectDependencies) = postProject
 		{5433A938-14E3-41EB-B700-5D2DF80ED6B8} = {5433A938-14E3-41EB-B700-5D2DF80ED6B8}
 		{9C6FD69F-B7E2-4541-B381-653AF0AC7896} = {9C6FD69F-B7E2-4541-B381-653AF0AC7896}

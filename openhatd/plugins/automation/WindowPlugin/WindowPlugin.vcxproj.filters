@@ -18,13 +18,13 @@
     <ClCompile Include="WindowPlugin.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\..\opdi_core\code\c\platforms\win32\opdi_platformfuncs.c">
-      <Filter>Quelldateien</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\src\Configuration.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\src\OPDI_Ports.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\opdi_core\code\c\platforms\win32\opdi_platformfuncs.c">
       <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>
@@ -32,10 +32,5 @@
     <None Include="readme.txt">
       <Filter>Ressourcendateien</Filter>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\..\..\..\..\opdi_core\code\c\common\cppwrapper\OPDI_Ports.h">
-      <Filter>Headerdateien</Filter>
-    </ClInclude>
   </ItemGroup>
 </Project>

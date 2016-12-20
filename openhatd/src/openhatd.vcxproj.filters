@@ -138,52 +138,52 @@
     <ClCompile Include="WindowsOpenHAT.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\opdi_core\code\c\libraries\libctb\src\fifo.cpp">
+    <ClCompile Include="..\..\opdi_core\code\c\libraries\libctb\src\fifo.cpp">
       <Filter>Quelldateien\libraries\libctb</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\opdi_core\code\c\libraries\libctb\src\iobase.cpp">
+    <ClCompile Include="..\..\opdi_core\code\c\libraries\libctb\src\iobase.cpp">
       <Filter>Quelldateien\libraries\libctb</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\opdi_core\code\c\libraries\libctb\src\kbhit.cpp">
+    <ClCompile Include="..\..\opdi_core\code\c\libraries\libctb\src\kbhit.cpp">
       <Filter>Quelldateien\libraries\libctb</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\opdi_core\code\c\libraries\libctb\src\portscan.cpp">
+    <ClCompile Include="..\..\opdi_core\code\c\libraries\libctb\src\portscan.cpp">
       <Filter>Quelldateien\libraries\libctb</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\opdi_core\code\c\libraries\libctb\src\serportx.cpp">
+    <ClCompile Include="..\..\opdi_core\code\c\libraries\libctb\src\serportx.cpp">
       <Filter>Quelldateien\libraries\libctb</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\opdi_core\code\c\libraries\libctb\src\win32\getopt.cpp">
+    <ClCompile Include="..\..\opdi_core\code\c\libraries\libctb\src\win32\getopt.cpp">
       <Filter>Quelldateien\libraries\libctb</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\opdi_core\code\c\libraries\libctb\src\win32\serport.cpp">
+    <ClCompile Include="..\..\opdi_core\code\c\libraries\libctb\src\win32\serport.cpp">
       <Filter>Quelldateien\libraries\libctb</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\opdi_core\code\c\libraries\libctb\src\win32\timer.cpp">
+    <ClCompile Include="..\..\opdi_core\code\c\libraries\libctb\src\win32\timer.cpp">
       <Filter>Quelldateien\libraries\libctb</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\opdi_core\code\c\common\opdi_message.c">
+    <ClCompile Include="..\..\opdi_core\code\c\common\opdi_message.c">
       <Filter>Quelldateien\common</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\opdi_core\code\c\common\opdi_port.c">
+    <ClCompile Include="..\..\opdi_core\code\c\common\opdi_port.c">
       <Filter>Quelldateien\common</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\opdi_core\code\c\common\opdi_protocol.c">
+    <ClCompile Include="..\..\opdi_core\code\c\common\opdi_protocol.c">
       <Filter>Quelldateien\common</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\opdi_core\code\c\common\opdi_slave_protocol.c">
+    <ClCompile Include="..\..\opdi_core\code\c\common\opdi_slave_protocol.c">
       <Filter>Quelldateien\common</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\opdi_core\code\c\common\opdi_strings.c">
+    <ClCompile Include="..\..\opdi_core\code\c\common\opdi_strings.c">
       <Filter>Quelldateien\common</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\opdi_core\code\c\common\opdi_aes.cpp">
+    <ClCompile Include="..\..\opdi_core\code\c\common\opdi_aes.cpp">
       <Filter>Quelldateien\common</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\opdi_core\code\c\common\opdi_rijndael.cpp">
+    <ClCompile Include="..\..\opdi_core\code\c\common\opdi_rijndael.cpp">
       <Filter>Quelldateien\common</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\opdi_core\code\c\platforms\win32\opdi_platformfuncs.c">
+    <ClCompile Include="..\..\opdi_core\code\c\platforms\win32\opdi_platformfuncs.c">
       <Filter>Quelldateien\platform</Filter>
     </ClCompile>
     <ClCompile Include="Configuration.cpp">

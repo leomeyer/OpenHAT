@@ -55,13 +55,13 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;POCO_STATIC;NOMINMAX;_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\..\opdi_core\code\c\libraries\libctb\include;..\..\..\libraries\exprtk;..\..\..\opdi_core\code\c\libraries\POCO\Foundation\include;..\..\..\opdi_core\code\c\libraries\POCO\Util\include;..\..\..\opdi_core\code\c\libraries\POCO\Net\include;../../../opdi_core/code/c/common;../../../opdi_core/code/c/platforms\win32;../../../opdi_core/code/c/platforms;../../../opdi_core/code/c/common\cppwrapper;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\opdi_core\code\c\libraries\libctb\include;..\..\libraries\exprtk;..\..\opdi_core\code\c\libraries\POCO\Foundation\include;..\..\opdi_core\code\c\libraries\POCO\Util\include;..\..\opdi_core\code\c\libraries\POCO\Net\include;..\..\opdi_core/code/c/common;..\..\opdi_core/code/c/platforms\win32;..\..\opdi_core/code/c/platforms;..\..\opdi_core/code/c/common\cppwrapper;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>..\..\..\opdi_core\code\c\libraries\POCO\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\opdi_core\code\c\libraries\POCO\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -73,7 +73,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;POCO_STATIC;NOMINMAX;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\..\opdi_core\code\c\libraries\libctb\include;..\..\..\libraries\exprtk;..\..\..\opdi_core\code\c\libraries\POCO\Foundation\include;..\..\..\opdi_core\code\c\libraries\POCO\Util\include;..\..\..\opdi_core\code\c\libraries\POCO\Net\include;../../../opdi_core/code/c/common;../../../opdi_core/code/c/platforms\win32;../../../opdi_core/code/c/platforms;../../../opdi_core/code/c/common\cppwrapper;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\opdi_core\code\c\libraries\libctb\include;..\..\..\libraries\exprtk;..\..\opdi_core\code\c\libraries\POCO\Foundation\include;..\..\opdi_core\code\c\libraries\POCO\Util\include;..\..\opdi_core\code\c\libraries\POCO\Net\include;..\..\opdi_core/code/c/common;..\..\opdi_core/code/c/platforms\win32;..\..\opdi_core/code/c/platforms;..\..\opdi_core/code/c/common\cppwrapper;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
@@ -81,7 +81,7 @@
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>..\..\..\opdi_core\code\c\libraries\POCO\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\opdi_core\code\c\libraries\POCO\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -116,22 +116,22 @@
     <ClInclude Include="WindowsOpenHAT.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\opdi_core\code\c\common\opdi_aes.cpp" />
-    <ClCompile Include="..\..\..\opdi_core\code\c\common\opdi_message.c" />
-    <ClCompile Include="..\..\..\opdi_core\code\c\common\opdi_port.c" />
-    <ClCompile Include="..\..\..\opdi_core\code\c\common\opdi_protocol.c" />
-    <ClCompile Include="..\..\..\opdi_core\code\c\common\opdi_rijndael.cpp" />
-    <ClCompile Include="..\..\..\opdi_core\code\c\common\opdi_slave_protocol.c" />
-    <ClCompile Include="..\..\..\opdi_core\code\c\common\opdi_strings.c" />
-    <ClCompile Include="..\..\..\opdi_core\code\c\libraries\libctb\src\fifo.cpp" />
-    <ClCompile Include="..\..\..\opdi_core\code\c\libraries\libctb\src\iobase.cpp" />
-    <ClCompile Include="..\..\..\opdi_core\code\c\libraries\libctb\src\kbhit.cpp" />
-    <ClCompile Include="..\..\..\opdi_core\code\c\libraries\libctb\src\portscan.cpp" />
-    <ClCompile Include="..\..\..\opdi_core\code\c\libraries\libctb\src\serportx.cpp" />
-    <ClCompile Include="..\..\..\opdi_core\code\c\libraries\libctb\src\win32\getopt.cpp" />
-    <ClCompile Include="..\..\..\opdi_core\code\c\libraries\libctb\src\win32\serport.cpp" />
-    <ClCompile Include="..\..\..\opdi_core\code\c\libraries\libctb\src\win32\timer.cpp" />
-    <ClCompile Include="..\..\..\opdi_core\code\c\platforms\win32\opdi_platformfuncs.c" />
+    <ClCompile Include="..\..\opdi_core\code\c\common\opdi_aes.cpp" />
+    <ClCompile Include="..\..\opdi_core\code\c\common\opdi_message.c" />
+    <ClCompile Include="..\..\opdi_core\code\c\common\opdi_port.c" />
+    <ClCompile Include="..\..\opdi_core\code\c\common\opdi_protocol.c" />
+    <ClCompile Include="..\..\opdi_core\code\c\common\opdi_rijndael.cpp" />
+    <ClCompile Include="..\..\opdi_core\code\c\common\opdi_slave_protocol.c" />
+    <ClCompile Include="..\..\opdi_core\code\c\common\opdi_strings.c" />
+    <ClCompile Include="..\..\opdi_core\code\c\libraries\libctb\src\fifo.cpp" />
+    <ClCompile Include="..\..\opdi_core\code\c\libraries\libctb\src\iobase.cpp" />
+    <ClCompile Include="..\..\opdi_core\code\c\libraries\libctb\src\kbhit.cpp" />
+    <ClCompile Include="..\..\opdi_core\code\c\libraries\libctb\src\portscan.cpp" />
+    <ClCompile Include="..\..\opdi_core\code\c\libraries\libctb\src\serportx.cpp" />
+    <ClCompile Include="..\..\opdi_core\code\c\libraries\libctb\src\win32\getopt.cpp" />
+    <ClCompile Include="..\..\opdi_core\code\c\libraries\libctb\src\win32\serport.cpp" />
+    <ClCompile Include="..\..\opdi_core\code\c\libraries\libctb\src\win32\timer.cpp" />
+    <ClCompile Include="..\..\opdi_core\code\c\platforms\win32\opdi_platformfuncs.c" />
     <ClCompile Include="AbstractOpenHAT.cpp" />
     <ClCompile Include="Configuration.cpp" />
     <ClCompile Include="ExecPort.cpp" />

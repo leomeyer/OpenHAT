@@ -1,0 +1,199 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Quelldateien">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Headerdateien">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Ressourcendateien">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Quelldateien\common">
+      <UniqueIdentifier>{fe170a8f-fe38-4ad0-9eb0-7451842f7683}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Quelldateien\libraries">
+      <UniqueIdentifier>{beece497-7f96-47e1-a2eb-4aca03b19691}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Quelldateien\libraries\libctb">
+      <UniqueIdentifier>{fc51c054-eb17-44b7-be46-90d5c9e425ec}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Quelldateien\platform">
+      <UniqueIdentifier>{3346649b-3db5-4663-bdaa-7207353952f8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Ressourcendateien\testconfigs">
+      <UniqueIdentifier>{cac0db1f-a458-44d1-b349-8fe842633f92}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ReadMe.txt" />
+    <None Include="exectest.bat">
+      <Filter>Ressourcendateien</Filter>
+    </None>
+    <None Include="fileinputtest.txt">
+      <Filter>Ressourcendateien</Filter>
+    </None>
+    <None Include="..\doc\complex_example_1.ini">
+      <Filter>Ressourcendateien</Filter>
+    </None>
+    <None Include="..\doc\complex_example_2.ini">
+      <Filter>Ressourcendateien</Filter>
+    </None>
+    <None Include="webdocro..\src.css" />
+    <None Include="..\testconfigs\current.json">
+      <Filter>Ressourcendateien\testconfigs</Filter>
+    </None>
+    <None Include="..\testconfigs\dev.ini">
+      <Filter>Ressourcendateien\testconfigs</Filter>
+    </None>
+    <None Include="..\testconfigs\gertboard.ini">
+      <Filter>Ressourcendateien\testconfigs</Filter>
+    </None>
+    <None Include="..\testconfigs\influxdb_test.ini">
+      <Filter>Ressourcendateien\testconfigs</Filter>
+    </None>
+    <None Include="..\testconfigs\scene0.ini">
+      <Filter>Ressourcendateien\testconfigs</Filter>
+    </None>
+    <None Include="..\testconfigs\scene1.ini">
+      <Filter>Ressourcendateien\testconfigs</Filter>
+    </None>
+    <None Include="..\testconfigs\test_include.ini">
+      <Filter>Ressourcendateien\testconfigs</Filter>
+    </None>
+    <None Include="..\testconfigs\testconfig.ini">
+      <Filter>Ressourcendateien\testconfigs</Filter>
+    </None>
+    <None Include="..\testconfigs\weather_test.ini">
+      <Filter>Ressourcendateien\testconfigs</Filter>
+    </None>
+    <None Include="..\testconfigs\window_test.ini">
+      <Filter>Ressourcendateien\testconfigs</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="stdafx.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="SunRiseSet.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="ExecPort.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="ExpressionPort.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="Ports.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="TimerPort.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="AbstractOpenHAT.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="WindowsOpenHAT.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="Configuration.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="opdi_configspecs.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="SunRiseSet.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="ExecPort.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="ExpressionPort.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="Ports.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="TimerPort.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="AbstractOpenHAT.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="openhat_win.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="WindowsOpenHAT.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\opdi_core\code\c\libraries\libctb\src\fifo.cpp">
+      <Filter>Quelldateien\libraries\libctb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\opdi_core\code\c\libraries\libctb\src\iobase.cpp">
+      <Filter>Quelldateien\libraries\libctb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\opdi_core\code\c\libraries\libctb\src\kbhit.cpp">
+      <Filter>Quelldateien\libraries\libctb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\opdi_core\code\c\libraries\libctb\src\portscan.cpp">
+      <Filter>Quelldateien\libraries\libctb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\opdi_core\code\c\libraries\libctb\src\serportx.cpp">
+      <Filter>Quelldateien\libraries\libctb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\opdi_core\code\c\libraries\libctb\src\win32\getopt.cpp">
+      <Filter>Quelldateien\libraries\libctb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\opdi_core\code\c\libraries\libctb\src\win32\serport.cpp">
+      <Filter>Quelldateien\libraries\libctb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\opdi_core\code\c\libraries\libctb\src\win32\timer.cpp">
+      <Filter>Quelldateien\libraries\libctb</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\opdi_core\code\c\common\opdi_message.c">
+      <Filter>Quelldateien\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\opdi_core\code\c\common\opdi_port.c">
+      <Filter>Quelldateien\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\opdi_core\code\c\common\opdi_protocol.c">
+      <Filter>Quelldateien\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\opdi_core\code\c\common\opdi_slave_protocol.c">
+      <Filter>Quelldateien\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\opdi_core\code\c\common\opdi_strings.c">
+      <Filter>Quelldateien\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\opdi_core\code\c\common\opdi_aes.cpp">
+      <Filter>Quelldateien\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\opdi_core\code\c\common\opdi_rijndael.cpp">
+      <Filter>Quelldateien\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\opdi_core\code\c\platforms\win32\opdi_platformfuncs.c">
+      <Filter>Quelldateien\platform</Filter>
+    </ClCompile>
+    <ClCompile Include="Configuration.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="OPDI.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="OPDI_Ports.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

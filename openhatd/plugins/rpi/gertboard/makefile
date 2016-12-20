@@ -7,15 +7,15 @@ PLATFORM = linux
 # Relative path to the openhat application directory.
 # All other paths are calculated relative to this path, so if you create a plugin anywhere it should be enough
 # just to adjust this path.
-APP_PATH = ../../src
+APP_PATH = ../../../src
 
 # Relative path to common directory (without trailing slash)
 # This also becomes an additional include directory.
-CPATH = $(APP_PATH)/../../../common
+CPATH = $(APP_PATH)/../../opdi_core/code/c/common
 
 # Relative path to platform directory (without trailing slash)
 # This also becomes an additional include directory.
-PPATHBASE = $(APP_PATH)/../../../platforms
+PPATHBASE = $(APP_PATH)/../../opdi_core/code/c/platforms
 PPATH = $(PPATHBASE)/$(PLATFORM)
 
 # List source files of the plugin here.
@@ -28,20 +28,20 @@ CPPPATH = $(APP_PATH)
 SRC += $(CPPPATH)/OPDI_Ports.cpp
 
 # additional source files
-SRC += $(APP_PATH)/../../../libraries/rpi/gertboard/gb_common.c $(APP_PATH)/../../../libraries/rpi/gertboard/gb_spi.c $(APP_PATH)/../../../libraries/rpi/gertboard/gb_pwm.c
-SRC += $(APP_PATH)/../../../platforms/linux/opdi_platformfuncs.c
+SRC += $(APP_PATH)/../../libraries/rpi/gertboard/gb_common.c $(APP_PATH)/../../libraries/rpi/gertboard/gb_spi.c $(APP_PATH)/../../libraries/rpi/gertboard/gb_pwm.c
+SRC += $(PPATH)/opdi_platformfuncs.c
 
 # Gertboard library include path
-GERTBOARDINCPATH = $(APP_PATH)/../../../libraries/rpi/gertboard
+GERTBOARDINCPATH = $(APP_PATH)/../../libraries/rpi/gertboard
 
 # conio include path
-CONIOINCPATH = $(APP_PATH)/../../../libraries/conio
+CONIOINCPATH = $(APP_PATH)/../../libraries/conio
 
 # POCO include path
-POCOINCPATH = $(APP_PATH)/../../../libraries/POCO/Util/include $(APP_PATH)/../../../libraries/POCO/Foundation/include $(APP_PATH)/../../../libraries/POCO/Net/include
+POCOINCPATH = $(APP_PATH)/../../opdi_core/code/c/libraries/POCO/Util/include $(APP_PATH)/../../opdi_core/code/c/libraries/POCO/Foundation/include $(APP_PATH)/../../opdi_core/code/c/libraries/POCO/Net/include
 
 # POCO library path
-POCOLIBPATH = $(APP_PATH)/../../../libraries/POCO/lib/Linux/x86_64
+POCOLIBPATH = $(APP_PATH)/../../opdi_core/code/c/libraries/POCO/lib/Linux/x86_64
 
 # POCO libraries
 POCOLIBS = -lPocoUtil -lPocoNet -lPocoFoundation 

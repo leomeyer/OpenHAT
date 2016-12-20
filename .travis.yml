@@ -9,7 +9,7 @@ install:
 - export PATH=$(pwd)/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin:$PATH
 - cp -r opdi_core/code/c/libraries/POCO_patches/* opdi_core/code/c/libraries/POCO/
 - pushd opdi_core/code/c/libraries/POCO
-#- ./build_poco_rpi.sh
+- ./build_poco_rpi.sh
 - ./build_poco_i386.sh
 - ./build_poco.sh
 - popd
@@ -39,10 +39,10 @@ script:
 - export CXX=g++-4.9
 - export CC=g++-4.9
 - export PATH=$(pwd)/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin:$PATH
-#- make -C src/openhatd/openhatd/ -f makefile-rpicc
-- make -C src/openhatd/openhatd/ -f makefile-i386 CC=$CC
-- make -C src/openhatd/openhatd/ CC=$CC
-- make -C src/openhatd/openhatd/ tests && sshpass -e scp -P $RELEASE_UPLOAD_PORT -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no /home/travis/build/openhat-org/OpenHAT/src/openhatd/openhatd/*.tar.gz* $RELEASE_UPLOAD_USER@$RELEASE_UPLOAD_HOST:~
+- make -C openhatd/src/ -f makefile-rpicc
+- make -C openhatd/src/ -f makefile-i386 CC=$CC
+- make -C openhatd/src/ CC=$CC
+- make -C openhatd/src/ tests && sshpass -e scp -P $RELEASE_UPLOAD_PORT -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no /home/travis/build/openhat-org/OpenHAT/openhatd/src/*.tar.gz* $RELEASE_UPLOAD_USER@$RELEASE_UPLOAD_HOST:~
 
 notifications:
   email:

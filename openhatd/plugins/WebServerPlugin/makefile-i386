@@ -4,6 +4,8 @@ TARGET = $(shell basename $(CURDIR))
 # OPDI platform specifier
 PLATFORM = linux
 
+DEBUG ?= 0
+
 # Relative path to the openhat application directory.
 # All other paths are calculated relative to this path, so if you create a plugin anywhere it should be enough
 # just to adjust this path.
@@ -40,8 +42,12 @@ POCOINCPATH = $(OPDI_CORE_PATH)/code/c/libraries/POCO/Util/include $(OPDI_CORE_P
 POCOLIBPATH = $(OPDI_CORE_PATH)/code/c/libraries/POCO/lib/Linux/i386
 
 # POCO libraries
-#POCOLIBS = -lPocoUtil -lPocoNet -lPocoFoundation 
-POCOLIBS = $(POCOLIBPATH)/libPocoUtil.a $(POCOLIBPATH)/libPocoNet.a $(POCOLIBPATH)/libPocoFoundation.a $(POCOLIBPATH)/libPocoJSON.a
+ifeq ($(DEBUG),1)
+	POCOLIBS ?= $(POCOLIBPATH)/libPocoUtild.a $(POCOLIBPATH)/libPocoNetd.a $(POCOLIBPATH)/libPocoFoundationd.a $(POCOLIBPATH)/libPocoXMLd.a $(POCOLIBPATH)/libPocoJSONd.a
+else
+	POCOLIBS ?= $(POCOLIBPATH)/libPocoUtil.a $(POCOLIBPATH)/libPocoNet.a $(POCOLIBPATH)/libPocoFoundation.a  $(POCOLIBPATH)/libPocoXML.a $(POCOLIBPATH)/libPocoJSON.a
+endif
+
 
 # Additional libraries
 LIBS = -lpthread -lrt

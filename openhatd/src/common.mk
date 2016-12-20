@@ -3,7 +3,7 @@
 # Pass DEBUG=1 to enable a debug build.
 
 # Program file name
-BASENAME = $(shell basename $(CURDIR))
+BASENAME = openhatd
 
 DEBUG ?= 0
 

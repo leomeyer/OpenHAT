@@ -204,16 +204,32 @@ int32_t Port::getFlags() const {
 	return this->flags;
 }
 
+void Port::setTypeGUID(const std::string & guid) {
+	if (this->typeGUID != guid) {
+		this->typeGUID = guid;
+		this->updateExtendedInfo();
+		if (this->opdi != nullptr)
+			this->opdi->updatePortData(this);
+	}
+}
+
+const std::string & Port::getTypeGUID(void) const {
+	return this->typeGUID;
+}
+
 void Port::updateExtendedInfo(void) {
 	std::string exInfo;
+	if (this->typeGUID.size() > 0) {
+		exInfo += "typeGUID=" + escapeKeyValueText(this->typeGUID) + ";";
+	}
 	if (this->group.size() > 0) {
-		exInfo += "group=" + this->group + ";";
+		exInfo += "group=" + escapeKeyValueText(this->group) + ";";
 	}
 	if (this->unit.size() > 0) {
-		exInfo += "unit=" + this->unit + ";";
+		exInfo += "unit=" + escapeKeyValueText(this->unit) + ";";
 	}
 	if (this->icon.size() > 0) {
-		exInfo += "icon=" + this->icon + ";";
+		exInfo += "icon=" + escapeKeyValueText(this->icon) + ";";
 	}
 	this->extendedInfo = exInfo;
 }
@@ -227,6 +243,10 @@ void Port::setUnit(const std::string& unit) {
 	}
 }
 
+const std::string & Port::getUnit(void) const {
+	return this->unit;
+}
+
 void Port::setIcon(const std::string& icon) {
 	if (this->icon != icon) {
 		this->icon = icon;
@@ -236,6 +256,10 @@ void Port::setIcon(const std::string& icon) {
 	}
 }
 
+const std::string & Port::getIcon(void) const {
+	return this->icon;
+}
+
 void Port::setGroup(const std::string& group) {
 	if (this->group != group) {
 		this->group = group;
@@ -243,6 +267,10 @@ void Port::setGroup(const std::string& group) {
 		if (this->opdi != nullptr)
 			this->opdi->updatePortData(this);
 	}
+}
+
+const std::string & Port::getGroup(void) const {
+	return this->group;
 }
 
 void Port::setHistory(uint64_t intervalSeconds, int maxCount, const std::vector<int64_t>& values) {
@@ -261,6 +289,10 @@ void Port::setHistory(uint64_t intervalSeconds, int maxCount, const std::vector<
 		this->refreshRequired = true;
 }
 
+const std::string & Port::getHistory(void) const {
+	return this->history;
+}
+
 void Port::clearHistory(void) {
 	this->history.clear();
 	if (this->refreshMode == RefreshMode::REFRESH_AUTO)
@@ -274,6 +306,10 @@ std::string Port::getExtendedInfo() const {
 void Port::setLogVerbosity(LogVerbosity newLogVerbosity)
 {
 	this->logVerbosity = newLogVerbosity;
+}
+
+LogVerbosity Port::getLogVerbosity(void) const {
+	return this->logVerbosity;
 }
 
 std::string Port::getExtendedState() const {
@@ -308,7 +344,7 @@ void Port::setRefreshMode(RefreshMode refreshMode) {
 	this->refreshMode = refreshMode;
 }
 
-Port::RefreshMode Port::getRefreshMode(void) {
+Port::RefreshMode Port::getRefreshMode(void) const {
 	return this->refreshMode;
 }
 

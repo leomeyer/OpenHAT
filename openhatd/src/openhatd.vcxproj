@@ -107,7 +107,9 @@
     <ClInclude Include="Configuration.h" />
     <ClInclude Include="ExecPort.h" />
     <ClInclude Include="ExpressionPort.h" />
+    <ClInclude Include="OPDI.h" />
     <ClInclude Include="opdi_configspecs.h" />
+    <ClInclude Include="OPDI_Ports.h" />
     <ClInclude Include="Ports.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="SunRiseSet.h" />

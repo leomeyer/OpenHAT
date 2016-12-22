@@ -109,6 +109,12 @@
     <ClInclude Include="opdi_configspecs.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
+    <ClInclude Include="OPDI.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="OPDI_Ports.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

@@ -100,6 +100,7 @@ protected:
 	Error error;
 
 	// extended info variables
+	std::string typeGUID;
 	std::string unit;
 	std::string icon;
 	std::string group;
@@ -285,13 +286,25 @@ public:
 
 	virtual int32_t getFlags(void) const;
 
+	virtual void setTypeGUID(const std::string& guid);
+
+	virtual const std::string& getTypeGUID(void) const;
+
 	virtual void setUnit(const std::string& unit);
+
+	virtual const std::string& getUnit(void) const;
 
 	virtual void setIcon(const std::string& icon);
 
+	virtual const std::string& getIcon(void) const;
+
 	virtual void setGroup(const std::string& group);
 
+	virtual const std::string& getGroup(void) const;
+
 	virtual void setHistory(uint64_t intervalSeconds, int maxCount, const std::vector<int64_t>& values);
+
+	virtual const std::string& getHistory(void) const;
 
 	virtual void clearHistory(void);
 
@@ -301,13 +314,11 @@ public:
 
 	virtual void setLogVerbosity(LogVerbosity newLogVerbosity);
 
-	virtual RefreshMode getRefreshMode(void);
+	virtual LogVerbosity getLogVerbosity(void) const;
 
 	virtual void setRefreshMode(RefreshMode refreshMode);
 
-	/** Sets the list of ports that should be auto-refreshed, as a space-delimited string.
-	virtual void setAutoRefreshPorts(std::string portList);
-	*/
+	virtual RefreshMode getRefreshMode(void) const;
 
 	/** Sets the minimum time in milliseconds between self-refresh messages. If this time is 0 (default),
 	* the self-refresh is disabled. */
@@ -349,11 +360,6 @@ template <class T> inline std::string Port::to_string(const T& t) const {
 class PortGroup {
 	friend class OPDI;
 
-	/*
-	private:
-		// disable copy constructor
-		PortGroup(const PortGroup& that);
-	*/
 protected:
 	char* id;
 	char* label;
@@ -769,7 +775,5 @@ public:
 		}
 	}
 };
-
-
 
 }	// namespace opdi

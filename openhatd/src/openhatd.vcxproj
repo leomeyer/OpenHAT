@@ -73,7 +73,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;POCO_STATIC;NOMINMAX;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\..\opdi_core\code\c\libraries\libctb\include;..\..\..\libraries\exprtk;..\..\opdi_core\code\c\libraries\POCO\Foundation\include;..\..\opdi_core\code\c\libraries\POCO\Util\include;..\..\opdi_core\code\c\libraries\POCO\Net\include;..\..\opdi_core/code/c/common;..\..\opdi_core/code/c/platforms\win32;..\..\opdi_core/code/c/platforms;..\..\opdi_core/code/c/common\cppwrapper;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\opdi_core\code\c\libraries\libctb\include;..\..\libraries\exprtk;..\..\opdi_core\code\c\libraries\POCO\Foundation\include;..\..\opdi_core\code\c\libraries\POCO\Util\include;..\..\opdi_core\code\c\libraries\POCO\Net\include;..\..\opdi_core/code/c/common;..\..\opdi_core/code/c/platforms\win32;..\..\opdi_core/code/c/platforms;..\..\opdi_core/code/c/common\cppwrapper;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>

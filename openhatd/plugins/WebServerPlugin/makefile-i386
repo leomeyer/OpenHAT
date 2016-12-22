@@ -47,9 +47,9 @@ POCOLIBPATH = $(OPDI_CORE_PATH)/code/c/libraries/POCO/lib/Linux/i386
 # This bug happens only when cross-compiling to 32 bits under 64 bits. Native 64 and 32 bit builds are ok.
 # Despite very extensive tests and copious yak-shaving a simple case for this bug could not be identified.
 ifeq ($(DEBUG),1)
-	POCOLIBS ?= -lPocoUtild -lPocoFoundationd -lPocoJSONd
+	POCOLIBS ?= -lPocoUtild -lPocoFoundationd -lPocoJSONd -lPocoNetd -lPocoXMLd
 else
-	POCOLIBS ?= -lPocoUtil -lPocoFoundation -lPocoJSON
+	POCOLIBS ?= -lPocoUtil -lPocoFoundation -lPocoJSON -lPocoNet -lPocoXML
 endif
 
 # Additional libraries

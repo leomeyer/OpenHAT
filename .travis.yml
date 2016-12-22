@@ -9,9 +9,9 @@ install:
 - export PATH=$(pwd)/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin:$PATH
 - cp -r opdi_core/code/c/libraries/POCO_patches/* opdi_core/code/c/libraries/POCO/
 - pushd opdi_core/code/c/libraries/POCO
-- ./build_poco_rpi.sh
-- ./build_poco_i386.sh
-- ./build_poco.sh
+#- ./build_poco_rpi.sh
+#- ./build_poco_i386.sh
+#- ./build_poco.sh
 - popd
 - sudo pip install mkdocs
 
@@ -29,10 +29,16 @@ addons:
     - lib32stdc++6
     - sshpass
     - python-pip
+    - doxygen
+    - doxygen-doc
+    - doxygen-latex
+    - doxygen-gui
+    - graphviz
 
 script: 
 - export SSHPASS=$RELEASE_UPLOAD_PASSWORD 
 - mkdocs build
+- doxygen Doxyfile
 - tar czf OpenHAT-docs.tar.gz OpenHAT-docs/
 - md5sum OpenHAT-docs.tar.gz > OpenHAT-docs.tar.gz.md5
 - sshpass -e scp -P $RELEASE_UPLOAD_PORT -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no OpenHAT-docs.tar.gz* $RELEASE_UPLOAD_USER@$RELEASE_UPLOAD_HOST:~/.documentation

@@ -1,3 +1,7 @@
+/// \dir FritzBoxPlugin
+///      
+/// \brief Plugin that supports AVM FRITZ! smart home devices
+
 #include <sstream>
 
 #include "Poco/Tuple.h"

@@ -79,7 +79,7 @@ uint8_t Port::doWork(uint8_t /* canSend */) {
 	if ((this->refreshMode == RefreshMode::REFRESH_PERIODIC) && (this->periodicRefreshTime > 0)) {
 		// self refresh timer reached?
 		if (opdi_get_time_ms() - this->lastRefreshTime > this->periodicRefreshTime) {
-			this->doRefresh();
+			this->refreshRequired = true;
 			this->lastRefreshTime = opdi_get_time_ms();
 		}
 	}

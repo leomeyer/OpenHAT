@@ -6,7 +6,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 
- #pragma once
+#pragma once
 
 #include <string>
 #include <vector>
@@ -43,29 +43,33 @@ typedef std::vector<DigitalPort*> DigitalPortList;
 typedef std::vector<AnalogPort*> AnalogPortList;
 
 
-/** Base class for OPDI port wrappers.
-	*
-	*/
+/// Base class for OPDI port wrappers.
+///
+/// This class is not intended to be used or extended directly. Rather, extend one of its
+/// direct subclasses, such as DigitalPort or DialPort.
 class Port {
 
 	friend class OPDI;
 
 public:
+	/// Defines the origin of a state change.
+	///
 	enum class ChangeSource {
-		CHANGESOURCE_INT,
-		CHANGESOURCE_USER
+		CHANGESOURCE_INT,		/**< Change originated in internal function */
+		CHANGESOURCE_USER		/**< Change originated in user action */
 	};
 
+	/// Defines the refresh mode of a port.
+	///
 	enum class RefreshMode : unsigned int {
-		REFRESH_NOT_SET,
-		// no automatic refresh
-		REFRESH_OFF,
-		// time based refresh
-		REFRESH_PERIODIC,
-		// automatic refresh on state changes
-		REFRESH_AUTO
+		REFRESH_NOT_SET,		/**< Uninitialized value */
+		REFRESH_OFF,			/**< No automatic refresh */
+		REFRESH_PERIODIC,		/**< Time based refresh */
+		REFRESH_AUTO			/**< Automatic refresh on state or error changes */
 	};
 
+	/// Possible error values that a port can have.
+	///
 	enum class Error {
 		VALUE_OK,
 		VALUE_EXPIRED,
@@ -76,10 +80,12 @@ public:
 	Port(const Port& that) = delete;
 
 protected:
-	// protected constructor - for use by friend classes only
+	/// protected constructor - for use by friend classes only
+	///
 	Port(const char* id, const char* type);
 
-	// protected constructor: This class can't be instantiated directly
+	/// protected constructor: This class can't be instantiated directly
+	///
 	Port(const char* id, const char* type, const char* dircaps, int32_t flags, void* ptr);
 
 	char* id;
@@ -89,99 +95,146 @@ protected:
 	int32_t flags;
 	void* ptr;
 
-	// If a port is hidden it is not included in the device capabilities as queried by the master.
+	/// If a port is hidden it is not included in the device capabilities as queried by the master.
+	///
 	bool hidden;
 
-	// If a port is readonly its state cannot be changed by the master.
+	/// If a port is readonly its state cannot be changed by the master.
+	///
 	bool readonly;
 
+	/// LogVerbosity setting. This setting usually overrides the main program's log verbosity.
+	///
 	LogVerbosity logVerbosity;
 
+	/// The error value of a port.
+	///
 	Error error;
 
-	// extended info variables
+	/// Globally unique identifier for the port type. Necessary if another port needs to check
+	/// that a given port is indeed of a required type. Is sent to the master as part of the
+	/// extended info string.
 	std::string typeGUID;
+
+	/// The unit specification of the port. Is sent to the master as part of the
+	/// extended info string.
 	std::string unit;
+
+	/// The icon specification of the port. Is sent to the master as part of the
+	/// extended info string.
 	std::string icon;
+
+	/// The group that this port belongs to. Is sent to the master as part of the
+	/// extended info string.
 	std::string group;
 
-	// total extended info string
+	/// Total extended info string. Is updated when a setter method of a property
+	/// that is a part of the extended info string changes its setting.
 	std::string extendedInfo;
 
-	// extended state historic values
+	/// Historic values of a port. Is sent to the master as part of the
+	/// extended state string.
 	std::string history;
 
-	// pointer to OPDI class instance
+	/// Pointer to OPDI class instance.
 	OPDI* opdi;
 
-	// OPDI implementation management structure
-	// this pointer is managed by the OPDI class
+	/// OPDI implementation management structure. This pointer is managed by the OPDI class.
+	/// Do not use this directly.
 	void* data;
 
-	// Specifies when this port sends refresh messages to a connected master.
-	// Default is off (REFRESH_NOT_SET).
+	/// The refresh mode specifies when this port should generate refresh messages to be sent.
+	/// Default is REFRESH_NOT_SET.
 	RefreshMode refreshMode;
 
-	// Is set to true if the need for a refresh is detected (due to a state change or the timer).
-	// The port will be refreshed in the doWork method.
+	/// Can be set true if the need for a refresh is detected.
+	/// This base class handles the case for periodic refreshes. If the refresh timer is up
+	/// this flag is set to true.
+	/// The standard ports set this flag when a state or error change has been detected.
+	/// Normally it is not required to use this flag in subclasses directly if the usual
+	/// state change functions are being used (e. g. setLine for a DigitalPort).
+	/// The doWork method handles this flag and generates refreshes if necessary.
 	bool refreshRequired;
 
-	// for refresh mode Periodic, the time in milliseconds between self-refresh messages
+	/// For refresh mode Periodic, the time in milliseconds between self-refresh messages.
+	///
 	uint32_t periodicRefreshTime;
+
+	/// The last time a refresh has been generated for this port. Is used to avoid too many
+	/// refreshes within a short time which may cause DOS.
 	uint64_t lastRefreshTime;
 
-	// indicates whether port state should be written to a persistent storage
+	/// Indicates whether port state should be written to and loaded from a persistent storage.
+	/// 
 	bool persistent;
 
-	// utility function for string conversion 
+	/// Utility function for string conversion. Can be called directly for most data types
+	/// except char which requires a conversion to int first, such as to_string((int)aChar).
 	template <class T> std::string to_string(const T& t) const;
 
-	/** Called regularly by the OPDI system. Enables the port to do work.
-	* Override this method in subclasses to implement more complex functionality.
-	* In this method, an implementation may send asynchronous messages to the master ONLY if canSend is true.
-	* This includes messages like Resync, Refresh, Debug etc.
-	* If canSend is 0 (= false), it means that there is no master is connected or the system is in the middle
-	* of sending a message of its own. It is not safe to send messages if canSend = 0!
-	* Returning any other value than OPDI_STATUS_OK causes the message processing to exit.
-	* This will usually signal a device error to the master or cause the master to time out.
-	* This base class uses doWork to implement the refresh timer. It calls doRefresh when the
-	* periodic refresh time has been reached. Implementations can decide in doRefresh whether
-	* they want to cause a refresh (set refreshRequired = true) or not.
-	*/
+	/// Called regularly by the OPDI system. Enables the port to do work.
+	/// Override this method in subclasses to implement more complex functionality.
+	///
+	/// In this method, an implementation may send asynchronous messages to the master ONLY if canSend is true.
+	/// This includes messages like Resync, Refresh, Debug etc.
+	/// If canSend is 0 (= false), it means that there is no master is connected or the system is in the middle
+	/// of sending a message of its own. It is not safe to send messages if canSend = 0!
+	/// If a refresh is necessary it should be signalled by setting refreshRequired = true.
+	///
+	/// Returning a value other than OPDI_STATUS_OK causes the message processing to exit.
+	/// This will usually signal a device error to the master or cause the master to time out.
+	///
+	/// This base class uses doWork to implement the refresh timer. It calls doRefresh when the
+	/// periodic refresh time has been reached. Implementations can decide in doRefresh how the
+	/// refresh should be dealt with.
+	/// 
 	virtual uint8_t doWork(uint8_t canSend);
 
-	/** Performs actions necessary before shutting down. The default implementation calls persist() if 
-	* persistent is true and ignores any errors. */
+	/// Performs actions necessary before shutting down. The default implementation calls persist() if 
+	/// persistent is true and ignores any errors.
 	virtual void shutdown(void);
 
-	/** Override this method to implement specific persistence mechanisms. The default implementation 
-	* does nothing. */
+	/// Override this method to implement specific persistence mechanisms. This default implementation 
+	/// does nothing. Actual persistence handling is defined by subclasses.
 	virtual void persist(void);
 
-	/** Causes the port to be refreshed by sending a refresh message to a connected master.
-	* Only if the port is not hidden. */
+	/// Causes the port to be refreshed by sending a refresh message to a connected master.
+	/// Only if the port is not hidden.
 	virtual uint8_t refresh();
 
-	/** Called when the port should send a refresh message to the master.
-	* This implementation sets this->refreshRequired = true. */
-	virtual void doRefresh(void);
-
+	/// Updates the extended info string of a port that will be sent to connected masters.
+	///
 	virtual void updateExtendedInfo(void);
 
+	/// Utility function for escaping special characters in extended strings.
+	///
 	std::string escapeKeyValueText(const std::string& str) const;
 
-	/** Checks the error state and throws an exception.
-	* Should be used by subclasses in getState() methods. */
+	/// Checks the error state and throws an exception.
+	/// Should be used by subclasses in getState() methods.
 	virtual void checkError(void) const;
 
+	/// Sets the ID of the port to the specified value.
+	/// It is safe to use this function during the initialization phase only.
+	/// Once the system is running the port IDs should not be changed any more.
 	virtual void setID(const char* newID);
 
-	/** This method must be called when the state changes in order to
-	* handle the onChange* functionality. */
+	/// This method must be called when the state changes in order to
+	/// handle the onChange* functionality. The default port implementations
+	/// automatically handle this.
 	virtual void handleStateChange(ChangeSource changeSource);
 
+	/// Finds the port with the specified portID. Delegates to the OPDI.findPort method.
+	/// If portID.isEmpty() and required is true, throws an exceptions whose message refers to the configPort and setting. 
+	/// This method is intended to be used during the preparation phase to resolve port specifications. 
+	/// configPort will usually be the ID of the resolving port, and setting the 
+	/// configuration parameter name that contained the portID specification.
 	virtual Port* findPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required);
 
+	/// Finds the ports with the specified portIDs. Delegates to the OPDI.findPorts method.
+	/// This method is intended to be used during the preparation phase to resolve port specifications. 
+	/// configPort will usually be the ID of the resolving port, and setting the 
+	/// configuration parameter name that contained the portIDs specification.
 	virtual void findPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, PortList& portList);
 
 	virtual DigitalPort* findDigitalPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required);
@@ -606,23 +659,22 @@ public:
 	virtual int read(char* result) = 0;
 };
 
-/** This class wraps either a fixed value or a port name. It is used when port configuration parameters
-*   can be either fixed or dynamic values.
-*   A port name can be followed by a double value in brackets. This indicates that the port's value
-*   should be scaled, i. e. multiplied, with the given factor. This is especially useful when the value
-*   of an analog port, which is by definition always between 0 and 1 inclusive, should be mapped to
-*   a different range of numbers.
-*   The port name can be optionally followed by a slash (/) plus a double value that specifies the value
-*   in case the port returns an error. This allows for a reasonable reaction in case port errors are to
-*   be expected. If this value is omitted the error will be propagated via an exception to the caller
-*   which must then be react to the error condition. 
-*   Syntax examples:
-*   10               - fixed value 10
-*   MyPort1          - dynamic value of MyPort1
-*   MyPort1(100)     - dynamic value of MyPort1, multiplied by 100
-*   MyPort1/0        - dynamic value of MyPort1, 0 in case of an error
-*   MyPort1(100)/0   - dynamic value of MyPort1, multiplied by 100, 0 in case of an error
-**/
+/// This class wraps either a fixed value or a port name. It is used when port configuration parameters
+/// can be either fixed or dynamic values.
+/// A port name can be followed by a double value in brackets. This indicates that the port's value
+/// should be scaled, i. e. multiplied, with the given factor. This is especially useful when the value
+/// of an analog port, which is by definition always between 0 and 1 inclusive, should be mapped to
+/// a different range of numbers.
+/// The port name can be optionally followed by a slash (/) plus a double value that specifies the value
+/// in case the port returns an error. This allows for a reasonable reaction in case port errors are to
+/// be expected. If this value is omitted the error will be propagated via an exception to the caller
+/// which must then be react to the error condition. 
+/// Syntax examples:
+/// 10               - fixed value 10
+/// MyPort1          - dynamic value of MyPort1
+/// MyPort1(100)     - dynamic value of MyPort1, multiplied by 100
+/// MyPort1/0        - dynamic value of MyPort1, 0 in case of an error
+/// MyPort1(100)/0   - dynamic value of MyPort1, multiplied by 100, 0 in case of an error
 template<typename T>
 class ValueResolver {
 

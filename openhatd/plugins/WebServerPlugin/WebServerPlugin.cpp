@@ -1,17 +1,12 @@
 #include <sstream>
 
 #include <Poco/File.h>
-#include <Poco/Path.h>
-#include <Poco/Exception.h>
 #include <Poco/JSON/JSON.h>
 #include <Poco/JSON/Parser.h>
 #include <Poco/JSON/Object.h>
-#include "Poco/BasicEvent.h"
-#include "Poco/Delegate.h"
 
 #include "AbstractOpenHAT.h"
 
-#define OPENHAT_NO_INTTYPES
 #include <mongoose.h>
 
 #ifdef _WINDOWS
@@ -24,7 +19,7 @@ namespace {
 // Plugin main class
 ////////////////////////////////////////////////////////////////////////
 
-class WebServerPlugin : public IOpenHATPlugin, public openhat::IConnectionListener, public opdi::DigitalPort {
+class WebServerPlugin : public IOpenHATPlugin, public opdi::DigitalPort {
 
 	class InvalidRequestException : public Poco::Exception
 	{
@@ -74,9 +69,7 @@ public:
 	void handleEvent(struct mg_connection* nc, int ev, void* p);
 
 	virtual uint8_t doWork(uint8_t canSend) override;
-
-	virtual void masterConnected(void) override;
-	virtual void masterDisconnected(void) override;
+	virtual void shutdown(void) override;
 
 	void onAllPortsRefreshed(const void* pSender);
 	void onPortRefreshed(const void* pSender, opdi::Port*& port);
@@ -654,10 +647,10 @@ uint8_t WebServerPlugin::doWork(uint8_t canSend) {
 	return OPDI_STATUS_OK;
 }
 
-void WebServerPlugin::masterConnected() {
-}
 
-void WebServerPlugin::masterDisconnected() {
+void WebServerPlugin::shutdown() {
+	//this->logVerbose("WebServerPlugin shutting down");
+	mg_mgr_free(&this->mgr);
 }
 
 // plugin instance factory function

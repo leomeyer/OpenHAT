@@ -42,12 +42,15 @@ POCOINCPATH = $(OPDI_CORE_PATH)/code/c/libraries/POCO/Util/include $(OPDI_CORE_P
 POCOLIBPATH = $(OPDI_CORE_PATH)/code/c/libraries/POCO/lib/Linux/i386
 
 # POCO libraries
+# POCO libraries for this plugin must be linked dynamically.
+# Otherwise, a very strange and elusive bug manifests itself that causes a double free on exit.
+# This bug happens only when cross-compiling to 32 bits under 64 bits. Native 64 and 32 bit builds are ok.
+# Despite very extensive tests and copious yak-shaving a simple case for this bug could not be identified.
 ifeq ($(DEBUG),1)
-	POCOLIBS ?= $(POCOLIBPATH)/libPocoUtild.a $(POCOLIBPATH)/libPocoNetd.a $(POCOLIBPATH)/libPocoFoundationd.a $(POCOLIBPATH)/libPocoXMLd.a $(POCOLIBPATH)/libPocoJSONd.a
+	POCOLIBS ?= -lPocoUtild -lPocoFoundationd -lPocoJSONd
 else
-	POCOLIBS ?= $(POCOLIBPATH)/libPocoUtil.a $(POCOLIBPATH)/libPocoNet.a $(POCOLIBPATH)/libPocoFoundation.a  $(POCOLIBPATH)/libPocoXML.a $(POCOLIBPATH)/libPocoJSON.a
+	POCOLIBS ?= -lPocoUtil -lPocoFoundation -lPocoJSON
 endif
-
 
 # Additional libraries
 LIBS = -lpthread -lrt

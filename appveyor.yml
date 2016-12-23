@@ -4,6 +4,7 @@ clone_depth: 1
 
 install:
   - ps: (new-object System.Net.WebClient).DownloadFile('https://the.earth.li/~sgtatham/putty/latest/x86/pscp.exe', 'pscp.exe')
+  - choco install doxygen.install -y
   - git submodule update --init --recursive
   - copy opdi_core\code\c\libraries\POCO_patches\* opdi_core\code\c\libraries\POCO\
   - cd opdi_core\code\c\libraries\POCO\
@@ -12,7 +13,6 @@ install:
   - pip install mkdocs
   - pip install markdown-include
   - set /p "OPENHATD_VERSION=" < openhatd\src\VERSION
-  - choco install doxygen
 
 configuration: Release
 

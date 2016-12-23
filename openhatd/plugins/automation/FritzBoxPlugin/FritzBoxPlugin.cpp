@@ -37,7 +37,7 @@ friend class FritzBoxPlugin;
 protected:
 	std::string id;
 	std::string ain;
-	int queryInterval;
+	uint32_t queryInterval;
 	uint64_t lastQueryTime;
 	bool valueSet;
 	Poco::Mutex mutex;
@@ -717,6 +717,8 @@ void FritzBoxPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, cons
 		// get device type (required)
 		std::string deviceType = this->openhat->getConfigString(deviceConfig, deviceName, "Type", "", true);
 		int queryInterval = deviceConfig->getInt("QueryInterval", 30);
+		if (queryInterval < 1)
+			this->openhat->throwSettingsException(deviceName + ": Please specify a QueryInterval greater than 1: " + this->openhat->to_string(queryInterval));
 
 		if (deviceType == "FritzDECT200") {
 

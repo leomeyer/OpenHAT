@@ -560,7 +560,7 @@ void WebServerPlugin::onPortRefreshed(const void* /*pSender*/, opdi::Port*& port
 	}
 }
 
-void WebServerPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, openhat::ConfigurationView* nodeConfig, openhat::ConfigurationView* parentConfig, const std::string& driverPath) {
+void WebServerPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, openhat::ConfigurationView* nodeConfig, openhat::ConfigurationView* /*parentConfig*/, const std::string& driverPath) {
 	this->opdi = this->openhat = openhat;
 	this->setID(node.c_str());
 

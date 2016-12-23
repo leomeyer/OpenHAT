@@ -129,7 +129,7 @@ OBJECTS = $(SRC)
 
 TARFOLDER = $(TARGET)-$(VERSION)-$(BUILD)
 
-all: clean plugins $(TARGET) tar
+all: clean plugins $(TARGET)
 
 target: $(TARGET)
 
@@ -154,12 +154,14 @@ docs:
 	mv -f ../mkdocs.yml ../mkdocs.yml.orig
 	sed "s/__VERSION__/$(VERSION)/g;s/__TIMESTAMP__/$(TIMESTAMP)/g" < ../mkdocs.yml.orig > ../mkdocs.yml
 	cd .. && doxygen Doxyfile && mkdocs build
+	rm -f ../Doxyfile
+	mv -f ../Doxyfile.orig ../Doxyfile
 	rm -f ../mkdocs.yml
 	mv -f ../mkdocs.yml.orig ../mkdocs.yml
 	tar czf openhatd-docs-$(VERSION).tar.gz ../openhatd-docs-$(VERSION)
 	md5sum openhatd-docs-$(VERSION).tar.gz > openhatd-docs-$(VERSION).tar.gz.md5
 
-tar:	docs
+release: docs all
 	@echo Preparing tar folder...
 	mkdir -p $(TARFOLDER)
 	mkdir -p $(TARFOLDER)/bin

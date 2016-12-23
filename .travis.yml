@@ -42,9 +42,9 @@ script:
 - export CXX=g++-4.9
 - export CC=g++-4.9
 - export PATH=$(pwd)/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin:$PATH
-- make -C openhatd/src/ -f makefile-rpicc
-- make -C openhatd/src/ -f makefile-i386 CC=$CC
-- make -C openhatd/src/ CC=$CC
+- make -C openhatd/src/ -f makefile-rpicc release
+- make -C openhatd/src/ -f makefile-i386 release CC=$CC
+- make -C openhatd/src/ release CC=$CC
 - make -C openhatd/src/ tests && sshpass -e scp -P $RELEASE_UPLOAD_PORT -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no /home/travis/build/openhat-org/OpenHAT/openhatd/src/*.tar.gz* $RELEASE_UPLOAD_USER@$RELEASE_UPLOAD_HOST:~
 
 notifications:

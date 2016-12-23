@@ -1,1 +1,1 @@
-## [openhatd Doxygen Documentation](doxygen/html/index.html)
+## [openhatd Doxygen Documentation](html/index.html)

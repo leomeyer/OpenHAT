@@ -52,6 +52,28 @@ First, plugins will be built. This will also create a current release tarball. T
 
 Open the Visual Studio solution file `src/openhatd/openhatd.sln`. Build the solution. To run the program from within Visual Studio, go to the openhatd project's properties and enter `-c hello-world.ini` as command line parameter for debugging. Press F5 or Ctrl+F5 to run the program.
 
+## Building the documentation
+Building the documentation requires Python, the Python package installer `pip` and Doxygen with the `graphviz `package.
+
+On Linux:
+
+	$ sudo apt-get install python doxygen graphviz
+
+Additionally required Python modules are `mkdocs` and `markdown_include`:
+
+	$ sudo pip install mkdocs 
+	$ sudo pip install markdown_include
+
+From within the openhatd folder, first build the Doxygen documentation:
+
+	$ doxygen Doxyfile
+
+Then, build the mkdocs documentation:
+
+	$ mkdocs build
+
+The configuration files for these documentations contain placeholders for version and timestamp. The `common.mk ` makefile within the `src` folder contains logic to replace these placeholders when the `docs` target is invoked. This way is intended for releases only. If documentation generation fails the replaced versions of the files will remain in the openhatd folder; they then need to be reset with `git checkout`. For this reason it is recommended to invoke `make release` only if a previous documentation generation has completed successfully.   
+
 ## Testing
 
 Ideally, testing is done on the target hardware with external components connected. Unfortunately, this is not possible with continuous integration.

@@ -29,6 +29,12 @@ xcopy /s ..\testconfigs %ZIPFOLDER%\testconfigs
 
 @echo Preparing documentation...
 pushd ..
+copy Doxyfile Doxyfile.orig
+powershell -Command "(gc Doxyfile) -replace '__VERSION__', '%OPENHATD_VERSION%' | Out-File Doxyfile"
+doxygen Doxyfile
+copy Doxyfile.orig Doxyfile
+del Doxyfile.orig
+
 copy mkdocs.yml mkdocs.yml.orig
 powershell -Command "(gc mkdocs.yml) -replace '__VERSION__', '%OPENHATD_VERSION%' | Out-File mkdocs.yml"
 mkdocs build

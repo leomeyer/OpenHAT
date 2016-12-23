@@ -10,7 +10,9 @@ install:
   - buildwin 140 build static_mt release Win32 nosamples notests
   - cd %APPVEYOR_BUILD_FOLDER%
   - pip install mkdocs
+  - pip install markdown-include
   - set /p "OPENHATD_VERSION=" < openhatd\src\VERSION
+  - choco install doxygen
 
 configuration: Release
 

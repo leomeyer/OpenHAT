@@ -987,8 +987,8 @@ bool SelectPort::hasError(void) const {
 
 DialPort::DialPort(const char* id) : Port(id, OPDI_PORTTYPE_DIAL, OPDI_PORTDIRCAP_OUTPUT, 0, nullptr) {
 	this->minValue = 0;
-	this->maxValue = 0;
-	this->step = 0;
+	this->maxValue = 100;
+	this->step = 1;
 	this->position = 0;
 }
 

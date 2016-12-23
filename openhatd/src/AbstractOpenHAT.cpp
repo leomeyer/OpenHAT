@@ -973,11 +973,11 @@ void AbstractOpenHAT::configureDialPort(ConfigurationView* portConfig, opdi::Dia
 	if (!stateOnly) {
 		this->configurePort(portConfig, port, 0);
 
-		int64_t min = portConfig->getInt64("Min", 0);
-		int64_t max = portConfig->getInt64("Max", 100);
+		int64_t min = portConfig->getInt64("Min", port->getMin());
+		int64_t max = portConfig->getInt64("Max", port->getMax());
 		if (min >= max)
 			this->throwSettingsException("Wrong dial port setting: Max (" + to_string(max) + ") must be greater than Min (" + to_string(min) + ")");
-		int64_t step = portConfig->getInt64("Step", 1);
+		int64_t step = portConfig->getInt64("Step", port->getStep());
 		if (step < 1)
 			this->throwSettingsException("Wrong dial port setting: Step may not be negative or zero: " + to_string(step));
 

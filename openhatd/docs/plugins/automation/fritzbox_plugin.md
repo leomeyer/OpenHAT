@@ -2,7 +2,7 @@
 
 The FritzBoxPlugin can control smart home devices connected to an AVM FRITZ!Box. Supported devices are:
 
-- FRITZ!DECT200 remote controllable power socket and energy meter
+- FRITZ!DECT200 remote controllable power socket, power and energy meter
 
 An instance of a FritzBoxPlugin connects to exactly one FRITZ!Box. You have to use a separate plugin node for each FRITZ!Box if you use more than one. One FritzBoxPlugin instance can use an arbitrary number of devices (actors/sensors). Each device in turn defines certain ports that can be used to interact with the device.
 
@@ -25,10 +25,13 @@ Required. The user name  to use for the login.
 Required. The password to use for the login.
 
 #### Timeout
-Optional. Timeout setting for communications in seconds. Defaults to 2 (this assumes a fast response if both devices are in the same local network).
+Optional. Timeout setting for communications in seconds. Defaults to 5 seconds (this assumes a fast response if both devices are in the same local network).
 
 #### Group
 Optional. The default group to use for the device ports. Can be overridden by the device port specification (see below).
+
+#### LogVerbosity
+Optional. The default log verbosity to use for the device ports. Can be overridden by the device port specification (see below).
 
 ### Device definition
 
@@ -45,6 +48,8 @@ The plugin assumes that its devices are to be configured in the `Devices` sub-no
 	DECT200_1 = 1
 	DECT200_2 = 2
 
+If the order number is negative the device will not be used.
+
 Each actor/sensor specification requires a node on the same configuration level as the FritzBoxPlugin:
 
 	[DECT200_1]
@@ -52,7 +57,7 @@ Each actor/sensor specification requires a node on the same configuration level 
 	AIN = ... 
 	QueryInterval = 30
 
-Currently, only the type FritzDECT200 is supported.
+Currently, only the type `FritzDECT200` is supported.
 
 #### AIN
 
@@ -64,19 +69,23 @@ The query interval specifies the time between update queries in seconds. This se
 
 ### FRITZ!DECT200 
 
-A node of type FritzDECT200 defines two optional ports: a switch port (Digital) and an energy port (Dial). The switch port is defined in the `_Switch` node:
+A node of type FritzDECT200 defines three ports: a switch port (Digital), a power port (Dial) and an energy port (Dial). The switch port is defined in the `_Switch` node:
 
 	[DECT200_1_Switch]
- 
+
+The power port is defined in the '_Power' node:
+
+	[DECT200_1_Power] 
+
 The energy port is defined in the `_Energy` node:
 
 	[DECT200_1_Energy]  
 
-Note that these nodes are not configuration sections (separated by a dot). The reason for this is that the names of these nodes will result in port IDs which should not contain special characters.
+Note that these nodes are not configuration sub-sections (separated by a dot). The reason for this is that the names of these nodes will result in port IDs which should not contain special characters.
 
-If a matching port section is not defined the corresponding port will not be created.
+All three ports will be created, regardless of whether the configuration sections are present. You can override the default settings of these ports in their configuration sections.
 
-It is not necessary to specify the `Type` of these nodes as it is set automatically. Both ports are initialized with the `Group` setting inherited from the plugin main node. An individual `Group` specification can override this setting.
+It is not necessary to specify the `Type` of these nodes as it is set automatically. All ports are initialized with the `Group` and `LogVerbosity` settings inherited from the plugin main node. Individual `Group` and `LogVerbosity` specifications can override these settings.
 
 #### Switch port
 The switch port reflects the current switch state of the FRITZ!DECT200. It can be used to switch the actor on and off.
@@ -86,14 +95,21 @@ Default settings:
 	Mode = Output
 	Icon = powersocket
 	
-#### Energy port
-The energy port reflects the current reading of the FRITZ!DECT200's energy meter. It is measured in milliwatts (mW). As the FRITZ!DECT200 is rated for up to 2300 W its max value is 2300000. An energy port is readonly.
+### Power port
+The power port contains the current power consumption measurement. It is measured in milliwatts (mW). As the FRITZ!DECT200 is rated for up to 2300 W its max value is 2300000. A power port is readonly by default.
 
 Default settings:
 
-	Unit = 
-	Icon = energymeter
+	Unit = electricPower_mW
+	Icon = powermeter
 
+#### Energy port
+The energy port reflects the total energy consumption since the last . It is measured in watt hours (Wh). The max value is 2147483647. An energy port is readonly by default.
+
+Default settings:
+
+	Unit = electricEnergy_Wh
+	Icon = energymeter
 
 ### Example configuration
 

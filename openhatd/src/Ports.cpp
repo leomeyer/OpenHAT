@@ -523,7 +523,7 @@ void ErrorDetectorPort::prepare() {
 uint8_t ErrorDetectorPort::doWork(uint8_t canSend)  {
 	opdi::DigitalPort::doWork(canSend);
 
-	int8_t newState = 0;
+	int8_t newLine = 0;
 
 	// if any port has an error, set the line state to 1
 	auto it = this->inputPorts.begin();
@@ -531,21 +531,16 @@ uint8_t ErrorDetectorPort::doWork(uint8_t canSend)  {
 	while (it != ite) {
 		if ((*it)->hasError()) {
 			this->logExtreme("Detected error on port: " + (*it)->ID());
-			newState = 1;
+			newLine = 1;
 			break;
 		}
 		++it;
 	}
 
 	if (negate)
-		newState = (newState == 0 ? 1 : 0);
+		newLine = (newLine == 0 ? 1 : 0);
 
-	// change?
-	if (this->line != newState) {
-		this->logDebug(std::string("Changing line state to: ") + (newState == 1 ? "High" : "Low"));
-		this->line = newState;
-		this->doRefresh();
-	}
+	opdi::DigitalPort::setLine(newLine);
 
 	return OPDI_STATUS_OK;
 }

@@ -258,17 +258,15 @@ public:
 	// weather data collection thread method
 	virtual void run(void);
 
-	virtual void setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, openhat::ConfigurationView* config, const std::string& driverPath) override;
+	virtual void setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, openhat::ConfigurationView* nodeConfig, openhat::ConfigurationView* parentConfig, const std::string& driverPath) override;
 };
 
-void WeatherPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, openhat::ConfigurationView* config, const std::string& /*driverPath*/) {
+void WeatherPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, openhat::ConfigurationView* nodeConfig, openhat::ConfigurationView* parentConfig, const std::string& /*driverPath*/) {
 	this->openhat = openhat;
 	this->nodeID = node;
 	this->timeoutSeconds = 10;
 	this->refreshTime = 30;	// default: 30 seconds
 	this->dataValiditySeconds = 120;	// default: two minutes (JSON skin time resolution does not include seconds, allow extra time)
-
-	Poco::AutoPtr<openhat::ConfigurationView> nodeConfig = this->openhat->createConfigView(config, node);
 
 	this->logVerbosity = this->openhat->getConfigLogVerbosity(nodeConfig, opdi::LogVerbosity::UNKNOWN);
 
@@ -301,7 +299,7 @@ void WeatherPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::st
 	// enumerate keys of the plugin's nodes (in specified order)
 	this->openhat->logVerbose(node + ": Enumerating Weather nodes: " + node + ".Nodes", this->logVerbosity);
 
-	Poco::AutoPtr<openhat::ConfigurationView> nodes = this->openhat->createConfigView(config, node + ".Nodes");
+	Poco::AutoPtr<openhat::ConfigurationView> nodes = this->openhat->createConfigView(nodeConfig, node + ".Nodes");
 
 	// get ordered list of ports
 	openhat::ConfigurationView::Keys portKeys;
@@ -345,7 +343,7 @@ void WeatherPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::st
 		this->openhat->logVerbose("Setting up Weather port(s) for node: " + nodeName, this->logVerbosity);
 
 		// get port section from the configuration
-		Poco::AutoPtr<openhat::ConfigurationView> portConfig = this->openhat->createConfigView(config, nodeName);
+		Poco::AutoPtr<openhat::ConfigurationView> portConfig = this->openhat->createConfigView(nodeConfig, nodeName);
 
 		// get port type (required)
 		std::string portType = this->openhat->getConfigString(portConfig, nodeName, "Type", "", true);

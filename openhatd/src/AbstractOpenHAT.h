@@ -26,10 +26,15 @@ namespace openhat {
 	class AbstractOpenHAT;
 }
 
-/** The abstract plugin interface. */
+/// The interface that plugins must implement.
+/// 
 struct IOpenHATPlugin {
-	// config is the parent configuration. Implementations should use createView to get the node configuration.
-	virtual void setupPlugin(openhat::AbstractOpenHAT* openHAT, const std::string& nodeName, openhat::ConfigurationView* config, const std::string& driverPath) = 0;
+	/// This method is used to setup the plugin from the current configuration.
+	/// nodeName is the plugin node's section identifier.
+	/// nodeConfig is the configuration view that was created for the plugin section.
+	/// parentConfig is the parent configuration view of the plugin section.
+	/// driverPath is the actual resolved dynamic library path that has been used to load the plugin.
+	virtual void setupPlugin(openhat::AbstractOpenHAT* openHAT, const std::string& nodeName, openhat::ConfigurationView* nodeConfig, openhat::ConfigurationView* parentConfig, const std::string& driverPath) = 0;
 
 	// virtual destructor (called when the plugin is deleted)
 	virtual ~IOpenHATPlugin() {}
@@ -37,7 +42,7 @@ struct IOpenHATPlugin {
 
 namespace openhat {
 
-#define OPENHAT_CONFIG_FILE_SETTING	"__OPENHAT_CONFIG_FILE_PATH"
+#define OPENHAT_CONFIG_FILE_SETTING	"__OPENHATD_CONFIG_FILE_PATH"
 
 constexpr char OPENHAT_VERSION_ID[] =
 #include "VERSION"

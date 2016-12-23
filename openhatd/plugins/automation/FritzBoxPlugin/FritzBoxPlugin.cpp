@@ -1,7 +1,3 @@
-/// \dir FritzBoxPlugin
-///      
-/// \brief Plugin that supports AVM FRITZ! smart home devices
-
 #include <sstream>
 
 #include "Poco/Tuple.h"
@@ -132,7 +128,7 @@ public:
 
 	virtual void run(void);
 
-	virtual void setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const std::string& node, openhat::ConfigurationView* nodeConfig, const std::string& driverPath) override;
+	virtual void setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const std::string& node, openhat::ConfigurationView* nodeConfig, openhat::ConfigurationView* parentConfig, const std::string& driverPath) override;
 };
 
 ////////////////////////////////////////////////////////////////////////
@@ -181,8 +177,6 @@ public:
 	virtual void query() override;
 
 	virtual void getState(int64_t* position) const override;
-
-	virtual void doRefresh(void) override;
 };
 
 
@@ -205,8 +199,6 @@ public:
 	virtual void query() override;
 
 	virtual void getState(int64_t* position) const override;
-
-	virtual void doRefresh(void) override;
 };
 
 }	// end anonymous namespace
@@ -214,7 +206,6 @@ public:
 FritzDECT200Switch::FritzDECT200Switch(FritzBoxPlugin* plugin, const char* id) : opdi::DigitalPort(id, OPDI_PORTDIRCAP_OUTPUT, 0), FritzPort(id) {
 	this->plugin = plugin;
 	this->switchState = -1;	// unknown
-	this->refreshMode = RefreshMode::REFRESH_PERIODIC;
 
 	this->setIcon("powersocket");
 }
@@ -262,14 +253,11 @@ void FritzDECT200Switch::setSwitchState(int8_t line) {
 	this->switchState = line;
 	if ((line == 0) || (line == 1))
 		opdi::DigitalPort::setLine(line);
-	else
-		this->refreshRequired = true;
 }
 
 FritzDECT200Power::FritzDECT200Power(FritzBoxPlugin* plugin, const char* id) : opdi::DialPort(id), FritzPort(id) {
 	this->plugin = plugin;
 	this->power = -1;	// unknown
-	this->refreshMode = RefreshMode::REFRESH_PERIODIC;
 
 	this->minValue = 0;
 	this->maxValue = 2300000;	// measured in mW; 2300 W is maximum power load for the DECT200
@@ -337,20 +325,12 @@ void FritzDECT200Power::setPower(int32_t power) {
 	this->power = power;
 	if (power > -1)
 		opdi::DialPort::setPosition(power);
-
-	this->refreshRequired = true;
-}
-
-void FritzDECT200Power::doRefresh(void) {
-	// cause a query to be performed before actually refreshing
-	this->query();
 }
 
 
 FritzDECT200Energy::FritzDECT200Energy(FritzBoxPlugin* plugin, const char* id) : opdi::DialPort(id), FritzPort(id) {
 	this->plugin = plugin;
 	this->energy = -1;	// unknown
-	this->refreshMode = RefreshMode::REFRESH_PERIODIC;
 
 	this->minValue = 0;
 	this->maxValue = 2147483647;	// measured in Wh
@@ -418,14 +398,8 @@ void FritzDECT200Energy::setEnergy(int32_t energy) {
 	this->energy = energy;
 	if (energy > -1)
 		opdi::DialPort::setPosition(energy);
-
-	this->refreshRequired = true;
 }
 
-void FritzDECT200Energy::doRefresh(void) {
-	// cause a query to be performed before actually refreshing
-	this->query();
-}
 
 ////////////////////////////////////////////////////////
 // Plugin implementation
@@ -445,7 +419,8 @@ unsigned int msb32(unsigned int x)
 }
 
 void FritzBoxPlugin::errorOccurred(const std::string& message) {
-	// this method is for errors that are usually logged in verbosity Normal
+	// This method is for errors that are usually logged in verbosity Normal.
+	// It suppresses frequent occurrences of the same error.
 	// identical error message?
 	if (this->lastErrorMessage == message) {
 		this->errorCount++;
@@ -555,7 +530,6 @@ std::string FritzBoxPlugin::getResponse(const std::string& challenge, const std:
 }
 
 std::string FritzBoxPlugin::getSessionID(const std::string& user, const std::string& password) {
-
 	std::string loginPage = this->httpGet("/login_sid.lua?sid=" + this->sid);
 	if (loginPage.empty())
 		return INVALID_SID;
@@ -572,19 +546,20 @@ std::string FritzBoxPlugin::getSessionID(const std::string& user, const std::str
 }
 
 void FritzBoxPlugin::login(void) {
-	this->openhat->logDebug(this->nodeID + ": Attempting to login to FritzBox " + this->host + " with user " + this->user, this->logVerbosity);
+	this->openhat->logDebug(this->nodeID + ": Attempting to login at " + this->host + " with user " + this->user, this->logVerbosity);
 
 	this->sid = this->getSessionID(this->user, this->password);
 
 	if (sid == INVALID_SID) {
-		this->errorOccurred(this->nodeID + ": Login to FritzBox " + this->host + " with user " + this->user + " failed");
+		this->errorOccurred(this->nodeID + ": Login at " + this->host + " with user " + this->user + " failed");
 		return;
 	}
+	// one normal message after failed attempts
 	if (this->errorCount > 0) {
-		this->openhat->logNormal(this->nodeID + ": Login to FritzBox " + this->host + " with user " + this->user + " successful; sid = " + this->sid, this->logVerbosity);
+		this->openhat->logNormal(this->nodeID + ": Login at " + this->host + " with user " + this->user + " successful; sid = " + this->sid, this->logVerbosity);
 		this->errorCount = 0;
 	} else
-		this->openhat->logDebug(this->nodeID + ": Login to FritzBox " + this->host + " with user " + this->user + " successful; sid = " + this->sid, this->logVerbosity);
+		this->openhat->logDebug(this->nodeID + ": Login at " + this->host + " with user " + this->user + " successful; sid = " + this->sid, this->logVerbosity);
 
 	// query ports (post notifications to query)
 	auto it = this->fritzPorts.begin();
@@ -615,9 +590,10 @@ void FritzBoxPlugin::logout(void) {
 	if (this->sid == INVALID_SID)
 		return;
 
-	this->openhat->logDebug(this->nodeID + ": Logout from FritzBox " + this->host, this->logVerbosity);
+	this->openhat->logDebug(this->nodeID + ": Logout from " + this->host, this->logVerbosity);
 
 	this->httpGet("/login_sid.lua?logout=true&sid=" + this->sid);
+
 
 	this->sid = INVALID_SID;
 }
@@ -731,18 +707,13 @@ void FritzBoxPlugin::getSwitchPower(FritzPort* port) {
 	powerPort->setPower(power);
 }
 
-void FritzBoxPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const std::string& node, openhat::ConfigurationView* config, const std::string& /*driverPath*/) {
+void FritzBoxPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const std::string& node, openhat::ConfigurationView* nodeConfig, openhat::ConfigurationView* parentConfig, const std::string& /*driverPath*/) {
 	this->openhat = abstractOpenHAT;
 	this->nodeID = node;
 	this->sid = INVALID_SID;			// default; means not connected
 	this->timeoutSeconds = 2;			// short timeout (assume local network)
 
 	this->errorCount = 0;
-
-	Poco::AutoPtr<openhat::ConfigurationView> nodeConfig = this->openhat->createConfigView(config, node);
-	// avoid check for unused plugin keys
-	nodeConfig->addUsedKey("Type");
-	nodeConfig->addUsedKey("Driver");
 
 	// test case for response calculation (see documentation: http://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/AVM_Technical_Note_-_Session_ID.pdf)
 	// abstractOpenHAT->log("Test Response: " + this->getResponse("1234567z", "äbc"));
@@ -758,7 +729,7 @@ void FritzBoxPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, cons
 	std::string group = nodeConfig->getString("Group", "");
 
 	// store main node's verbosity level (will become the default of ports)
-	this->logVerbosity = this->openhat->getConfigLogVerbosity(config, opdi::LogVerbosity::UNKNOWN);
+	this->logVerbosity = this->openhat->getConfigLogVerbosity(nodeConfig, opdi::LogVerbosity::UNKNOWN);
 
 	// enumerate keys of the plugin's nodes (in specified order)
 	this->openhat->logVerbose("Enumerating FritzBox devices: " + node + ".Devices", this->logVerbosity);
@@ -808,7 +779,7 @@ void FritzBoxPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, cons
 		this->openhat->logVerbose("Setting up FritzBox port(s) for device: " + nodeName, this->logVerbosity);
 
 		// get port section from the configuration>
-		Poco::AutoPtr<openhat::ConfigurationView> portConfig = this->openhat->createConfigView(config, nodeName);
+		Poco::AutoPtr<openhat::ConfigurationView> portConfig = this->openhat->createConfigView(parentConfig, nodeName);
 
 		// get port type (required)
 		std::string portType = abstractOpenHAT->getConfigString(portConfig, nodeName, "Type", "", true);
@@ -819,7 +790,7 @@ void FritzBoxPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, cons
 			// set default group: FritzBox's node's group
 			switchPort->setGroup(group);
 			switchPort->configure(portConfig);
-			switchPort->logVerbosity = this->openhat->getConfigLogVerbosity(config, this->logVerbosity);
+			switchPort->logVerbosity = this->openhat->getConfigLogVerbosity(portConfig, this->logVerbosity);
 			abstractOpenHAT->addPort(switchPort);
 			// remember port in plugin
 			this->fritzPorts.push_back(switchPort);
@@ -829,7 +800,7 @@ void FritzBoxPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, cons
 			// set default group: FritzBox's node's group
 			energyPort->setGroup(group);
 			energyPort->configure(portConfig);
-			energyPort->logVerbosity = this->openhat->getConfigLogVerbosity(config, this->logVerbosity);
+			energyPort->logVerbosity = this->openhat->getConfigLogVerbosity(portConfig, this->logVerbosity);
 			abstractOpenHAT->addPort(energyPort);
 			// remember port in plugin
 			this->fritzPorts.push_back(energyPort);
@@ -839,7 +810,7 @@ void FritzBoxPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, cons
 			// set default group: FritzBox's node's group
 			powerPort->setGroup(group);
 			powerPort->configure(portConfig);
-			powerPort->logVerbosity = this->openhat->getConfigLogVerbosity(config, this->logVerbosity);
+			powerPort->logVerbosity = this->openhat->getConfigLogVerbosity(portConfig, this->logVerbosity);
 			abstractOpenHAT->addPort(powerPort);
 			// remember port in plugin
 			this->fritzPorts.push_back(powerPort);

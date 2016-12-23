@@ -18,7 +18,9 @@ There are different types of ports in openhatd. To be able to model automation b
  - A **refresh mode** that decides how changes in the port's state affect the connected user interfaces
  - Freely assignable **tag** values
 
-Ports can have **errors**. This is normal because many ports interact with resources of the environment or external components that may fail or become unavailable. openhatd provides mechanisms to gracefully deal with these errors. See [Port Overview - Errors](ports.md#port_errors) for more details. 
+Port IDs should contain only upper- and lowercase characters, digits, and the underscore. They should not start with a digit. The technical reason for this is that port IDs can be referred to from within expression formulas and other constructs which use a certain syntax. Using special characters in port IDs might interfere with this syntax. Additionally, port IDs are case sensitive in some contexts but may not be in others. For this reason (and for readability) it is strongly discouraged to rely on port ID case sensitivity.
+
+Ports can have **errors**. This is normal because many ports interact with resources of the environment or external components that may fail or become unavailable. openhatd provides mechanisms to gracefully deal with such errors. See [Port Overview - Errors](ports.md#port_errors) for more details. 
 
 Basically, ports are of five different types:
 

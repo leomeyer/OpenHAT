@@ -1129,7 +1129,7 @@ void AbstractOpenHAT::setupNode(ConfigurationView* config, const std::string& no
 		nodeConfig->setCheckUnused(false);
 
 		// init the plugin
-		plugin->setupPlugin(this, node, config, nodeDriver);
+		plugin->setupPlugin(this, node, nodeConfig, config, nodeDriver);
 
 	} else
 	if (nodeType == "Group") {

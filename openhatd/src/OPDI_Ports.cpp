@@ -352,10 +352,6 @@ void Port::setPeriodicRefreshTime(uint32_t timeInMs) {
 	this->periodicRefreshTime = timeInMs;
 }
 
-void Port::doRefresh(void) {
-	this->refreshRequired = true;
-}
-
 uint8_t Port::refresh() {
 	if (this->isHidden())
 		return OPDI_STATUS_OK;

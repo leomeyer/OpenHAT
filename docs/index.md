@@ -13,7 +13,7 @@ OpenHAT is for people who like building things themselves rather than relying on
 
 ### Features
 
-- Runs on Windows and Linux
+- Runs on Windows and Linux, with the Raspberry Pi being the primary target
 - Controls actors like relays using an Android application or an HTML interface
 - Accepts input from sensors like switches, temperature or light sensors
 - Supports complex automation tasks like window and shutter control

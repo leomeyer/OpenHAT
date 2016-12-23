@@ -149,9 +149,11 @@ plugins:
 	$(MAKE) -C ../plugins -f $(MAKEFILE)
 
 docs:
+	mv -f ../Doxyfile ../Doxyfile.orig
+	sed "s/__VERSION__/$(VERSION)/g;s/__TIMESTAMP__/$(TIMESTAMP)/g" < ../Doxyfile.orig > ../Doxyfile
 	mv -f ../mkdocs.yml ../mkdocs.yml.orig
 	sed "s/__VERSION__/$(VERSION)/g;s/__TIMESTAMP__/$(TIMESTAMP)/g" < ../mkdocs.yml.orig > ../mkdocs.yml
-	cd .. && mkdocs build
+	cd .. && doxygen Doxyfile && mkdocs build
 	rm -f ../mkdocs.yml
 	mv -f ../mkdocs.yml.orig ../mkdocs.yml
 	tar czf openhatd-docs-$(VERSION).tar.gz ../openhatd-docs-$(VERSION)

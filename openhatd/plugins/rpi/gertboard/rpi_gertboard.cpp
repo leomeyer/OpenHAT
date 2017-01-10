@@ -96,7 +96,6 @@ protected:
 public:
 	AnalogGertboardOutput(openhat::AbstractOpenHAT* openhat, const char* id, int output);
 
-	virtual void setFlags(int32_t flags) override;
 	virtual void setMode(uint8_t mode, ChangeSource changeSource = ChangeSource::CHANGESOURCE_INT) override;
 	virtual void setResolution(uint8_t resolution, ChangeSource changeSource = ChangeSource::CHANGESOURCE_INT) override;
 	virtual void setReference(uint8_t reference, ChangeSource changeSource = ChangeSource::CHANGESOURCE_INT) override;
@@ -117,7 +116,6 @@ protected:
 public:
 	AnalogGertboardInput(openhat::AbstractOpenHAT* openhat, const char* id, int input);
 
-	virtual void setFlags(int32_t flags) override;
 	virtual void setMode(uint8_t mode, ChangeSource changeSource = ChangeSource::CHANGESOURCE_INT) override;
 	virtual void setResolution(uint8_t resolution, ChangeSource changeSource = ChangeSource::CHANGESOURCE_INT) override;
 	virtual void setReference(uint8_t reference, ChangeSource changeSource = ChangeSource::CHANGESOURCE_INT) override;
@@ -149,8 +147,6 @@ public:
 	GertboardButton(openhat::AbstractOpenHAT* openhat, const char* ID, int pin);
 	virtual void setLine(uint8_t line, ChangeSource changeSource = ChangeSource::CHANGESOURCE_INT) override;
 	virtual void setMode(uint8_t mode, ChangeSource changeSource = ChangeSource::CHANGESOURCE_INT) override;
-	virtual void setDirCaps(const char* dirCaps) override;
-	virtual void setFlags(int32_t flags) override;
 	virtual void getState(uint8_t* mode, uint8_t* line) const override;
 };
 
@@ -343,10 +339,6 @@ AnalogGertboardOutput::AnalogGertboardOutput(openhat::AbstractOpenHAT* openhat, 
 	write_dac(this->output, this->value);
 }
 
-void AnalogGertboardOutput::setFlags(int32_t flags) {
-	// ignore flag changes
-}
-
 // function that handles the set direction command (opdi_set_digital_port_mode)
 void AnalogGertboardOutput::setMode(uint8_t mode, ChangeSource /*changeSource*/) {
 	throw PortError("Gertboard analog output mode cannot be changed");
@@ -400,10 +392,6 @@ AnalogGertboardInput::AnalogGertboardInput(openhat::AbstractOpenHAT* openhat, co
 
 	// Setup SPI bus
 	setup_spi();
-}
-
-void AnalogGertboardInput::setFlags(int32_t flags) {
-	// ignore flag changes
 }
 
 // function that handles the set direction command (opdi_set_digital_port_mode)
@@ -506,15 +494,6 @@ void GertboardButton::setLine(uint8_t line, ChangeSource /*changeSource*/) {
 
 void GertboardButton::setMode(uint8_t mode, ChangeSource /*changeSource*/) {
 	openhat->logNormal("Warning: Gertboard Button mode cannot be changed, ignoring");
-}
-
-void GertboardButton::setDirCaps(const char* dirCaps) {
-	openhat->logNormal("Warning: Gertboard Button direction capabilities cannot be changed, ignoring");
-}
-
-void GertboardButton::setFlags(int32_t flags) {
-	// TODO validate?
-	opdi::DigitalPort::setFlags(flags);
 }
 
 void GertboardButton::getState(uint8_t* mode, uint8_t* line) const {

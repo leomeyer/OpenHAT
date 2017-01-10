@@ -902,52 +902,52 @@ void AbstractOpenHAT::configureSelectPort(ConfigurationView* portConfig, Configu
 	if (!stateOnly) {
 		this->configurePort(portConfig, port, 0);
 
-		// the select port requires a prefix or section "<portID>.Items"
-		Poco::AutoPtr<ConfigurationView> portItems = this->createConfigView(portConfig, "Items");
-		portConfig->addUsedKey("Items");
+		// the select port requires a prefix or section "<portID>.Labels"
+		Poco::AutoPtr<ConfigurationView> portLabels = this->createConfigView(portConfig, "Labels");
+		portConfig->addUsedKey("Labels");
 
 		// get ordered list of items
-		ConfigurationView::Keys itemKeys;
-		portItems->keys("", itemKeys);
+		ConfigurationView::Keys labelKeys;
+		portLabels->keys("", labelKeys);
 
-		typedef Poco::Tuple<int, std::string> Item;
-		typedef std::vector<Item> ItemList;
-		ItemList orderedItems;
+		typedef Poco::Tuple<int, std::string> Label;
+		typedef std::vector<Label> LabelList;
+		LabelList orderedLabels;
 
-		// create ordered list of items (by priority)
-		for (auto it = itemKeys.begin(), ite = itemKeys.end(); it != ite; ++it) {
-			int itemNumber = portItems->getInt(*it, 0);
-			// check whether the item is active
-			if (itemNumber < 0)
+		// create ordered list of labels (by priority)
+		for (auto it = labelKeys.begin(), ite = labelKeys.end(); it != ite; ++it) {
+			int labelNumber = portLabels->getInt(*it, 0);
+			// check whether the label is active
+			if (labelNumber < 0)
 				continue;
 
 			// insert at the correct position to create a sorted list of items
-			auto nli = orderedItems.begin();
-			auto nlie = orderedItems.end();
+			auto nli = orderedLabels.begin();
+			auto nlie = orderedLabels.end();
 			while (nli != nlie) {
-				if (nli->get<0>() > itemNumber)
+				if (nli->get<0>() > labelNumber)
 					break;
 				++nli;
 			}
-			Item item(itemNumber, *it);
-			orderedItems.insert(nli, item);
+			Label label(labelNumber, *it);
+			orderedLabels.insert(nli, label);
 		}
 
-		if (orderedItems.size() == 0)
-			this->throwSettingsException("The select port " + std::string(port->ID()) + " requires at least one item in its config section", std::string(port->ID()) + ".Items");
+		if (orderedLabels.size() == 0)
+			this->throwSettingsException("The select port " + std::string(port->ID()) + " requires at least one label in its config section", std::string(port->ID()) + ".Label");
 
 		// go through items, create ordered list of char* items
-		std::vector<const char*> charItems;
-		auto nli = orderedItems.begin();
-		auto nlie = orderedItems.end();
+		std::vector<const char*> charLabels;
+		auto nli = orderedLabels.begin();
+		auto nlie = orderedLabels.end();
 		while (nli != nlie) {
-			charItems.push_back(nli->get<1>().c_str());
+			charLabels.push_back(nli->get<1>().c_str());
 			++nli;
 		}
-		charItems.push_back(nullptr);
+		charLabels.push_back(nullptr);
 
-		// set port items
-		port->setItems(&charItems[0]);
+		// set port labels
+		port->setLabels(&charLabels[0]);
 	}
 
 	Poco::AutoPtr<Poco::Util::AbstractConfiguration> stateConfig = this->getConfigForState(portConfig, port->ID());

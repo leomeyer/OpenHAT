@@ -878,13 +878,13 @@ bool AnalogPort::hasError(void) const {
 
 SelectPort::SelectPort(const char* id) : Port(id, OPDI_PORTTYPE_SELECT, OPDI_PORTDIRCAP_OUTPUT, 0, nullptr) {
 	this->count = 0;
-	this->items = nullptr;
+	this->labels = nullptr;
 	this->position = 0;
 }
 
-SelectPort::SelectPort(const char* id, const char** items)
+SelectPort::SelectPort(const char* id, const char** labels)
 	: Port(id, OPDI_PORTTYPE_SELECT, OPDI_PORTDIRCAP_OUTPUT, 0, nullptr) {
-	this->setItems(items);
+	this->setLabels(labels);
 	this->position = 0;
 }
 
@@ -893,53 +893,53 @@ SelectPort::~SelectPort() {
 }
 
 void SelectPort::freeItems() {
-	if (this->items != nullptr) {
+	if (this->labels != nullptr) {
 		int i = 0;
-		const char* item = this->items[i];
+		const char* item = this->labels[i];
 		while (item) {
 			free((void*)item);
 			i++;
-			item = this->items[i];
+			item = this->labels[i];
 		}
-		delete[] this->items;
+		delete[] this->labels;
+		this->labels = nullptr;
 	}
 }
 
-void SelectPort::setItems(const char** items) {
+void SelectPort::setLabels(const char** labels) {
 	this->freeItems();
-	this->items = nullptr;
 	this->count = 0;
-	if (items == nullptr)
+	if (labels == nullptr)
 		return;
 	// determine array size
-	const char* item = items[0];
+	const char* item = labels[0];
 	int itemCount = 0;
 	while (item) {
 		itemCount++;
-		item = items[itemCount];
+		item = labels[itemCount];
 	}
 	if (itemCount > 65535)
 		throw Poco::DataException(this->ID() + "Too many select port items: " + to_string(itemCount));
 	// create target array
-	this->items = new char*[itemCount + 1];
+	this->labels = new char*[itemCount + 1];
 	// copy strings to array
-	item = items[0];
+	item = labels[0];
 	itemCount = 0;
 	while (item) {
-		this->items[itemCount] = (char*)malloc(strlen(items[itemCount]) + 1);
-		assert(this->items[itemCount] && "Unable to allocate memory");
+		this->labels[itemCount] = (char*)malloc(strlen(labels[itemCount]) + 1);
+		assert(this->labels[itemCount] && "Unable to allocate memory");
 		// copy string
-		strcpy(this->items[itemCount], items[itemCount]);
+		strcpy(this->labels[itemCount], labels[itemCount]);
 		itemCount++;
-		item = items[itemCount];
+		item = labels[itemCount];
 	}
 	// end token
-	this->items[itemCount] = nullptr;
+	this->labels[itemCount] = nullptr;
 	this->count = itemCount - 1;
 }
 
 void SelectPort::setPosition(uint16_t position, ChangeSource changeSource) {
-	if (position > count)
+	if (position > this->count)
 		throw PortError(this->ID() + ": Position must not exceed the number of items: " + to_string((int)this->count));
 	if (this->error != Error::VALUE_OK)
 		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
@@ -963,7 +963,9 @@ void SelectPort::getState(uint16_t* position) const {
 }
 
 const char* SelectPort::getPositionLabel(uint16_t position) {
-	return this->items[position];
+	if (position > this->count)
+		throw PortError(this->ID() + ": Position must not exceed the number of items: " + to_string((int)this->count));
+	return this->labels[position];
 }
 
 uint16_t SelectPort::getMaxPosition(void) {

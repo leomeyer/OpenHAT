@@ -263,6 +263,8 @@ On systems that use an SD card as their primary storage care should be taken to 
 
 Units are a very important concept in openhatd. A port's unit specification tells a user interface how to present the value to the user. Units apply to numeric values only, i. e. they are useful with Analog and Dial ports. They are not validated or used for internal purposes in openhatd, so they are basically tags or labels that can be anything; but as they are hints for client UIs you should make sure that UIs understand the specified units. 
 
+Currently, unit specifications are required to be built into the available GUIs. There are, however, plans to make this more flexible.
+
 Units are specified for ports using the `Unit` setting. Example:
 
 	[APort]

@@ -5,7 +5,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-
 #pragma once
 
 #include <string>
@@ -22,6 +21,8 @@
 
 namespace opdi {
 
+	/// Defines the available log levels.
+	///
 	enum class LogVerbosity {
 		UNKNOWN,
 		QUIET,
@@ -42,13 +43,11 @@ typedef std::vector<Port*> PortList;
 typedef std::vector<DigitalPort*> DigitalPortList;
 typedef std::vector<AnalogPort*> AnalogPortList;
 
-
 /// Base class for OPDI port wrappers.
 ///
 /// This class is not intended to be used or extended directly. Rather, extend one of its
 /// direct subclasses, such as DigitalPort or DialPort.
 class Port {
-
 	friend class OPDI;
 
 public:
@@ -71,36 +70,22 @@ public:
 	/// Possible error values that a port can have.
 	///
 	enum class Error {
-		VALUE_OK,
-		VALUE_EXPIRED,
-		VALUE_NOT_AVAILABLE
+		VALUE_OK,				/**< No error */
+		VALUE_EXPIRED,			/**< The value has expired */
+		VALUE_NOT_AVAILABLE		/**< The value is not available */
 	};
 
 	// disable copy constructor
 	Port(const Port& that) = delete;
 
 protected:
-	/// protected constructor - for use by friend classes only
-	///
-	Port(const char* id, const char* type);
-
-	/// protected constructor: This class can't be instantiated directly
-	///
-	Port(const char* id, const char* type, const char* dircaps, int32_t flags, void* ptr);
-
 	char* id;
 	char* label;
 	char type[2];	// type constants are one character (see opdi_port.h)
 	char caps[2];	// caps constants are one character (port direction constants)
 	int32_t flags;
 	void* ptr;
-
-	/// If a port is hidden it is not included in the device capabilities as queried by the master.
-	///
 	bool hidden;
-
-	/// If a port is readonly its state cannot be changed by the master.
-	///
 	bool readonly;
 
 	/// LogVerbosity setting. This setting usually overrides the main program's log verbosity.
@@ -172,6 +157,14 @@ protected:
 	/// except char which requires a conversion to int first, such as to_string((int)aChar).
 	template <class T> std::string to_string(const T& t) const;
 
+	/// protected constructor - for use by friend classes only
+	///
+	Port(const char* id, const char* type);
+
+	/// protected constructor: This class can't be instantiated directly
+	///
+	Port(const char* id, const char* type, const char* dircaps, int32_t flags, void* ptr);
+
 	/// Called regularly by the OPDI system. Enables the port to do work.
 	/// Override this method in subclasses to implement more complex functionality.
 	///
@@ -187,7 +180,6 @@ protected:
 	/// This base class uses doWork to implement the refresh timer. It calls doRefresh when the
 	/// periodic refresh time has been reached. Implementations can decide in doRefresh how the
 	/// refresh should be dealt with.
-	/// 
 	virtual uint8_t doWork(uint8_t canSend);
 
 	/// Performs actions necessary before shutting down. The default implementation calls persist() if 
@@ -202,9 +194,9 @@ protected:
 	/// Only if the port is not hidden.
 	virtual uint8_t refresh();
 
-	/// Updates the extended info string of a port that will be sent to connected masters.
+	/// Updates the extended info string of the port that will be sent to connected masters.
 	///
-	virtual void updateExtendedInfo(void);
+	void updateExtendedInfo(void);
 
 	/// Utility function for escaping special characters in extended strings.
 	///
@@ -217,7 +209,7 @@ protected:
 	/// Sets the ID of the port to the specified value.
 	/// It is safe to use this function during the initialization phase only.
 	/// Once the system is running the port IDs should not be changed any more.
-	virtual void setID(const char* newID);
+	void setID(const char* newID);
 
 	/// This method must be called when the state changes in order to
 	/// handle the onChange* functionality. The default port implementations
@@ -229,167 +221,283 @@ protected:
 	/// This method is intended to be used during the preparation phase to resolve port specifications. 
 	/// configPort will usually be the ID of the resolving port, and setting the 
 	/// configuration parameter name that contained the portID specification.
-	virtual Port* findPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required);
+	Port* findPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required);
 
 	/// Finds the ports with the specified portIDs. Delegates to the OPDI.findPorts method.
 	/// This method is intended to be used during the preparation phase to resolve port specifications. 
 	/// configPort will usually be the ID of the resolving port, and setting the 
 	/// configuration parameter name that contained the portIDs specification.
-	virtual void findPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, PortList& portList);
+	void findPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, PortList& portList);
 
-	virtual DigitalPort* findDigitalPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required);
+	/// Finds the Digital port with the specified portID. Delegates to the OPDI.findPort method.
+	/// If portID.isEmpty() and required is true, throws an exceptions whose message refers to the configPort and setting. 
+	/// This method is intended to be used during the preparation phase to resolve port specifications. 
+	/// configPort will usually be the ID of the resolving port, and setting the 
+	/// configuration parameter name that contained the portID specification.
+	/// Throws an exception if the port is found but is not a Digital port.
+	DigitalPort* findDigitalPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required);
 
-	virtual void findDigitalPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, DigitalPortList& portList);
+	/// Finds the Digital ports with the specified portIDs. Delegates to the OPDI.findPorts method.
+	/// This method is intended to be used during the preparation phase to resolve port specifications. 
+	/// configPort will usually be the ID of the resolving port, and setting the 
+	/// configuration parameter name that contained the portIDs specification.
+	/// Throws an exception if a port is not found or a found port is not a Digital port.
+	void findDigitalPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, DigitalPortList& portList);
 
-	virtual AnalogPort* findAnalogPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required);
+	/// Finds the Analog port with the specified portID. Delegates to the OPDI.findPort method.
+	/// If portID.isEmpty() and required is true, throws an exceptions whose message refers to the configPort and setting. 
+	/// This method is intended to be used during the preparation phase to resolve port specifications. 
+	/// configPort will usually be the ID of the resolving port, and setting the 
+	/// configuration parameter name that contained the portID specification.
+	/// Throws an exception if the port is found but is not an Analog port.
+	AnalogPort* findAnalogPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required);
 
-	virtual void findAnalogPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, AnalogPortList& portList);
+	/// Finds the Analog ports with the specified portIDs. Delegates to the OPDI.findPorts method.
+	/// This method is intended to be used during the preparation phase to resolve port specifications. 
+	/// configPort will usually be the ID of the resolving port, and setting the 
+	/// configuration parameter name that contained the portIDs specification.
+	/// Throws an exception if a port is not found or a found port is not an Analog port.
+	void findAnalogPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, AnalogPortList& portList);
 
-	virtual SelectPort* findSelectPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required);
+	/// Finds the Select port with the specified portID. Delegates to the OPDI.findPort method.
+	/// If portID.isEmpty() and required is true, throws an exceptions whose message refers to the configPort and setting. 
+	/// This method is intended to be used during the preparation phase to resolve port specifications. 
+	/// configPort will usually be the ID of the resolving port, and setting the 
+	/// configuration parameter name that contained the portID specification.
+	/// Throws an exception if the port is found but is not a Select port.
+	SelectPort* findSelectPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required);
 
-	virtual void logWarning(const std::string& message);
+	/// Logs a message with log verbosity Warning.
+	///
+	void logWarning(const std::string& message);
 
-	virtual void logNormal(const std::string& message);
+	/// Logs a message with log verbosity Normal.
+	///
+	void logNormal(const std::string& message);
 
-	virtual void logVerbose(const std::string& message);
+	/// Logs a message with log verbosity Verbose.
+	///
+	void logVerbose(const std::string& message);
 
-	virtual void logDebug(const std::string& message);
+	/// Logs a message with log verbosity Debug.
+	///
+	void logDebug(const std::string& message);
 
-	virtual void logExtreme(const std::string& message);
+	/// Logs a message with log verbosity Extreme.
+	///
+	void logExtreme(const std::string& message);
 
+	/// Returns the text for the specified changeSource.
+	///
 	std::string getChangeSourceText(ChangeSource changeSource);
-public:
 
-	/** Virtual destructor for the port. */
+public:
+	/// Virtual destructor for the port.
+	///
 	virtual ~Port();
 
-	/** This exception can be used by implementations to indicate an error during a port operation.
-	*  Its message will be transferred to the master. */
+	/// This exception can be used by implementations to indicate an error during a port operation.
+	/// Its message will be transferred to the master.
 	class PortError : public Poco::Exception
 	{
 	public:
 		explicit PortError(std::string message) : Poco::Exception(message) {};
 	};
 
-	/** This exception can be used by implementations to indicate that the value has expired. */
+	/// This exception can be used by implementations to indicate that the value has expired.
+	///
 	class ValueExpired : public PortError
 	{
 	public:
 		ValueExpired() : PortError("The value has expired") {};
 	};
 
-	/** This exception can be used by implementations to indicate that no value is available. */
+	/// This exception can be used by implementations to indicate that no value is available.
+	///
 	class ValueUnavailable : public PortError
 	{
 	public:
 		ValueUnavailable() : PortError("The value is unavailable") {};
 	};
 
-	/** This exception can be used by implementations to indicate that a port operation is not allowed.
-		*  Its message will be transferred to the master. */
+	/// This exception can be used by implementations to indicate that a port operation is not allowed.
+	/// Its message will be transferred to the master.
 	class AccessDenied : public Poco::Exception
 	{
 	public:
 		explicit AccessDenied(std::string message) : Poco::Exception(message) {};
 	};
 
-	// used to provide display ordering on ports
+	/// Used internally to provide display ordering on ports
+	///
 	int orderID;
 
-	// a list of space-separated keywords
+	/// A list of space-separated keywords
+	///
 	std::string tags;
 
-	// Lists of digital ports that are to be set to High if a change occurs
-	// The lists are to be set from external code but handled internally (this->handleStateChange).
 	std::string onChangeIntPortsStr;
-	std::string onChangeUserPortsStr;
+	// List of digital ports that are to be set to High if a change with source "internal" occurs
+	// The lists are to be set from external code but handled internally (this->handleStateChange).
 	DigitalPortList onChangeIntPorts;
+
+	std::string onChangeUserPortsStr;
+	// List of digital ports that are to be set to High if a change with source "user" occurs
+	// The lists are to be set from external code but handled internally (this->handleStateChange).
 	DigitalPortList onChangeUserPorts;
 
-	virtual const char* getID(void) const;
+	/// Returns the port ID as a char*.
+	///
+	const char* getID(void) const;
 
+	/// Returns the port ID as a std::string.
+	///
 	std::string ID() const;
 
-	virtual const char* getType(void) const;
+	/// Returns the port type as a constant of value OPDI_PORTTYPE_*.
+	///
+	const char* getType(void) const;
 
-	virtual void setHidden(bool hidden);
+	/// Sets the hidden flag of the port.
+	/// If a port is hidden it is not included in the device capabilities as queried by a master.
+	///
+	void setHidden(bool hidden);
 
-	virtual bool isHidden(void) const;
+	/// Returns the hidden flag of the port.
+	///
+	bool isHidden(void) const;
 
-	virtual void setReadonly(bool readonly);
+	/// Sets the readonly flag of the port.
+	/// If a port is readonly its state cannot be changed by a master.
+	///
+	void setReadonly(bool readonly);
 
-	virtual bool isReadonly(void) const;
+	/// Returns the readonly flag of the port.
+	///
+	bool isReadonly(void) const;
 
-	virtual void setPersistent(bool persistent);
+	/// Sets the persistent flag of the port.
+	///
+	void setPersistent(bool persistent);
 
-	virtual bool isPersistent(void) const;
+	/// Returns the persistent flag of the port.
+	///
+	bool isPersistent(void) const;
 
-	/** Sets the label of the port. */
-	virtual void setLabel(const char* label);
+	/// Sets the label of the port.
+	///
+	void setLabel(const char* label);
 
-	virtual const char* getLabel(void) const;
+	/// Returns the label of the port.
+	///
+	const char* getLabel(void) const;
 
-	/** Sets the direction capabilities of the port. */
-	virtual void setDirCaps(const char* dirCaps);
+	/// Sets the direction capabilities of the port.
+	///
+	void setDirCaps(const char* dirCaps);
 
-	virtual const char* getDirCaps(void) const;
+	/// Returns the direction capabilities of the port.
+	///
+	const char* getDirCaps(void) const;
 
-	/** Sets the flags of the port. */
-	virtual void setFlags(int32_t flags);
+	/// Sets the flags of the port.
+	///
+	void setFlags(int32_t flags);
 
-	virtual int32_t getFlags(void) const;
+	/// Returns the flags of the port.
+	///
+	int32_t getFlags(void) const;
 
-	virtual void setTypeGUID(const std::string& guid);
+	/// Sets the type GUID of the port.
+	///
+	void setTypeGUID(const std::string& guid);
 
-	virtual const std::string& getTypeGUID(void) const;
+	/// Returns the type GUID of the port.
+	///
+	const std::string& getTypeGUID(void) const;
 
-	virtual void setUnit(const std::string& unit);
+	/// Sets the unit of the port.
+	/// The unit is an identifier that needs to be correctly interpreted by a GUI.
+	void setUnit(const std::string& unit);
 
-	virtual const std::string& getUnit(void) const;
+	/// Returns the unit of the port.
+	///
+	const std::string& getUnit(void) const;
 
-	virtual void setIcon(const std::string& icon);
+	/// Sets the icon of the port.
+	/// The icon is an identifier that needs to be correctly interpreted by a GUI.
+	void setIcon(const std::string& icon);
 
-	virtual const std::string& getIcon(void) const;
+	/// Returns the icon of the port.
+	///
+	const std::string& getIcon(void) const;
 
-	virtual void setGroup(const std::string& group);
+	/// Sets the group of the port.
+	///
+	void setGroup(const std::string& group);
 
-	virtual const std::string& getGroup(void) const;
+	/// Returns the group of the port.
+	///
+	const std::string& getGroup(void) const;
 
-	virtual void setHistory(uint64_t intervalSeconds, int maxCount, const std::vector<int64_t>& values);
+	/// Sets the history of the port.
+	/// The history consists of an ordered set of values that have been collected in the specified interval.
+	/// maxCount specifies the total number of values that are collected for this port; the size of values may be less.
+	/// The history is not collected by the port itself. It needs to be set by an external component.
+	void setHistory(uint64_t intervalSeconds, int maxCount, const std::vector<int64_t>& values);
 
-	virtual const std::string& getHistory(void) const;
+	/// Returns a string representation of the port's history.
+	///
+	const std::string& getHistory(void) const;
 
-	virtual void clearHistory(void);
+	/// Clears the port history.
+	///
+	void clearHistory(void);
 
+	/// Returns the extended state of the port.
+	/// The extended state is a set of name=value pairs.
 	virtual std::string getExtendedState(void) const;
 
+	/// Returns the extended info of the port.
+	/// The extended state is a set of name=value pairs.
 	virtual std::string getExtendedInfo(void) const;
 
-	virtual void setLogVerbosity(LogVerbosity newLogVerbosity);
+	/// Sets the log verbosity of the port.
+	///
+	void setLogVerbosity(LogVerbosity newLogVerbosity);
 
-	virtual LogVerbosity getLogVerbosity(void) const;
+	/// Returns the log verbosity of the port.
+	///
+	LogVerbosity getLogVerbosity(void) const;
 
-	virtual void setRefreshMode(RefreshMode refreshMode);
+	/// Sets the refresh mode of the port.
+	///
+	void setRefreshMode(RefreshMode refreshMode);
 
-	virtual RefreshMode getRefreshMode(void) const;
+	/// Sets the refresh mode of the port.
+	///
+	RefreshMode getRefreshMode(void) const;
 
-	/** Sets the minimum time in milliseconds between self-refresh messages. If this time is 0 (default),
-	* the self-refresh is disabled. */
+	/// Sets the minimum time in milliseconds between self-refresh messages. If this time is 0 (default),
+	/// the self-refresh is disabled. Only effective if the refresh mode equals "Periodic".
 	virtual void setPeriodicRefreshTime(uint32_t timeInMs);
 
-	/** This method should be called just before the OPDI system is ready to start.
-	* It gives the port the chance to do necessary initializations. */
+	/// This method should be called before the OPDI system is ready to start the doWork loop.
+	/// It gives the port the chance to do necessary initializations.
+	/// Port implementation may override this method to implement their own preparations.
 	virtual void prepare(void);
 
-	/** Sets the error state of this port. */
+	/// Sets the error state of the port.
+	///
 	virtual void setError(Error error);
 
-	/** Gets the error state of this port. */
+	/// Returns the error state of the port.
+	///
 	virtual Port::Error getError(void) const;
 
-	/** This method returns true if the port is in an error state. This will likely be the case
-	*   when the getState() method of the port throws an exception.
-	*/
+	/// This method returns true if the port is in an error state. This will likely be the case
+	/// when the getState() method of the port throws an exception.
+	/// Subclasses may override this method to implement their own behaviour.
 	virtual bool hasError(void) const = 0;
 };
 
@@ -410,59 +518,92 @@ template <class T> inline std::string Port::to_string(const T& t) const {
 	return ss.str();
 }
 
+/// This class encapsulates the functions and behaviour of a port group.
+///
 class PortGroup {
 	friend class OPDI;
 
 protected:
+	/// Internal variable. Do not use.
+	///
 	char* id;
+	/// Internal variable. Do not use.
+	///
 	char* label;
+	/// Internal variable. Do not use.
+	///
 	char* parent;
+	/// Internal variable. Do not use.
+	///
 	int32_t flags;
+	/// Internal variable. Do not use.
+	///
 	char* extendedInfo;
 
-	// pointer to OPDI class instance
+	/// Pointer to OPDI class instance.
+	///
 	OPDI* opdi;
 
-	// OPDI implementation management structure
+	/// OPDI implementation management structure.
+	///
 	void* data;
 
-	// linked list of port groups - pointer to next port group
+	/// Linked list of port groups - pointer to next port group.
+	///
 	PortGroup* next;
 
+	/// Internal variable. Do not use.
+	///
 	std::string icon;
 
+	/// Updates the extended info string of the port that will be sent to connected masters.
+	///
 	virtual void updateExtendedInfo(void);
 
 public:
+	/// Port group constructor. Requires a port group ID.
+	///
 	explicit PortGroup(const char* id);
 
-	/** Virtual destructor for the port. */
+	/// Virtual destructor for the port group.
+	///
 	virtual ~PortGroup();
 
-	virtual const char* getID(void);
+	/// Returns the ID of the port group.
+	///
+	const char* getID(void);
 
-	/** Sets the label of the port group. */
-	virtual void setLabel(const char* label);
+	/// Sets the label of the port group.
+	///
+	void setLabel(const char* label);
 
-	virtual const char* getLabel(void);
+	/// Returns the label of the port group.
+	///
+	const char* getLabel(void);
 
-	/** Sets the parent of the port group. */
-	virtual void setParent(const char* parent);
+	/// Sets the parent of the port group.
+	///
+	void setParent(const char* parent);
 
-	virtual const char* getParent(void);
+	/// Returns the parent of the port group.
+	///
+	const char* getParent(void);
 
-	/** Sets the flags of the port group. */
-	virtual void setFlags(int32_t flags);
+	/// Sets the flags of the port group.
+	///
+	void setFlags(int32_t flags);
 
-	virtual void setIcon(const std::string& icon);
+	/// Sets the icon of the port group.
+	/// The icon is an identifier that needs to be correctly interpreted by a GUI.
+	void setIcon(const std::string& icon);
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Port definitions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Defines a digital port.
-	*/
+/// Defines a Digital port.
+///
 class DigitalPort : public Port {
 	friend class OPDI;
 
@@ -471,38 +612,49 @@ protected:
 	uint8_t line;
 
 public:
+	/// Constructs a Digital port with default settings. The ID is required.
+	/// Default settings are: DirCaps = BiDi, Mode = Input, Flags = 0.
 	explicit DigitalPort(const char* id);
 
-	// Initialize a digital port. Specify one of the OPDI_PORTDIRCAPS_* values for dircaps.
-	// Specify one or more of the OPDI_DIGITAL_PORT_* values for flags, or'ed together, to specify pullup/pulldown resistors.
+	/// Constructs a Digital port. Specify one of the OPDI_PORTDIRCAPS_* values for dircaps.
+	/// Specify one or more of the OPDI_DIGITAL_PORT_* values for flags, or'ed together, to specify pullup/pulldown resistors.
 	DigitalPort(const char* id, const char*  dircaps, const int32_t flags);
 
+	/// Virtual destructor.
+	///
 	virtual ~DigitalPort();
 
-	virtual void setDirCaps(const char* dirCaps);
+	/// Sets the direction capabilities of the port.
+	///
+	void setDirCaps(const char* dirCaps);
 
-	// function that handles the set mode command (opdi_set_digital_port_mode)
-	// mode = 0: floating input
-	// mode = 1: input with pullup on
-	// mode = 2: not supported
-	// mode = 3: output
+	/// Sets the port mode (opdi_set_digital_port_mode).
+	/// mode = 0: floating input
+	/// mode = 1: input with pullup on
+	/// mode = 2: not supported
+	/// mode = 3: output
 	virtual void setMode(uint8_t mode, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT);
 
-	// function that handles the set line command (opdi_set_digital_port_line)
-	// line = 0: state low
-	// line = 1: state high
-	virtual void setLine(uint8_t line, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT);
-
-	// function that fills in the current port state
-	virtual void getState(uint8_t* mode, uint8_t* line) const;
-
+	/// Returns the current port mode.
+	///
 	virtual uint8_t getMode(void);
 
+	/// Sets the port line (opdi_set_digital_port_line).
+	/// line = 0: low
+	/// line = 1: high
+	virtual void setLine(uint8_t line, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT);
+
+	/// Retrieves the current port state.
+	///
+	virtual void getState(uint8_t* mode, uint8_t* line) const;
+
+	/// Returns true if the port is in an error state.
+	///
 	virtual bool hasError(void) const override;
 };
 
-/** Defines an analog port.
-	*/
+/// Defines an Analog port.
+///
 class AnalogPort : public Port {
 	friend class OPDI;
 
@@ -512,84 +664,118 @@ protected:
 	uint8_t resolution;
 	int32_t value;
 
+	/// Validates and adjusts the supplied value if necessary.
+	///
 	virtual int32_t validateValue(int32_t value) const;
 
 public:
+	/// Constructs an Analog port with default settings. The ID is required.
+	/// Default settings are: DirCaps = BiDi, Mode = Input, supported resolutions 8..12 bits, Reference = Internal.
 	explicit AnalogPort(const char* id);
 
+	/// Constructs an Analog port. Specify one of the OPDI_PORTDIRCAPS_* values for dircaps.
+	/// Specify one or more of the OPDI_ANALOG_PORT_RESOLUTION_* values for flags, or'ed together, to specify supported resolutions.
+	/// Default settings are: Mode = Input, Reference = Internal.
 	AnalogPort(const char* id, const char*  dircaps, const int32_t flags);
 
+	/// Virtual destructor.
+	///
 	virtual ~AnalogPort();
 
-	// mode = 0: input
-	// mode = 1: output
+	/// Sets the port mode (opdi_set_analog_port_mode).
+	/// mode = 0: input
+	/// mode = 1: output
 	virtual void setMode(uint8_t mode, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT);
 
-	virtual void setResolution(uint8_t resolution, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT);
-
-	// reference = 0: internal voltage reference
-	// reference = 1: external voltage reference
-	virtual void setReference(uint8_t reference, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT);
-
-	// value: an integer value ranging from 0 to 2^resolution - 1
-	virtual void setValue(int32_t value, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT);
-
-	virtual void getState(uint8_t* mode, uint8_t* resolution, uint8_t* reference, int32_t* value) const;
-
-	// returns the value as a factor between 0 and 1 of the maximum resolution
-	virtual double getRelativeValue(void);
-
-	// sets the value from a factor between 0 and 1
-	virtual void setRelativeValue(double value);
-
+	/// Returns the current port mode.
+	///
 	virtual uint8_t getMode(void);
 
+	/// Sets the port resolution in bits.
+	/// Supported values are 8..12.
+	virtual void setResolution(uint8_t resolution, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT);
+
+	/// Sets the port's voltage reference source.
+	/// reference = 0: internal voltage reference
+	/// reference = 1: external voltage reference
+	virtual void setReference(uint8_t reference, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT);
+
+	/// Sets the port's value.
+	/// value: an integer value ranging from 0 to 2^resolution - 1
+	virtual void setValue(int32_t value, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT);
+
+	/// Retrieves the current port state.
+	///
+	virtual void getState(uint8_t* mode, uint8_t* resolution, uint8_t* reference, int32_t* value) const;
+
+	/// Returns the current value as a factor between 0 and 1 of the maximum resolution.
+	///
+	virtual double getRelativeValue(void);
+
+	/// Sets the value from a factor between 0 and 1.
+	///
+	virtual void setRelativeValue(double value);
+
+	/// Returns true if the port is in an error state.
+	///
 	virtual bool hasError(void) const override;
 };
 
-/** Defines a select port.
-	*
-	*/
+/// Defines a select port.
+///
 class SelectPort : public Port {
 	friend class OPDI;
 
 protected:
-	char** items;
+	char** labels;
 	uint16_t count;
 	uint16_t position;
 
-	// frees the internal items memory
+	/// Frees the internal items memory. Do not use.
+	///
 	void freeItems();
 
 public:
+	/// Constructs a Select port with the given ID.
+	///
 	explicit SelectPort(const char* id);
 
-	// Initialize a select port. The direction of a select port is output only.
-	// You have to specify a list of items that are the labels of the different select positions. The last element must be NULL.
-	// The items are copied into the privately managed data structure of this class.
-	SelectPort(const char* id, const char** items);
+	/// Constructs a Select port. The direction of a select port is output only.
+	/// You have to specify a list of labels for the different select positions. The last element must be NULL.
+	/// The labels are copied into the privately managed data structure of this class.
+	SelectPort(const char* id, const char** labels);
 
+	/// Virtual destructor.
+	///
 	virtual ~SelectPort();
 
-	// Copies the items into the privately managed data structure of this class.
-	virtual void setItems(const char* *items);
+	/// Sets the port's labels. The last element must be NULL.
+	/// Copies the labels into the privately managed data structure of this class.
+	virtual void setLabels(const char** labels);
 
-	// function that handles position setting; position may be in the range of 0..(items.length - 1)
+	/// Handles position setting; position may be in the range of 0..(labels.length - 1).
+	///
 	virtual void setPosition(uint16_t position, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT);
 
-	// function that fills in the current port state
+	/// Returns the current port state, i. e. the selected label's position.
+	///
 	virtual void getState(uint16_t* position) const;
 
+	/// Returns the label at the specified position.
+	///
 	virtual const char* getPositionLabel(uint16_t position);
 
+	/// Returns the maximum position this select port can be set to.
+	/// Positions are 0-based, i. e. the maximum position is the number of labels minus 1.
 	virtual uint16_t getMaxPosition(void);
 
+	/// Returns true if the port is in an error state.
+	///
 	virtual bool hasError(void) const override;
 };
 
-/** Defines a dial port.
-	*
-	*/
+/// Defines a Dial port.
+///
 class DialPort : public Port {
 	friend class OPDI;
 
@@ -600,62 +786,92 @@ protected:
 	int64_t position;
 
 public:
+	/// Constructs a Select port with the given ID.
+	/// Default values are: Min = 0, Max = 100, Step = 1.
 	explicit DialPort(const char* id);
 
-	// Initialize a dial port. The direction of a dial port is output only.
-	// You have to specify boundary values and a step size.
+	/// Constructs a Select port with the given ID.
+	/// The direction of a dial port is output only.
+	/// You have to specify boundary values and a step size.
 	DialPort(const char* id, int64_t minValue, int64_t maxValue, uint64_t step);
+
+	/// Virtual destructor.
+	///
 	virtual ~DialPort();
 
-	virtual int64_t getMin(void);
-	virtual int64_t getMax(void);
-	virtual int64_t getStep(void);
-
+	/// Sets the minimum value.
+	///
 	virtual void setMin(int64_t min);
+
+	/// Returns the minimum value.
+	///
+	virtual int64_t getMin(void);
+
+	/// Sets the maximum value.
+	///
 	virtual void setMax(int64_t max);
+
+	/// Returns the maximum value.
+	///
+	virtual int64_t getMax(void);
+
+	/// Sets the step.
+	///
 	virtual void setStep(uint64_t step);
 
-	// function that handles position setting; position may be in the range of minValue..maxValue
+	/// Returns the step.
+	///
+	virtual int64_t getStep(void);
+
+	/// Sets the port's position; position may be in the range of minValue..maxValue.
+	///
 	virtual void setPosition(int64_t position, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT);
 
-	// function that fills in the current port state
+	/// Returns the current port position.
+	///
 	virtual void getState(int64_t* position) const;
 
+	/// Returns true if the port is in an error state.
+	///
 	virtual bool hasError(void) const override;
 };
 
-/** Defines a streaming port.
-	* A streaming port represents a serial data connection on the device. It can send and receive bytes.
-	* Examples are RS232 or I2C ports.
-	* If a master is connected it can bind to a streaming port. Binding means that received bytes are
-	* transferred to the master and bytes received from the master are sent to the connection.
-	* The streaming port can thus act as an internal connection data source and sink, as well as a
-	* transparent connection which directly connects the master and the connection partner.
-	* Data sources can be read-only or write-only. Data may be also transformed before it is transmitted
-	* to the master. How exactly this is done depends on the concrete implementation.
-	*/
+/// Defines an abstract Streaming port.
+/// This class can not be used directly. Use one of its subclasses instead.
+///
+/// A Streaming port represents a serial data connection on the device. It can send and receive bytes.
+/// Examples are RS232 or I2C ports, but Streaming ports may also be entirely virtual or emulated.
+/// If a master is connected it can bind to a streaming port. Binding means that received bytes are
+/// transferred to the master and bytes received from the master are sent to the port.
+/// The streaming port can thus act as an internal connection data source and sink, as well as a
+/// transparent connection which directly connects the master and the connection partner.
+/// Data sources can be read-only or write-only. Data may be also transformed before it is transmitted
+/// to the master. How exactly this is done depends on the concrete implementation.
 class StreamingPort : public Port {
 	friend class OPDI;
 
 public:
-	// Initialize a streaming port. A streaming port is always bidirectional.
+	/// Constructs a Streaming port with the given ID. A streaming port is always bidirectional.
+	///
 	explicit StreamingPort(const char* id);
 
+	/// Virtual destructor.
+	///
 	virtual ~StreamingPort();
 
-	// Writes the specified bytes to the data sink. Returns the number of bytes written.
-	// If the returned value is less than 0 it is considered an (implementation specific) error.
+	/// Writes the specified bytes to the data sink. Returns the number of bytes written.
+	/// If the returned value is less than 0 it is considered an (implementation specific) error.
 	virtual int write(char* bytes, size_t length) = 0;
 
-	// Checks how many bytes are available from the data source. If count is > 0
-	// it is used as a value to request the number of bytes if the underlying system
-	// supports this type of request. Otherwise it has no meaning.
-	// If no bytes are available the result is 0. If the returned
-	// value is less than 0 it is considered an (implementation specific) error.
+	/// Checks how many bytes are available from the data source. If count is > 0
+	/// it is used as a value to request the number of bytes if the underlying system
+	/// supports this type of request. Otherwise it has no meaning.
+	/// If no bytes are available the result is 0. If the returned
+	/// value is less than 0 it is considered an (implementation specific) error.
 	virtual int available(size_t count) = 0;
 
-	// Reads one byte from the data source and places it in result. If the returned
-	// value is less than 1 it is considered an (implementation specific) error.
+	/// Reads one byte from the data source and places it in result. If the returned
+	/// value is less than 1 it is considered an (implementation specific) error.
 	virtual int read(char* result) = 0;
 };
 

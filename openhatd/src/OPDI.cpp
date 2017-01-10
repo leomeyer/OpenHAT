@@ -175,7 +175,7 @@ void OPDI::updatePortData(opdi::Port* port) {
 
 	// check port type
 	if (strcmp(port->type, OPDI_PORTTYPE_SELECT) == 0) {
-		oPort->info.ptr = static_cast<opdi::SelectPort*>(port)->items;
+		oPort->info.ptr = static_cast<opdi::SelectPort*>(port)->labels;
 	} else
 	if (strcmp(port->type, OPDI_PORTTYPE_DIAL) == 0) {
 		// release additional data structure memory

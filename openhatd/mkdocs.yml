@@ -47,6 +47,7 @@ pages:
     - Contributing: contributing.md
     - Development: development.md
     - Doxygen documentation: doxygen/index.md
+    - Release Notes: release_notes.md
     - Release Plan: release_plan.md
 extra_css:
     - extra.css

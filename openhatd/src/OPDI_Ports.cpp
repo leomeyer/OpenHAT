@@ -11,6 +11,7 @@
 #include <string>
 #include <sstream>
 #include <cassert>
+#include <algorithm>
 
 #include "Poco/Exception.h"
 
@@ -382,9 +383,9 @@ void Port::prepare() {
 
 void Port::checkError() const {
 	if (this->error == Error::VALUE_EXPIRED)
-		throw ValueExpired();
+		throw ValueExpiredException(this->ID());
 	if (this->error == Error::VALUE_NOT_AVAILABLE)
-		throw ValueUnavailable();
+		throw ValueUnavailableException(this->ID());
 }
 
 void Port::setError(Error error) {
@@ -395,6 +396,63 @@ void Port::setError(Error error) {
 
 Port::Error Port::getError() const {
 	return this->error;
+}
+
+void Port::testValue(const std::string & property, const std::string & expectedValue) {
+	if (property == "ID")
+		return this->compareProperty(property, expectedValue, std::string(this->id));
+	if (property == "Label")
+		return this->compareProperty(property, expectedValue, std::string(this->label));
+	if (property == "Flags")
+		return this->compareProperty(property, expectedValue, this->to_string(this->flags));
+	if (property == "DirCaps") {
+		std::string dirCaps;
+		if (!strcmp(this->getDirCaps(), OPDI_PORTDIRCAP_UNKNOWN))
+			dirCaps = "Unknown";
+		else if (!strcmp(this->getDirCaps(), OPDI_PORTDIRCAP_INPUT))
+			dirCaps = "Input";
+		else if (!strcmp(this->getDirCaps(), OPDI_PORTDIRCAP_OUTPUT))
+			dirCaps = "Output";
+		else if (!strcmp(this->getDirCaps(), OPDI_PORTDIRCAP_BIDI))
+			dirCaps = "Bidi";
+		return this->compareProperty(property, expectedValue, dirCaps);
+	}
+	if (property == "Hidden")
+		return this->compareProperty(property, expectedValue, this->hidden);
+	if (property == "Readonly")
+		return this->compareProperty(property, expectedValue, this->readonly);
+	if (property == "TypeGUID")
+		return this->compareProperty(property, expectedValue, this->typeGUID);
+	if (property == "Unit")
+		return this->compareProperty(property, expectedValue, this->unit);
+	if (property == "Icon")
+		return this->compareProperty(property, expectedValue, this->icon);
+	if (property == "Group")
+		return this->compareProperty(property, expectedValue, this->group);
+	if (property == "RefreshMode") {
+		std::string refMode;
+		if (this->refreshMode == RefreshMode::REFRESH_NOT_SET)
+			refMode = "RefreshNotSet";
+		else if (this->refreshMode == RefreshMode::REFRESH_OFF)
+			refMode = "Off";
+		else if (this->refreshMode == RefreshMode::REFRESH_AUTO)
+			refMode = "Auto";
+		else if (this->refreshMode == RefreshMode::REFRESH_PERIODIC)
+			refMode = "Periodic";
+		return this->compareProperty(property, expectedValue, refMode);
+	}
+	if (property == "RefreshRequired")
+		return this->compareProperty(property, expectedValue, this->refreshRequired);
+	if (property == "RefreshTime")
+		return this->compareProperty(property, expectedValue, this->to_string(this->periodicRefreshTime));
+	if (property == "Persistent")
+		return this->compareProperty(property, expectedValue, this->persistent);
+	if (property == "OrderID")
+		return this->compareProperty(property, expectedValue, this->to_string(this->orderID));
+	if (property == "Tags")
+		return this->compareProperty(property, expectedValue, this->to_string(this->tags));
+
+	throw UnknownPropertyException(this->ID(), property);
 }
 
 Port::~Port() {
@@ -491,6 +549,19 @@ std::string Port::getChangeSourceText(ChangeSource changeSource)
 	case ChangeSource::CHANGESOURCE_USER: return "User";
 	default: return "<unknown>";
 	}
+}
+
+void Port::compareProperty(const std::string & property, const std::string & expectedValue, const std::string & actualValue) {
+	if (expectedValue != actualValue)
+		throw TestValueMismatchException(this->ID(), property, expectedValue, actualValue);
+}
+
+void Port::compareProperty(const std::string & property, const std::string & expectedValue, bool actualValue) {
+	std::string exString = expectedValue;
+	std::transform(exString.begin(), exString.end(), exString.begin(), tolower);
+	bool exValue = (exString == "1" || exString == "yes" || exString == "true");
+	if (exValue != actualValue)
+		throw TestValueMismatchException(this->ID(), property, expectedValue, actualValue ? "True" : "False");
 }
 
 PortGroup::PortGroup(const char* id) {
@@ -731,6 +802,27 @@ bool DigitalPort::hasError(void) const {
 	}
 }
 
+void DigitalPort::testValue(const std::string & property, const std::string & expectedValue) {
+	if (property == "Mode") {
+		std::string modeStr("Unknown");
+		if (this->mode == 0)
+			modeStr = "Input";
+		if (this->mode == 1)
+			modeStr = "Output";
+		return this->compareProperty(property, expectedValue, modeStr);
+	}
+	if (property == "Line") {
+		std::string lineStr("Unknown");
+		if (this->line == 0)
+			lineStr = "Low";
+		if (this->line == 1)
+			lineStr = "High";
+		return this->compareProperty(property, expectedValue, lineStr);
+	}
+
+	Port::testValue(property, expectedValue);
+}
+
 #endif		// NO_DIGITAL_PORTS
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -872,6 +964,32 @@ bool AnalogPort::hasError(void) const {
 	}
 }
 
+void AnalogPort::testValue(const std::string & property, const std::string & expectedValue) {
+	if (property == "Mode") {
+		std::string modeStr("Unknown");
+		if (this->mode == 0)
+			modeStr = "Input";
+		if (this->mode == 1)
+			modeStr = "Output";
+		return this->compareProperty(property, expectedValue, modeStr);
+	}
+	if (property == "Resolution") {
+		return this->compareProperty(property, expectedValue, this->to_string((int)this->resolution));
+	}
+	if (property == "Reference") {
+		std::string refStr("Unknown");
+		if (this->reference == 0)
+			refStr = "Internal";
+		if (this->reference == 1)
+			refStr = "External";
+		return this->compareProperty(property, expectedValue, refStr);
+	}
+	if (property == "Value") {
+		return this->compareProperty(property, expectedValue, this->to_string(this->value));
+	}
+	Port::testValue(property, expectedValue);
+}
+
 #endif		// NO_ANALOG_PORTS
 
 #ifndef OPDI_NO_SELECT_PORTS
@@ -983,6 +1101,14 @@ bool SelectPort::hasError(void) const {
 	}
 }
 
+void SelectPort::testValue(const std::string & property, const std::string & expectedValue) {
+	if (property == "Position") {
+		return this->compareProperty(property, expectedValue, this->to_string(this->position));
+	}
+
+	Port::testValue(property, expectedValue);
+}
+
 #endif // OPDI_NO_SELECT_PORTS
 
 #ifndef OPDI_NO_DIAL_PORTS
@@ -1074,6 +1200,25 @@ bool DialPort::hasError(void) const {
 	catch (...) {
 		return true;
 	}
+}
+
+void DialPort::testValue(const std::string & property, const std::string & expectedValue) {
+	if (property == "Min") {
+		return this->compareProperty(property, expectedValue, this->to_string(this->minValue));
+	}
+	if (property == "Max") {
+		return this->compareProperty(property, expectedValue, this->to_string(this->maxValue));
+	}
+	if (property == "Step") {
+		return this->compareProperty(property, expectedValue, this->to_string(this->step));
+	}
+	if (property == "Position") {
+		return this->compareProperty(property, expectedValue, this->to_string(this->position));
+	}
+
+	Port::testValue(property, expectedValue);
+
+	Port::testValue(property, expectedValue);
 }
 
 #endif // OPDI_NO_DIAL_PORTS

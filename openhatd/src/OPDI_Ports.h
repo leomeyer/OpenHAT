@@ -291,6 +291,14 @@ protected:
 	///
 	std::string getChangeSourceText(ChangeSource changeSource);
 
+	/// Used by testValue to reduce code duplication.
+	///
+	void compareProperty(const std::string& property, const std::string& expectedValue, const std::string& actualValue);
+
+	/// Used by testValue to reduce code duplication.
+	///
+	void compareProperty(const std::string& property, const std::string& expectedValue, bool actualValue);
+
 public:
 	/// Virtual destructor for the port.
 	///
@@ -306,26 +314,43 @@ public:
 
 	/// This exception can be used by implementations to indicate that the value has expired.
 	///
-	class ValueExpired : public PortError
+	class ValueExpiredException : public PortError
 	{
 	public:
-		ValueExpired() : PortError("The value has expired") {};
+		ValueExpiredException(const std::string& portID) : PortError(portID + ": The value has expired") {};
 	};
 
 	/// This exception can be used by implementations to indicate that no value is available.
 	///
-	class ValueUnavailable : public PortError
+	class ValueUnavailableException : public PortError
 	{
 	public:
-		ValueUnavailable() : PortError("The value is unavailable") {};
+		ValueUnavailableException(const std::string& portID) : PortError(portID + ": The value is unavailable") {};
 	};
 
 	/// This exception can be used by implementations to indicate that a port operation is not allowed.
 	/// Its message will be transferred to the master.
-	class AccessDenied : public Poco::Exception
+	class AccessDeniedException : public Poco::Exception
 	{
 	public:
-		explicit AccessDenied(std::string message) : Poco::Exception(message) {};
+		explicit AccessDeniedException(const std::string& message) : Poco::Exception(message) {};
+	};
+
+	/// This exception is thrown by the testValue() method when an unknown property is encountered.
+	class UnknownPropertyException : public Poco::Exception
+	{
+	public:
+		explicit UnknownPropertyException(const std::string& portID, const std::string& property) :
+			Poco::Exception(portID + ": Unknown property '" + property + "'") {};
+	};
+
+
+	/// This exception is thrown by the testValue() method when a mismatching value is encountered.
+	class TestValueMismatchException : public Poco::Exception
+	{
+	public:
+		explicit TestValueMismatchException(const std::string& portID, const std::string& property, const std::string& expectedValue, const std::string& actualValue) : 
+			Poco::Exception(portID + ": The expected value of property '" + property + "' ('" + expectedValue + "') did not match the actual value of '" + actualValue + "'") {};
 	};
 
 	/// Used internally to provide display ordering on ports
@@ -499,6 +524,14 @@ public:
 	/// when the getState() method of the port throws an exception.
 	/// Subclasses may override this method to implement their own behaviour.
 	virtual bool hasError(void) const = 0;
+
+	/// This method is used to test values of port properties. Subclasses can override this method
+	/// to implement support for their own properties. If a property values does not match the 
+	/// expected value the method should throw a TestValueMismatchException. It may also throw
+	/// other exceptions that should be derived from Poco::Exception.
+	/// The property names should match the configuration setting names as specified in the 
+	/// respective configure() method if applicable.
+	virtual void testValue(const std::string& property, const std::string& expectedValue);
 };
 
 inline std::ostream& operator<<(std::ostream& oStream, const Port::Error error) {
@@ -651,6 +684,9 @@ public:
 	/// Returns true if the port is in an error state.
 	///
 	virtual bool hasError(void) const override;
+
+	/// This method is used to test values of a Digital port.
+	virtual void testValue(const std::string& property, const std::string& expectedValue);
 };
 
 /// Defines an Analog port.
@@ -719,6 +755,9 @@ public:
 	/// Returns true if the port is in an error state.
 	///
 	virtual bool hasError(void) const override;
+
+	/// This method is used to test values of an Analog port.
+	virtual void testValue(const std::string& property, const std::string& expectedValue);
 };
 
 /// Defines a select port.
@@ -772,6 +811,9 @@ public:
 	/// Returns true if the port is in an error state.
 	///
 	virtual bool hasError(void) const override;
+
+	/// This method is used to test values of a Select port.
+	virtual void testValue(const std::string& property, const std::string& expectedValue);
 };
 
 /// Defines a Dial port.
@@ -834,6 +876,9 @@ public:
 	/// Returns true if the port is in an error state.
 	///
 	virtual bool hasError(void) const override;
+
+	/// This method is used to test values of a Dial port.
+	virtual void testValue(const std::string& property, const std::string& expectedValue);
 };
 
 /// Defines an abstract Streaming port.

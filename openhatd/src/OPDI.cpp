@@ -45,11 +45,12 @@ uint8_t OPDI::shutdownInternal(void) {
 	}
 	this->ports.clear();
 	this->disconnect();
-	return OPDI_SHUTDOWN;
+	return this->shutdownExitCode;
 }
 
 uint8_t OPDI::setup(const char* slaveName, int idleTimeout) {
 	this->shutdownRequested = false;
+	this->shutdownExitCode = OPDI_STATUS_OK;
 
 	// initialize port list
 	this->ports.clear();
@@ -408,11 +409,12 @@ uint8_t OPDI::messageHandled(channel_t channel, const char** /*parts*/) {
 	return OPDI_STATUS_OK;
 }
 
-void OPDI::shutdown(void) {
+void OPDI::shutdown(int exitCode) {
 	// set flag to indicate that the message processing should stop
 	// this method may be called asynchronously by signal handlers or threads,
 	// so it is very important not to do any actual work here
 	this->shutdownRequested = true;
+	this->shutdownExitCode = exitCode;
 }
 
 void OPDI::persist(opdi::Port*  /*port*/) {

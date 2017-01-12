@@ -78,42 +78,46 @@ AbstractOpenHAT::AbstractOpenHAT(void) {
 	this->allowHiddenPorts = true;
 	this->suppressUnusedParameterMessages = false;
 
-	// map result codes
-	opdiCodeTexts[0] = "STATUS_OK";
-	opdiCodeTexts[1] = "DISCONNECTED";
-	opdiCodeTexts[2] = "TIMEOUT";
-	opdiCodeTexts[3] = "CANCELLED";
-	opdiCodeTexts[4] = "ERROR_MALFORMED_MESSAGE";
-	opdiCodeTexts[5] = "ERROR_CONVERSION";
-	opdiCodeTexts[6] = "ERROR_MSGBUF_OVERFLOW";
-	opdiCodeTexts[7] = "ERROR_DEST_OVERFLOW";
-	opdiCodeTexts[8] = "ERROR_STRINGS_OVERFLOW";
-	opdiCodeTexts[9] = "ERROR_PARTS_OVERFLOW";
-	opdiCodeTexts[10] = "PROTOCOL_ERROR";
-	opdiCodeTexts[11] = "PROTOCOL_NOT_SUPPORTED";
-	opdiCodeTexts[12] = "ENCRYPTION_NOT_SUPPORTED";
-	opdiCodeTexts[13] = "ENCRYPTION_REQUIRED";
-	opdiCodeTexts[14] = "ENCRYPTION_ERROR";
-	opdiCodeTexts[15] = "AUTH_NOT_SUPPORTED";
-	opdiCodeTexts[16] = "AUTHENTICATION_EXPECTED";
-	opdiCodeTexts[17] = "AUTHENTICATION_FAILED";
-	opdiCodeTexts[18] = "DEVICE_ERROR";
-	opdiCodeTexts[19] = "TOO_MANY_PORTS";
-	opdiCodeTexts[20] = "PORTTYPE_UNKNOWN";
-	opdiCodeTexts[21] = "PORT_UNKNOWN";
-	opdiCodeTexts[22] = "WRONG_PORT_TYPE";
-	opdiCodeTexts[23] = "TOO_MANY_BINDINGS";
-	opdiCodeTexts[24] = "NO_BINDING";
-	opdiCodeTexts[25] = "CHANNEL_INVALID";
-	opdiCodeTexts[26] = "POSITION_INVALID";
-	opdiCodeTexts[27] = "NETWORK_ERROR";
-	opdiCodeTexts[28] = "TERMINATOR_IN_PAYLOAD";
-	opdiCodeTexts[29] = "PORT_ACCESS_DENIED";
-	opdiCodeTexts[30] = "PORT_ERROR";
-	opdiCodeTexts[31] = "SHUTDOWN";
-	opdiCodeTexts[32] = "GROUP_UNKNOWN";
-	opdiCodeTexts[33] = "MESSAGE_UNKNOWN";
-	opdiCodeTexts[34] = "FUNCTION_UNKNOWN";
+	// opdi result codes
+	resultCodeTexts[0] = "STATUS_OK";
+	resultCodeTexts[1] = "DISCONNECTED";
+	resultCodeTexts[2] = "TIMEOUT";
+	resultCodeTexts[3] = "CANCELLED";
+	resultCodeTexts[4] = "ERROR_MALFORMED_MESSAGE";
+	resultCodeTexts[5] = "ERROR_CONVERSION";
+	resultCodeTexts[6] = "ERROR_MSGBUF_OVERFLOW";
+	resultCodeTexts[7] = "ERROR_DEST_OVERFLOW";
+	resultCodeTexts[8] = "ERROR_STRINGS_OVERFLOW";
+	resultCodeTexts[9] = "ERROR_PARTS_OVERFLOW";
+	resultCodeTexts[10] = "PROTOCOL_ERROR";
+	resultCodeTexts[11] = "PROTOCOL_NOT_SUPPORTED";
+	resultCodeTexts[12] = "ENCRYPTION_NOT_SUPPORTED";
+	resultCodeTexts[13] = "ENCRYPTION_REQUIRED";
+	resultCodeTexts[14] = "ENCRYPTION_ERROR";
+	resultCodeTexts[15] = "AUTH_NOT_SUPPORTED";
+	resultCodeTexts[16] = "AUTHENTICATION_EXPECTED";
+	resultCodeTexts[17] = "AUTHENTICATION_FAILED";
+	resultCodeTexts[18] = "DEVICE_ERROR";
+	resultCodeTexts[19] = "TOO_MANY_PORTS";
+	resultCodeTexts[20] = "PORTTYPE_UNKNOWN";
+	resultCodeTexts[21] = "PORT_UNKNOWN";
+	resultCodeTexts[22] = "WRONG_PORT_TYPE";
+	resultCodeTexts[23] = "TOO_MANY_BINDINGS";
+	resultCodeTexts[24] = "NO_BINDING";
+	resultCodeTexts[25] = "CHANNEL_INVALID";
+	resultCodeTexts[26] = "POSITION_INVALID";
+	resultCodeTexts[27] = "NETWORK_ERROR";
+	resultCodeTexts[28] = "TERMINATOR_IN_PAYLOAD";
+	resultCodeTexts[29] = "PORT_ACCESS_DENIED";
+	resultCodeTexts[30] = "PORT_ERROR";
+	resultCodeTexts[31] = "SHUTDOWN";
+	resultCodeTexts[32] = "GROUP_UNKNOWN";
+	resultCodeTexts[33] = "MESSAGE_UNKNOWN";
+	resultCodeTexts[34] = "FUNCTION_UNKNOWN";
+
+	// openhatd-specific code texts
+	resultCodeTexts[OPENHATD_INTERRUPTED] = "INTERRUPTED";
+	resultCodeTexts[OPENHATD_TEST_FAILED] = "TEST_FAILED";
 }
 
 AbstractOpenHAT::~AbstractOpenHAT(void) {
@@ -205,13 +209,17 @@ void AbstractOpenHAT::showHelp(void) {
 	this->println("  -p <name=value>: set config parameter $name to value");
 }
 
+uint64_t AbstractOpenHAT::getCurrentFrame(void) {
+	return this->currentFrame;
+}
+
 std::string AbstractOpenHAT::getTimestampStr(void) {
 	return Poco::DateTimeFormatter::format(Poco::LocalDateTime(), this->timestampFormat);
 }
 
-std::string AbstractOpenHAT::getOPDIResult(uint8_t code) {
-	OPDICodeTexts::const_iterator it = this->opdiCodeTexts.find(code);
-	if (it == this->opdiCodeTexts.end())
+std::string AbstractOpenHAT::getResultCodeText(uint8_t code) {
+	ResultCodeTexts::const_iterator it = this->resultCodeTexts.find(code);
+	if (it == this->resultCodeTexts.end())
 		return std::string("Unknown status code: ") + to_string((int)code);
 	return it->second;
 }
@@ -230,7 +238,7 @@ ConfigurationView* AbstractOpenHAT::readConfiguration(const std::string& filenam
 std::string AbstractOpenHAT::getConfigString(Poco::Util::AbstractConfiguration* config, const std::string &section, const std::string &key, const std::string &defaultValue, const bool isRequired) {
 	if (isRequired) {
 		if (!config->hasProperty(key)) {
-			this->throwSettingsException("Expected configuration parameter not found in section '" + section + "'", key);
+			this->throwSettingException("Expected configuration parameter not found in section '" + section + "'", key);
 		}
 	}
 	return config->getString(key, defaultValue);
@@ -290,7 +298,6 @@ int AbstractOpenHAT::startup(const std::vector<std::string>& args, const std::ma
 	this->environment["$LOG_DATETIME"] = Poco::DateTimeFormatter::format(Poco::LocalDateTime(), "%Y%m%d_%H%M%S");
 	this->environment["$CWD"] = Poco::Path::current();
 
-	this->shutdownRequested = false;
 	std::string configFile;
 
 	// evaluate arguments
@@ -407,6 +414,11 @@ int AbstractOpenHAT::startup(const std::vector<std::string>& args, const std::ma
 
 	int result = this->setupConnection(configuration, testMode);
 
+	// special case: shutdown requested by test port?
+	if (result == OPENHATD_TEST_EXIT)
+		// return status code 0 (for automatic testing)
+		result = OPDI_STATUS_OK;
+
 	// save persistent configuration when exiting
 	this->savePersistentConfig();
 
@@ -419,7 +431,7 @@ void AbstractOpenHAT::lockResource(const std::string& resourceID, const std::str
 	LockedResources::const_iterator it = this->lockedResources.find(resourceID);
 	// resource already used?
 	if (it != this->lockedResources.end())
-		this->throwSettingsException("Resource requested by " + lockerID + " is already in use by " + it->second + ": " + resourceID);
+		this->throwSettingException("Resource requested by " + lockerID + " is already in use by " + it->second + ": " + resourceID);
 
 	// store the resource
 	this->lockedResources[resourceID] = lockerID;
@@ -483,11 +495,11 @@ void AbstractOpenHAT::unusedConfigKeysDetected(const std::string & viewName, con
 	}
 }
 
-void AbstractOpenHAT::throwSettingsException(const std::string & message, const std::string& detail) {
+void AbstractOpenHAT::throwSettingException(const std::string & message, const std::string& detail) {
 	// do not output unused parameter messages after this call
 	this->suppressUnusedParameterMessages = true;
 
-	throw SettingsException(message, detail);
+	throw SettingException(message, detail);
 }
 
 std::string AbstractOpenHAT::setupGeneralConfiguration(ConfigurationView* config) {
@@ -560,12 +572,12 @@ void AbstractOpenHAT::configureEncryption(ConfigurationView* config) {
 	if (type == "AES") {
 		std::string key = config->getString("Key", "");
 		if (key.length() != 16)
-			this->throwSettingsException("AES encryption setting 'Key' must be specified and 16 characters long");
+			this->throwSettingException("AES encryption setting 'Key' must be specified and 16 characters long");
 
 		strncpy(opdi_encryption_method, "AES", ENCRYPTION_METHOD_MAXLENGTH);
 		strncpy(opdi_encryption_key, key.c_str(), ENCRYPTION_KEY_MAXLENGTH);
 	} else
-		this->throwSettingsException("Encryption type not supported, expected 'AES': " + type);
+		this->throwSettingException("Encryption type not supported, expected 'AES': " + type);
 }
 
 void AbstractOpenHAT::configureAuthentication(ConfigurationView* config) {
@@ -575,7 +587,7 @@ void AbstractOpenHAT::configureAuthentication(ConfigurationView* config) {
 	if (type == "Login") {
 		std::string username = config->getString("Username", "");
 		if (username == "")
-			this->throwSettingsException("Authentication setting 'Username' must be specified");
+			this->throwSettingException("Authentication setting 'Username' must be specified");
 		this->loginUser = username;
 
 		this->loginPassword = config->getString("Password", "");
@@ -583,7 +595,7 @@ void AbstractOpenHAT::configureAuthentication(ConfigurationView* config) {
 		// flag the device: expect authentication
 		opdi_device_flags |= OPDI_FLAG_AUTHENTICATION_REQUIRED;
 	} else
-		this->throwSettingsException("Authentication type not supported, expected 'Login': " + type);
+		this->throwSettingException("Authentication type not supported, expected 'Login': " + type);
 }
 
 /** Reads common properties from the configuration and configures the port group. */
@@ -646,7 +658,7 @@ std::string AbstractOpenHAT::resolveRelativePath(ConfigurationView* config, cons
 		// determine plugin-relative path depending on location of plugin file
 		std::string pluginFile = manualPath;
 		if (pluginFile == "")
-			this->throwSettingsException("Programming error: Plugin file path not specified");
+			this->throwSettingException("Programming error: Plugin file path not specified");
 		Poco::Path pluginFilePath(pluginFile);
 		Poco::Path parentPath = pluginFilePath.parent();
 		this->logDebug("Resolving path '" + path + "' relative to plugin file path '" + parentPath.toString() + "'");
@@ -666,7 +678,7 @@ std::string AbstractOpenHAT::resolveRelativePath(ConfigurationView* config, cons
 		// determine configuration-relative path depending on location of previous config file
 		std::string configFile = config->getString(OPENHAT_CONFIG_FILE_SETTING, "");
 		if (configFile == "")
-			this->throwSettingsException("Programming error: Configuration file path not specified in config settings");
+			this->throwSettingException("Programming error: Configuration file path not specified in config settings");
 		Poco::Path configFilePath(configFile);
 		Poco::Path parentPath = configFilePath.parent();
         this->logDebug("Resolving path '" + path + "' relative to configuration file path '" + parentPath.toString() + "'");
@@ -678,7 +690,7 @@ std::string AbstractOpenHAT::resolveRelativePath(ConfigurationView* config, cons
         if (relativeTo.empty())
             return path;
 
-    this->throwSettingsException("Unknown RelativeTo property specified; expected 'CWD', 'Config' or 'Plugin'", relativeTo);
+    this->throwSettingException("Unknown RelativeTo property specified; expected 'CWD', 'Config' or 'Plugin'", relativeTo);
 	return "";
 }
 
@@ -758,7 +770,7 @@ void AbstractOpenHAT::configurePort(ConfigurationView* portConfig, opdi::Port* p
 	} else if (portDirCaps == "Bidi") {
 		port->setDirCaps(OPDI_PORTDIRCAP_BIDI);
 	} else if (portDirCaps != "")
-		this->throwSettingsException(port->ID() + ": Unknown DirCaps specified; expected 'Input', 'Output' or 'Bidi'", portDirCaps);
+		this->throwSettingException(port->ID() + ": Unknown DirCaps specified; expected 'Input', 'Output' or 'Bidi'", portDirCaps);
 
 /*	port flags are managed internally
 
@@ -782,14 +794,14 @@ void AbstractOpenHAT::configurePort(ConfigurationView* portConfig, opdi::Port* p
 		port->setRefreshMode(opdi::Port::RefreshMode::REFRESH_AUTO);
 	} else
 		if (refreshMode != "")
-			this->throwSettingsException(port->ID() + ": Unknown RefreshMode specified; expected 'Off', 'Periodic' or 'Auto': " + refreshMode);
+			this->throwSettingException(port->ID() + ": Unknown RefreshMode specified; expected 'Off', 'Periodic' or 'Auto': " + refreshMode);
 
 	if (port->getRefreshMode() == opdi::Port::RefreshMode::REFRESH_PERIODIC) {
 		int time = portConfig->getInt("RefreshTime", -1);
 		if (time >= 0) {
 			port->setPeriodicRefreshTime(time);
 		} else {
-			this->throwSettingsException(port->ID() + ": A RefreshTime > 0 must be specified in Periodic refresh mode: " + to_string(time));
+			this->throwSettingException(port->ID() + ": A RefreshTime > 0 must be specified in Periodic refresh mode: " + to_string(time));
 		}
 	}
 
@@ -833,7 +845,7 @@ void AbstractOpenHAT::configureDigitalPort(ConfigurationView* portConfig, opdi::
 	} else if (portMode == "Output") {
 		port->setMode(OPDI_DIGITAL_MODE_OUTPUT);
 	} else if (portMode != "")
-		this->throwSettingsException("Unknown Mode specified; expected 'Input', 'Input with pullup', 'Input with pulldown', or 'Output'", portMode);
+		this->throwSettingException("Unknown Mode specified; expected 'Input', 'Input with pullup', 'Input with pulldown', or 'Output'", portMode);
 
 	std::string portLine = this->getConfigString(stateConfig, port->ID(), "Line", "", false);
 	if (portLine == "High") {
@@ -841,7 +853,7 @@ void AbstractOpenHAT::configureDigitalPort(ConfigurationView* portConfig, opdi::
 	} else if (portLine == "Low") {
 		port->setLine(0);
 	} else if (portLine != "")
-		this->throwSettingsException("Unknown Line specified; expected 'Low' or 'High'", portLine);
+		this->throwSettingException("Unknown Line specified; expected 'Low' or 'High'", portLine);
 }
 
 void AbstractOpenHAT::setupEmulatedDigitalPort(ConfigurationView* portConfig, const std::string& port) {
@@ -934,7 +946,7 @@ void AbstractOpenHAT::configureSelectPort(ConfigurationView* portConfig, Configu
 		}
 
 		if (orderedLabels.size() == 0)
-			this->throwSettingsException("The select port " + std::string(port->ID()) + " requires at least one label in its config section", std::string(port->ID()) + ".Label");
+			this->throwSettingException("The select port " + std::string(port->ID()) + " requires at least one label in its config section", std::string(port->ID()) + ".Label");
 
 		// go through items, create ordered list of char* items
 		std::vector<const char*> charLabels;
@@ -955,7 +967,7 @@ void AbstractOpenHAT::configureSelectPort(ConfigurationView* portConfig, Configu
 	if (stateConfig->getString("Position", "") != "") {
 		int16_t position = stateConfig->getInt("Position", 0);
 		if ((position < 0) || (position > port->getMaxPosition()))
-			this->throwSettingsException("Wrong select port setting: Position is out of range: " + to_string(position));
+			this->throwSettingException("Wrong select port setting: Position is out of range: " + to_string(position));
 		port->setPosition(position);
 	}
 }
@@ -976,10 +988,10 @@ void AbstractOpenHAT::configureDialPort(ConfigurationView* portConfig, opdi::Dia
 		int64_t min = portConfig->getInt64("Min", port->getMin());
 		int64_t max = portConfig->getInt64("Max", port->getMax());
 		if (min >= max)
-			this->throwSettingsException("Wrong dial port setting: Max (" + to_string(max) + ") must be greater than Min (" + to_string(min) + ")");
+			this->throwSettingException("Wrong dial port setting: Max (" + to_string(max) + ") must be greater than Min (" + to_string(min) + ")");
 		int64_t step = portConfig->getInt64("Step", port->getStep());
 		if (step < 1)
-			this->throwSettingsException("Wrong dial port setting: Step may not be negative or zero: " + to_string(step));
+			this->throwSettingException("Wrong dial port setting: Step may not be negative or zero: " + to_string(step));
 
 		port->setMin(min);
 		port->setMax(max);
@@ -1002,7 +1014,7 @@ void AbstractOpenHAT::configureDialPort(ConfigurationView* portConfig, opdi::Dia
 			if (history == "Day") {
 				aggPort->totalValues = 1440;
 			} else
-				this->throwSettingsException(port->ID() + ": Value for 'History' not supported, expected 'Hour' or 'Day': " + history);
+				this->throwSettingException(port->ID() + ": Value for 'History' not supported, expected 'Hour' or 'Day': " + history);
 			aggPort->setHidden(true);
 			// set the standard log verbosity of hidden automatic aggregators to "Normal" because they can sometimes generate a log of log spam
 			// if the dial port's log verbosity is defined, the aggregator uses the same value
@@ -1024,7 +1036,7 @@ void AbstractOpenHAT::configureDialPort(ConfigurationView* portConfig, opdi::Dia
 	// set port error to invalid if the value is out of range
 	if ((position < port->getMin()) || (position > port->getMax()))
 		port->setError(opdi::Port::Error::VALUE_NOT_AVAILABLE);
-		//this->throwSettingsException("Wrong dial port setting: Position is out of range: " + to_string(position));
+		//this->throwSettingException("Wrong dial port setting: Position is out of range: " + to_string(position));
 	else
 		port->setPosition(position);
 }
@@ -1203,7 +1215,11 @@ void AbstractOpenHAT::setupNode(ConfigurationView* config, const std::string& no
 		this->setupPort<InfluxDBPort>(nodeConfig, node);
 	}
 	else
-		this->throwSettingsException("Invalid configuration: Unknown node type: " + nodeType);
+	if (nodeType == "Test") {
+		this->setupPortEx<TestPort>(nodeConfig, config, node);
+	}
+	else
+		this->throwSettingException("Invalid configuration: Unknown node type: " + nodeType);
 }
 
 void AbstractOpenHAT::setupRoot(ConfigurationView* config) {
@@ -1268,10 +1284,11 @@ int AbstractOpenHAT::setupConnection(ConfigurationView* configuration, bool test
 		std::string interface_ = this->getConfigString(config, "Connection", "Interface", "*", false);
 
 		if (interface_ != "*")
-			this->throwSettingsException("Connection interface: Sorry, values other than '*' are currently not supported");
+			this->throwSettingException("Connection interface: Sorry, values other than '*' are currently not supported");
 
 		int port = config->getInt("Port", DEFAULT_TCP_PORT);
 
+		// test mode causes immediate exit
 		if (testMode)
 			return OPDI_STATUS_OK;
 
@@ -1285,7 +1302,7 @@ int AbstractOpenHAT::setupConnection(ConfigurationView* configuration, bool test
 		return this->setupTCP(interface_, port);
 	}
 	else
-		this->throwSettingsException("Invalid configuration; unknown connection transport", connectionTransport);
+		this->throwSettingException("Invalid configuration; unknown connection transport", connectionTransport);
 	return OPDI_STATUS_OK;
 }
 
@@ -1313,6 +1330,8 @@ void AbstractOpenHAT::warnIfPluginMoreRecent(const std::string& driver) {
 
 uint8_t AbstractOpenHAT::waiting(uint8_t canSend) {
 	uint8_t result;
+
+	this->currentFrame++;
 
 	// add up microseconds of idle time
 	this->totalMicroseconds += this->idleStopwatch.elapsed();
@@ -1694,18 +1713,18 @@ uint8_t opdi_get_digital_port_state(opdi_Port* port, char mode[], char line[]) {
 		dPort->getState(&dMode, &dLine);
 		mode[0] = '0' + dMode;
 		line[0] = '0' + dLine;
-	} catch (opdi::Port::ValueUnavailable) {
+	} catch (opdi::Port::ValueUnavailableException) {
 		// TODO localize message
 		opdi_set_port_message("Value unavailable");
 		return OPDI_PORT_ERROR;
-	} catch (opdi::Port::ValueExpired) {
+	} catch (opdi::Port::ValueExpiredException) {
 		// TODO localize message
 		opdi_set_port_message("Value expired");
 		return OPDI_PORT_ERROR;
 	} catch (opdi::Port::PortError &pe) {
 		opdi_set_port_message(pe.message().c_str());
 		return OPDI_PORT_ERROR;
-	} catch (opdi::Port::AccessDenied &ad) {
+	} catch (opdi::Port::AccessDeniedException &ad) {
 		opdi_set_port_message(ad.message().c_str());
 		return OPDI_PORT_ACCESS_DENIED;
 	}
@@ -1731,7 +1750,7 @@ uint8_t opdi_set_digital_port_line(opdi_Port* port, const char line[]) {
 	} catch (opdi::Port::PortError &pe) {
 		opdi_set_port_message(pe.message().c_str());
 		return OPDI_PORT_ERROR;
-	} catch (opdi::Port::AccessDenied &ad) {
+	} catch (opdi::Port::AccessDeniedException &ad) {
 		opdi_set_port_message(ad.message().c_str());
 		return OPDI_PORT_ACCESS_DENIED;
 	}
@@ -1758,7 +1777,7 @@ uint8_t opdi_set_digital_port_mode(opdi_Port* port, const char mode[]) {
 	} catch (opdi::Port::PortError &pe) {
 		opdi_set_port_message(pe.message().c_str());
 		return OPDI_PORT_ERROR;
-	} catch (opdi::Port::AccessDenied &ad) {
+	} catch (opdi::Port::AccessDeniedException &ad) {
 		opdi_set_port_message(ad.message().c_str());
 		return OPDI_PORT_ACCESS_DENIED;
 	}
@@ -1780,18 +1799,18 @@ uint8_t opdi_get_analog_port_state(opdi_Port* port, char mode[], char res[], cha
 
 	try {
 		aPort->getState(&aMode, &aRes, &aRef, value);
-	} catch (opdi::Port::ValueUnavailable) {
+	} catch (opdi::Port::ValueUnavailableException) {
 		// TODO localize message
 		opdi_set_port_message("Value unavailable");
 		return OPDI_PORT_ERROR;
-	} catch (opdi::Port::ValueExpired) {
+	} catch (opdi::Port::ValueExpiredException) {
 		// TODO localize message
 		opdi_set_port_message("Value expired");
 		return OPDI_PORT_ERROR;
 	} catch (opdi::Port::PortError &pe) {
 		opdi_set_port_message(pe.message().c_str());
 		return OPDI_PORT_ERROR;
-	} catch (opdi::Port::AccessDenied &ad) {
+	} catch (opdi::Port::AccessDeniedException &ad) {
 		opdi_set_port_message(ad.message().c_str());
 		return OPDI_PORT_ACCESS_DENIED;
 	}
@@ -1815,7 +1834,7 @@ uint8_t opdi_set_analog_port_value(opdi_Port* port, int32_t value) {
 	} catch (opdi::Port::PortError &pe) {
 		opdi_set_port_message(pe.message().c_str());
 		return OPDI_PORT_ERROR;
-	} catch (opdi::Port::AccessDenied &ad) {
+	} catch (opdi::Port::AccessDeniedException &ad) {
 		opdi_set_port_message(ad.message().c_str());
 		return OPDI_PORT_ACCESS_DENIED;
 	}
@@ -1843,7 +1862,7 @@ uint8_t opdi_set_analog_port_mode(opdi_Port* port, const char mode[]) {
 	} catch (opdi::Port::PortError &pe) {
 		opdi_set_port_message(pe.message().c_str());
 		return OPDI_PORT_ERROR;
-	} catch (opdi::Port::AccessDenied &ad) {
+	} catch (opdi::Port::AccessDeniedException &ad) {
 		opdi_set_port_message(ad.message().c_str());
 		return OPDI_PORT_ACCESS_DENIED;
 	}
@@ -1867,7 +1886,7 @@ uint8_t opdi_set_analog_port_resolution(opdi_Port* port, const char res[]) {
 	} catch (opdi::Port::PortError &pe) {
 		opdi_set_port_message(pe.message().c_str());
 		return OPDI_PORT_ERROR;
-	} catch (opdi::Port::AccessDenied &ad) {
+	} catch (opdi::Port::AccessDeniedException &ad) {
 		opdi_set_port_message(ad.message().c_str());
 		return OPDI_PORT_ACCESS_DENIED;
 	}
@@ -1891,7 +1910,7 @@ uint8_t opdi_set_analog_port_reference(opdi_Port* port, const char ref[]) {
 	} catch (opdi::Port::PortError &pe) {
 		opdi_set_port_message(pe.message().c_str());
 		return OPDI_PORT_ERROR;
-	} catch (opdi::Port::AccessDenied &ad) {
+	} catch (opdi::Port::AccessDeniedException &ad) {
 		opdi_set_port_message(ad.message().c_str());
 		return OPDI_PORT_ACCESS_DENIED;
 	}
@@ -1909,18 +1928,18 @@ uint8_t opdi_get_select_port_state(opdi_Port* port, uint16_t* position) {
 
 	try {
 		sPort->getState(position);
-	} catch (opdi::Port::ValueUnavailable) {
+	} catch (opdi::Port::ValueUnavailableException) {
 		// TODO localize message
 		opdi_set_port_message("Value unavailable");
 		return OPDI_PORT_ERROR;
-	} catch (opdi::Port::ValueExpired) {
+	} catch (opdi::Port::ValueExpiredException) {
 		// TODO localize message
 		opdi_set_port_message("Value expired");
 		return OPDI_PORT_ERROR;
 	} catch (opdi::Port::PortError &pe) {
 		opdi_set_port_message(pe.message().c_str());
 		return OPDI_PORT_ERROR;
-	} catch (opdi::Port::AccessDenied &ad) {
+	} catch (opdi::Port::AccessDeniedException &ad) {
 		opdi_set_port_message(ad.message().c_str());
 		return OPDI_PORT_ACCESS_DENIED;
 	}
@@ -1940,7 +1959,7 @@ uint8_t opdi_set_select_port_position(opdi_Port* port, uint16_t position) {
 	} catch (opdi::Port::PortError &pe) {
 		opdi_set_port_message(pe.message().c_str());
 		return OPDI_PORT_ERROR;
-	} catch (opdi::Port::AccessDenied &ad) {
+	} catch (opdi::Port::AccessDeniedException &ad) {
 		opdi_set_port_message(ad.message().c_str());
 		return OPDI_PORT_ACCESS_DENIED;
 	}
@@ -1958,18 +1977,18 @@ uint8_t opdi_get_dial_port_state(opdi_Port* port, int64_t* position) {
 
 	try {
 		dPort->getState(position);
-	} catch (opdi::Port::ValueUnavailable) {
+	} catch (opdi::Port::ValueUnavailableException) {
 		// TODO localize message
 		opdi_set_port_message("Value unavailable");
 		return OPDI_PORT_ERROR;
-	} catch (opdi::Port::ValueExpired) {
+	} catch (opdi::Port::ValueExpiredException) {
 		// TODO localize message
 		opdi_set_port_message("Value expired");
 		return OPDI_PORT_ERROR;
 	} catch (opdi::Port::PortError &pe) {
 		opdi_set_port_message(pe.message().c_str());
 		return OPDI_PORT_ERROR;
-	} catch (opdi::Port::AccessDenied &ad) {
+	} catch (opdi::Port::AccessDeniedException &ad) {
 		opdi_set_port_message(ad.message().c_str());
 		return OPDI_PORT_ACCESS_DENIED;
 	}
@@ -1989,7 +2008,7 @@ uint8_t opdi_set_dial_port_position(opdi_Port* port, int64_t position) {
 	} catch (opdi::Port::PortError &pe) {
 		opdi_set_port_message(pe.message().c_str());
 		return OPDI_PORT_ERROR;
-	} catch (opdi::Port::AccessDenied &ad) {
+	} catch (opdi::Port::AccessDeniedException &ad) {
 		opdi_set_port_message(ad.message().c_str());
 		return OPDI_PORT_ACCESS_DENIED;
 	}

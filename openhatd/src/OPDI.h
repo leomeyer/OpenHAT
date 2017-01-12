@@ -46,6 +46,8 @@ protected:
 	// used to remember internal ordering when adding ports
 	int currentOrderID;
 
+	int shutdownExitCode;
+
 	// list pointers
 	PortList ports;
 	PortGroupList groups;
@@ -67,9 +69,10 @@ protected:
 	virtual void logErr(const std::string& message) = 0;
 
 	virtual void logWarn(const std::string& message) = 0;
-public:
 
-	// indicates that the OPDI system should shutdown
+public:
+	/// Flag that indicates that the OPDI system is being shutdown
+	///
 	bool shutdownRequested;
 
 	/** Prepares the OPDI class for use.
@@ -183,7 +186,7 @@ public:
 	virtual uint8_t messageHandled(channel_t channel, const char** parts);
 
 	/** Disconnects a master if connected and releases resources. Frees all ports and stops message processing. */
-	virtual void shutdown(void);
+	virtual void shutdown(int exitCode);
 
 	/** Makes the port state persistent if the implementation supports it. */
 	virtual void persist(opdi::Port* port);

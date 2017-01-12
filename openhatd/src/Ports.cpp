@@ -80,23 +80,23 @@ void LogicPort::configure(ConfigurationView* config) {
 			}
 		}
 	} catch (...) {
-		this->openhat->throwSettingsException(std::string("Syntax error for LogicPort ") + this->getID() + ", Function setting: Expected OR, AND, XOR, ATLEAST <n>, ATMOST <n> or EXACT <n>");
+		this->openhat->throwSettingException(std::string("Syntax error for LogicPort ") + this->getID() + ", Function setting: Expected OR, AND, XOR, ATLEAST <n>, ATMOST <n> or EXACT <n>");
 	}
 
 	if (this->function == UNKNOWN)
-		this->openhat->throwSettingsException("Unknown function specified for LogicPort: " + function);
+		this->openhat->throwSettingException("Unknown function specified for LogicPort: " + function);
 	if ((this->function == ATLEAST) && (this->funcN <= 0))
-		this->openhat->throwSettingsException("Expected positive integer for function ATLEAST of LogicPort: " + function);
+		this->openhat->throwSettingException("Expected positive integer for function ATLEAST of LogicPort: " + function);
 	if ((this->function == ATMOST) && (this->funcN <= 0))
-		this->openhat->throwSettingsException("Expected positive integer for function ATMOST of LogicPort: " + function);
+		this->openhat->throwSettingException("Expected positive integer for function ATMOST of LogicPort: " + function);
 	if ((this->function == EXACT) && (this->funcN <= 0))
-		this->openhat->throwSettingsException("Expected positive integer for function EXACT of LogicPort: " + function);
+		this->openhat->throwSettingException("Expected positive integer for function EXACT of LogicPort: " + function);
 
 	this->negate = config->getBool("Negate", false);
 
 	this->inputPortStr = config->getString("InputPorts", "");
 	if (this->inputPortStr == "")
-		this->openhat->throwSettingsException("Expected at least one input port for LogicPort");
+		this->openhat->throwSettingException("Expected at least one input port for LogicPort");
 
 	this->outputPortStr = config->getString("OutputPorts", "");
 	this->inverseOutputPortStr = config->getString("InverseOutputPorts", "");
@@ -247,7 +247,7 @@ void PulsePort::configure(ConfigurationView* config) {
 	} else if (portLine == "Low") {
 		this->setLine(0);
 	} else if (portLine != "")
-		this->openhat->throwSettingsException("Unknown Line specified; expected 'Low' or 'High'", portLine);
+		this->openhat->throwSettingException("Unknown Line specified; expected 'Low' or 'High'", portLine);
 
 	std::string disabledState = config->getString("DisabledState", "");
 	if (disabledState == "High") {
@@ -255,7 +255,7 @@ void PulsePort::configure(ConfigurationView* config) {
 	} else if (disabledState == "Low") {
 		this->disabledState = 0;
 	} else if (disabledState != "")
-		this->openhat->throwSettingsException("Unknown DisabledState specified; expected 'Low' or 'High'", disabledState);
+		this->openhat->throwSettingException("Unknown DisabledState specified; expected 'Low' or 'High'", disabledState);
 
 	this->enablePortStr = config->getString("EnablePorts", "");
 	this->outputPortStr = config->getString("OutputPorts", "");
@@ -263,18 +263,18 @@ void PulsePort::configure(ConfigurationView* config) {
 
 	this->period.initialize(this, "Period", config->getString("Period", "-1"));
 	if (!this->period.validate(1, INT_MAX))
-		this->openhat->throwSettingsException("Specify a positive integer value for the Period setting of a PulsePort: " + this->to_string(this->period.value()));
+		this->openhat->throwSettingException("Specify a positive integer value for the Period setting of a PulsePort: " + this->to_string(this->period.value()));
 
 	// duty cycle is specified in percent
 	this->dutyCycle.initialize(this, "DutyCycle", config->getString("DutyCycle", "50"));
 	if (!this->dutyCycle.validate(0, 100))
-		this->openhat->throwSettingsException("Specify a percentage value from 0 - 100 for the DutyCycle setting of a PulsePort: " + this->to_string(this->dutyCycle.value()));
+		this->openhat->throwSettingException("Specify a percentage value from 0 - 100 for the DutyCycle setting of a PulsePort: " + this->to_string(this->dutyCycle.value()));
 
 	// number of pulses
 	if (config->hasProperty("Pulses")) {
 		this->pulses.initialize(this, "Pulses", config->getString("Pulses", "-1"));
 		if (!this->pulses.validate(1, INT_MAX))
-			this->openhat->throwSettingsException("Specify a positive integer value for the Pulses setting of a PulsePort: " + this->to_string(this->pulses.value()));
+			this->openhat->throwSettingException("Specify a positive integer value for the Pulses setting of a PulsePort: " + this->to_string(this->pulses.value()));
 	}
 }
 
@@ -414,13 +414,13 @@ void SelectorPort::configure(ConfigurationView* config) {
 
 	this->selectPortStr = config->getString("SelectPort", "");
 	if (this->selectPortStr == "")
-		this->openhat->throwSettingsException(this->ID() + ": You have to specify the SelectPort");
+		this->openhat->throwSettingException(this->ID() + ": You have to specify the SelectPort");
 
 	this->outputPortStr = config->getString("OutputPorts", "");
 
 	int pos = config->getInt("Position", -1);
 	if ((pos < 0) || (pos > 65535))
-		this->openhat->throwSettingsException(this->ID() + ": You have to specify a SelectPort position that is greater than -1 and lower than 65536");
+		this->openhat->throwSettingException(this->ID() + ": You have to specify a SelectPort position that is greater than -1 and lower than 65536");
 
 	this->position = pos;
 }
@@ -452,7 +452,7 @@ void SelectorPort::prepare() {
 
 	// check position range
 	if (this->position > this->selectPort->getMaxPosition())
-		this->openhat->throwSettingsException(this->ID() + ": The specified selector position exceeds the maximum of port " + this->selectPort->ID() + ": " + to_string(this->selectPort->getMaxPosition()));
+		this->openhat->throwSettingException(this->ID() + ": The specified selector position exceeds the maximum of port " + this->selectPort->ID() + ": " + to_string(this->selectPort->getMaxPosition()));
 }
 
 uint8_t SelectorPort::doWork(uint8_t canSend)  {
@@ -600,7 +600,7 @@ void SerialStreamingPort::configure(ConfigurationView* config) {
 							ctb::SerialPort::NoFlowControl) >= 0) {
 		this->device = this->serialPort;
 	} else {
-		this->openhat->throwSettingsException(this->ID() + ": Unable to open serial port: " + serialPortName);
+		this->openhat->throwSettingException(this->ID() + ": Unable to open serial port: " + serialPortName);
 	}
 
 	this->logVerbose("Serial port " + serialPortName + " opened successfully");
@@ -613,7 +613,7 @@ void SerialStreamingPort::configure(ConfigurationView* config) {
 		this->mode = PASS_THROUGH;
 	} else
 		if (modeStr != "")
-			this->openhat->throwSettingsException(this->ID() + ": Invalid mode specifier; expected 'Passthrough' or 'Loopback': " + modeStr);
+			this->openhat->throwSettingException(this->ID() + ": Invalid mode specifier; expected 'Passthrough' or 'Loopback': " + modeStr);
 }
 
 int SerialStreamingPort::write(char* bytes, size_t length) {
@@ -744,7 +744,7 @@ void LoggerPort::configure(ConfigurationView* config) {
 
 	std::string formatStr = config->getString("Format", "CSV");
 	if (formatStr != "CSV")
-		this->openhat->throwSettingsException(this->ID() + ": Formats other than CSV are currently not supported");
+		this->openhat->throwSettingException(this->ID() + ": Formats other than CSV are currently not supported");
 
 	std::string outFileStr = config->getString("OutputFile", "");
 	if (outFileStr != "") {
@@ -756,7 +756,7 @@ void LoggerPort::configure(ConfigurationView* config) {
 		// open the stream in append mode
 		this->outFile.open(outFileStr, std::ios_base::app);
 	} else
-		this->openhat->throwSettingsException(this->ID() + ": The OutputFile setting must be specified");
+		this->openhat->throwSettingException(this->ID() + ": The OutputFile setting must be specified");
 
 	this->portsToLogStr = this->openhat->getConfigString(config, this->ID(), "Ports", "", true);
 }
@@ -807,25 +807,25 @@ void FaderPort::configure(ConfigurationView* config) {
 	else if (modeStr == "Exponential")
 		this->mode = EXPONENTIAL;
 	else if (modeStr != "")
-		this->openhat->throwSettingsException(this->ID() + ": Invalid FadeMode setting specified; expected 'Linear' or 'Exponential': " + modeStr);
+		this->openhat->throwSettingException(this->ID() + ": Invalid FadeMode setting specified; expected 'Linear' or 'Exponential': " + modeStr);
 
 	this->leftValue.initialize(this, "Left", config->getString("Left", "-1"));
 	if (!this->leftValue.validate(0.0, 100.0))
-		this->openhat->throwSettingsException(this->ID() + ": Value for 'Left' must be between 0 and 100 percent");
+		this->openhat->throwSettingException(this->ID() + ": Value for 'Left' must be between 0 and 100 percent");
 	this->rightValue.initialize(this, "Right", config->getString("Right", "-1"));
 	if (!this->rightValue.validate(0.0, 100.0))
-		this->openhat->throwSettingsException(this->ID() + ": Value for 'Right' must be between 0 and 100 percent");
+		this->openhat->throwSettingException(this->ID() + ": Value for 'Right' must be between 0 and 100 percent");
 	this->durationMsValue.initialize(this, "Duration", config->getString("Duration", "-1"));
 	if (!this->durationMsValue.validate(0, INT_MAX))
-		this->openhat->throwSettingsException(this->ID() + ": 'Duration' must be a positive non-zero value (in milliseconds)");
+		this->openhat->throwSettingException(this->ID() + ": 'Duration' must be a positive non-zero value (in milliseconds)");
 
 	if (this->mode == EXPONENTIAL) {
 		this->expA = config->getDouble("ExpA", 1);
 		if (this->expA < 0.0)
-			this->openhat->throwSettingsException(this->ID() + ": Value for 'ExpA' must be greater than 0 (default: 1)");
+			this->openhat->throwSettingException(this->ID() + ": Value for 'ExpA' must be greater than 0 (default: 1)");
 		this->expB = config->getDouble("ExpB", 10);
 		if (this->expB < 0.0)
-			this->openhat->throwSettingsException(this->ID() + ": Value for 'ExpB' must be greater than 0 (default: 10)");
+			this->openhat->throwSettingException(this->ID() + ": Value for 'ExpB' must be greater than 0 (default: 10)");
 
 		// determine maximum result of the exponentiation, depending on the coefficients expA and expB
 		this->expMax = this->expA * (exp(this->expB) - 1);
@@ -841,7 +841,7 @@ void FaderPort::configure(ConfigurationView* config) {
 	if (switchOffActionStr == "None") {
 		this->switchOffAction = NONE;
 	} else
-		this->openhat->throwSettingsException(this->ID() + ": Illegal value for 'SwitchOffAction', expected 'SetToLeft', 'SetToRight', or 'None': " + switchOffActionStr);
+		this->openhat->throwSettingException(this->ID() + ": Illegal value for 'SwitchOffAction', expected 'SetToLeft', 'SetToRight', or 'None': " + switchOffActionStr);
 
 	this->outputPortStr = openhat->getConfigString(config, this->ID(), "OutputPorts", "", true);
 	this->endSwitchesStr = openhat->getConfigString(config, this->ID(), "EndSwitches", "", false);
@@ -1036,7 +1036,7 @@ void SceneSelectPort::configure(ConfigurationView* config, ConfigurationView* pa
 	for (auto it = itemKeys.begin(), ite = itemKeys.end(); it != ite; ++it) {
 		int itemNumber;
 		if (!Poco::NumberParser::tryParse(*it, itemNumber) || (itemNumber < 0)) {
-			this->openhat->throwSettingsException(this->ID() + ": Scene identifiers must be numeric integer values greater or equal than 0; got: " + this->to_string(itemNumber));
+			this->openhat->throwSettingException(this->ID() + ": Scene identifiers must be numeric integer values greater or equal than 0; got: " + this->to_string(itemNumber));
 		}
 		// insert at the correct position to create a sorted list of items
 		auto nli = orderedItems.begin();
@@ -1051,7 +1051,7 @@ void SceneSelectPort::configure(ConfigurationView* config, ConfigurationView* pa
 	}
 
 	if (orderedItems.size() == 0)
-		this->openhat->throwSettingsException(this->ID() + ": A scene select port requires at least one scene in its config section", this->ID() + ".Scenes");
+		this->openhat->throwSettingException(this->ID() + ": A scene select port requires at least one scene in its config section", this->ID() + ".Scenes");
 
 	// go through items, create ordered list of char* items
 	auto nli = orderedItems.begin();
@@ -1065,7 +1065,7 @@ void SceneSelectPort::configure(ConfigurationView* config, ConfigurationView* pa
 
 	// check whether port items and file match in numbers
 	if ((uint32_t)(this->getMaxPosition() + 1) != this->fileList.size()) 
-		this->openhat->throwSettingsException(this->ID() + ": The number of scenes (" + this->to_string(this->fileList.size()) + ")"
+		this->openhat->throwSettingException(this->ID() + ": The number of scenes (" + this->to_string(this->fileList.size()) + ")"
 			+ " must match the number of items (" + this->to_string(this->getMaxPosition() + 1) + ")");
 }
 
@@ -1416,7 +1416,7 @@ void FilePort::configure(ConfigurationView* config, ConfigurationView* parentCon
 		this->openhat->configureDigitalPort(nodeConfig, (opdi::DigitalPort*)valuePort);
 		// validate setup
 		if (((opdi::DigitalPort*)valuePort)->getMode() != OPDI_DIGITAL_MODE_INPUT_FLOATING)
-			this->openhat->throwSettingsException(this->ID() + ": Modes other than 'Input' are not supported for a digital file port: " + portNode);
+			this->openhat->throwSettingException(this->ID() + ": Modes other than 'Input' are not supported for a digital file port: " + portNode);
 	} else
 	if (portType == "AnalogPort") {
 		this->portType = ANALOG_PORT;
@@ -1424,7 +1424,7 @@ void FilePort::configure(ConfigurationView* config, ConfigurationView* parentCon
 		this->openhat->configureAnalogPort(nodeConfig, (opdi::AnalogPort*)valuePort);
 		// validate setup
 		if (((opdi::AnalogPort*)valuePort)->getMode() != OPDI_ANALOG_MODE_INPUT)
-			this->openhat->throwSettingsException(this->ID() + ": Modes other than 'Input' are not supported for a analog file port: " + portNode);
+			this->openhat->throwSettingException(this->ID() + ": Modes other than 'Input' are not supported for a analog file port: " + portNode);
 	} else
 	if (portType == "DialPort") {
 		this->portType = DIAL_PORT;
@@ -1440,7 +1440,7 @@ void FilePort::configure(ConfigurationView* config, ConfigurationView* parentCon
 		this->portType = STREAMING_PORT;
 		throw Poco::NotImplementedException("Streaming port support not yet implemented");
 	} else
-		this->openhat->throwSettingsException(this->ID() + ": Node " + portNode + ": Type unsupported, expected 'DigitalPort', 'AnalogPort', 'DialPort', 'SelectPort', or 'StreamingPort': " + portType);
+		this->openhat->throwSettingException(this->ID() + ": Node " + portNode + ": Type unsupported, expected 'DigitalPort', 'AnalogPort', 'DialPort', 'SelectPort', or 'StreamingPort': " + portType);
 
 	this->openhat->addPort(this->valuePort);
 
@@ -1459,12 +1459,12 @@ void FilePort::configure(ConfigurationView* config, ConfigurationView* parentCon
 
 	this->reloadDelayMs = config->getInt("ReloadDelay", this->reloadDelayMs);
 	if (this->reloadDelayMs < 0) {
-		this->openhat->throwSettingsException(this->ID() + ": If ReloadDelay is specified it must be greater than 0 (ms): " + this->to_string(this->reloadDelayMs));
+		this->openhat->throwSettingException(this->ID() + ": If ReloadDelay is specified it must be greater than 0 (ms): " + this->to_string(this->reloadDelayMs));
 	}
 
 	this->expiryMs = config->getInt("Expiry", this->expiryMs);
 	if (this->expiryMs < 0) {
-		this->openhat->throwSettingsException(this->ID() + ": If Expiry is specified it must be greater than 0 (ms): " + this->to_string(this->expiryMs));
+		this->openhat->throwSettingException(this->ID() + ": If Expiry is specified it must be greater than 0 (ms): " + this->to_string(this->expiryMs));
 	}
 	this->deleteAfterRead = config->getBool("DeleteAfterRead", this->deleteAfterRead);
 
@@ -1820,12 +1820,12 @@ void AggregatorPort::configure(ConfigurationView* config, ConfigurationView* par
 
 	this->queryInterval = config->getInt("Interval", 0);
 	if (this->queryInterval <= 0) {
-		this->openhat->throwSettingsException(this->ID() + ": Please specify a positive value for Interval (in seconds): " + this->to_string(this->queryInterval));
+		this->openhat->throwSettingException(this->ID() + ": Please specify a positive value for Interval (in seconds): " + this->to_string(this->queryInterval));
 	}
 
 	this->totalValues = config->getInt("Values", 0);
 	if (this->totalValues <= 1) {
-		this->openhat->throwSettingsException(this->ID() + ": Please specify a number greater than 1 for Values: " + this->to_string(this->totalValues));
+		this->openhat->throwSettingException(this->ID() + ": Please specify a number greater than 1 for Values: " + this->to_string(this->totalValues));
 	}
 
 	this->multiplier = config->getInt("Multiplier", this->multiplier);
@@ -1889,7 +1889,7 @@ void AggregatorPort::configure(ConfigurationView* config, ConfigurationView* par
 
 		// type must be "DialPort"
 		if (type != "DialPort")
-			this->openhat->throwSettingsException(this->ID() + ": Invalid type for calculation section, must be 'DialPort': " + nodeName);
+			this->openhat->throwSettingException(this->ID() + ": Invalid type for calculation section, must be 'DialPort': " + nodeName);
 
 		// creat the dial port for the calculation
 		Calculation* calc = new Calculation(nodeName);
@@ -1920,7 +1920,7 @@ void AggregatorPort::configure(ConfigurationView* config, ConfigurationView* par
 			calc->algorithm = MAXIMUM;
 			calc->allowIncomplete = true;
 		} else
-			this->openhat->throwSettingsException(this->ID() + ": Algorithm unsupported or not specified; expected 'Delta', 'ArithmeticMean'/'Average', 'Minimum', or 'Maximum': " + algStr);
+			this->openhat->throwSettingException(this->ID() + ": Algorithm unsupported or not specified; expected 'Delta', 'ArithmeticMean'/'Average', 'Minimum', or 'Maximum': " + algStr);
 
 		// override allowIncomplete flag if specified
 		calc->allowIncomplete = calculationConfig->getBool("AllowIncomplete", calc->allowIncomplete);
@@ -2029,7 +2029,7 @@ void TriggerPort::configure(ConfigurationView* config) {
 		this->triggerType = BOTH;
 	else
 		if (triggerTypeStr != "")
-			this->openhat->throwSettingsException(this->ID() + ": Invalid specification for 'Trigger', expected 'RisingEdge', 'FallingEdge', or 'Both'");
+			this->openhat->throwSettingException(this->ID() + ": Invalid specification for 'Trigger', expected 'RisingEdge', 'FallingEdge', or 'Both'");
 
 	std::string changeTypeStr = config->getString("Change", "Toggle");
 	if (changeTypeStr == "SetHigh")
@@ -2042,11 +2042,11 @@ void TriggerPort::configure(ConfigurationView* config) {
 		this->changeType = TOGGLE;
 	else
 		if (changeTypeStr != "")
-			this->openhat->throwSettingsException(this->ID() + ": Invalid specification for 'Change', expected 'SetHigh', 'SetLow', or 'Toggle'");
+			this->openhat->throwSettingException(this->ID() + ": Invalid specification for 'Change', expected 'SetHigh', 'SetLow', or 'Toggle'");
 
 	this->inputPortStr = config->getString("InputPorts", "");
 	if (this->inputPortStr == "")
-		this->openhat->throwSettingsException("Expected at least one input port for TriggerPort");
+		this->openhat->throwSettingException("Expected at least one input port for TriggerPort");
 
 	this->outputPortStr = config->getString("OutputPorts", "");
 	this->inverseOutputPortStr = config->getString("InverseOutputPorts", "");
@@ -2337,6 +2337,168 @@ void InfluxDBPort::prepare() {
 	this->lastLogTime = opdi_get_time_ms();
 
 	this->openhat->findPorts(this->ID(), "Ports", this->portStr, this->ports);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// TestPort
+///////////////////////////////////////////////////////////////////////////////
+
+uint8_t TestPort::doWork(uint8_t canSend) {
+	// test only if High and interval is specified
+	if ((this->line == 0) || (this->interval <= 0))
+		return OPDI_STATUS_OK;
+
+	// check whether the interval time is up, return if not
+	switch (this->timeBase) {
+	case TimeBase::SECONDS:
+		if (opdi_get_time_ms() / 1000 - this->interval > this->lastExecution) {
+			this->lastExecution = opdi_get_time_ms() / 1000;
+			break;
+		}
+		else
+			return OPDI_STATUS_OK;
+	case TimeBase::MILLISECONDS:
+		if (opdi_get_time_ms() - this->interval > this->lastExecution) {
+			this->lastExecution = opdi_get_time_ms();
+			break;
+		}
+		else
+			return OPDI_STATUS_OK;
+	case TimeBase::FRAMES:
+		if (this->openhat->getCurrentFrame() - this->interval > this->lastExecution) {
+			this->lastExecution = this->openhat->getCurrentFrame();
+			break;
+		}
+		else
+			return OPDI_STATUS_OK;
+	}
+	this->logVerbose("Running test cases...");
+	bool testPassed = true;
+
+	// test is due, go through test values
+	auto it = this->testValues.begin();
+	auto ite = this->testValues.end();
+	opdi::Port* port = nullptr;
+	while (it != ite) {
+		// split test property name (expect portID.property)
+		std::vector<std::string> argList;
+		std::stringstream ss(it->first);
+		std::string item;
+		while (std::getline(ss, item, ':')) {
+			if (!item.empty())
+				argList.push_back(item);
+		}
+		// test case definitions are assumed to be validated in configure(), so no need to check again
+		// if (argList.size() != 2) ...
+
+		// check port ID; retrieve port if different
+		if ((port == nullptr) || (port->ID() != argList[0])) {
+			port = this->openhat->findPort(this->id, "test case definition", argList[0], true);
+		}
+		this->logDebug("Testing: " + argList[1] + " == " + it->second);
+		try {
+			// test property against its value
+			port->testValue(argList[1], it->second);
+		}
+		catch (const TestValueMismatchException& tvme) {
+			testPassed = false;
+			// test has failed
+			if (this->warnOnFailure)
+				this->logWarning("Test failed: " + tvme.message());
+			else {
+				this->openhat->logError(this->ID() + ": Test failed: " + tvme.message());
+				return OPENHATD_TEST_FAILED;
+			}
+		}
+		catch (const Poco::Exception& pe) {
+			testPassed = false;
+			if (this->warnOnFailure)
+				this->logWarning("Test failed due to: " + pe.message());
+			else {
+				this->openhat->logError(this->ID() + ": Test failed due to : " + pe.message());
+				return OPENHATD_TEST_FAILED;
+			}
+		}
+
+		++it;
+	}
+
+	if (testPassed)
+		this->logVerbose("Test passed");
+	else
+		this->logVerbose("Test failed");
+
+	if (this->exitAfterTest) {
+		this->logVerbose("Exiting after test. Shutting down...");
+		this->openhat->shutdown(OPENHATD_TEST_EXIT);
+	}
+
+	return OPDI_STATUS_OK;
+}
+
+TestPort::TestPort(AbstractOpenHAT* openhat, const char *id) : opdi::DigitalPort(id) {
+	this->opdi = this->openhat = openhat;
+	this->timeBase = TimeBase::SECONDS;
+	this->interval = 0;
+	this->lastExecution = 0;
+	this->warnOnFailure = false;
+	this->exitAfterTest = false;
+	// tests are active and hidden by default
+	this->line = 1;
+	this->hidden = true;
+}
+
+void TestPort::configure(ConfigurationView* portConfig, ConfigurationView* parentConfig) {
+	this->openhat->configureDigitalPort(portConfig, this);
+
+	std::string timeBaseStr = portConfig->getString("TimeBase", "");
+	if (timeBaseStr == "Seconds")
+		this->timeBase = TimeBase::SECONDS;
+	else
+	if (timeBaseStr == "Milliseconds")
+		this->timeBase = TimeBase::MILLISECONDS;
+	else
+	if (timeBaseStr == "Frames")
+		this->timeBase = TimeBase::FRAMES;
+	else
+	if (timeBaseStr != "")
+		this->openhat->throwSettingException(this->ID() + ": Invalid value for TimeBase, expected 'Seconds', 'Milliseconds', or 'Frames': " + timeBaseStr);
+
+	this->interval = portConfig->getInt64("Interval", this->interval);
+	if (this->interval <= 0)
+		this->logWarning("Interval not specified or less than 1, test is disabled");
+	this->warnOnFailure = portConfig->getBool("WarnOnFailure", this->warnOnFailure);
+	this->exitAfterTest = portConfig->getBool("ExitAfterTest", this->exitAfterTest);
+
+	// enumerate calculations
+	this->logVerbose(std::string("Enumerating test cases: ") + this->ID() + ".Cases");
+
+	Poco::AutoPtr<ConfigurationView> nodes = this->openhat->createConfigView(portConfig, "Cases");
+	portConfig->addUsedKey("Cases");
+
+	// get list of cases
+	ConfigurationView::Keys cases;
+	nodes->keys("", cases);
+
+	// create ordered list of cases (std::map internally orders by keys)
+	for (auto it = cases.begin(), ite = cases.end(); it != ite; ++it) {
+		// split test property name (expect portID.property)
+		std::vector<std::string> argList;
+		std::stringstream ss(*it);
+		std::string item;
+		while (std::getline(ss, item, ':')) {
+			if (!item.empty())
+				argList.push_back(item);
+		}
+		if (argList.size() != 2)
+			throw Poco::InvalidArgumentException(this->ID() + ": Test case definition error, expected <portID>:<property>, received: '" + *it + "'");
+
+		this->testValues[*it] = nodes->getString(*it);
+	}
+
+	if (this->testValues.size() == 0) {
+		this->logWarning(std::string("No test cases configured in node ") + this->ID() + ".Cases; is this intended?");
+	}
 }
 
 }		// namespace openhat

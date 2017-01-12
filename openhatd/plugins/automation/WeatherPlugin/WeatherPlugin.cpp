@@ -280,7 +280,7 @@ void WeatherPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::st
 	if (this->provider == "Weewx-JSON") {
 		// nothing to do
 	} else
-		this->openhat->throwSettingsException(node + ": Provider not supported: " + this->provider);
+		this->openhat->throwSettingException(node + ": Provider not supported: " + this->provider);
 
 	this->timeoutSeconds = nodeConfig->getInt("Timeout", this->timeoutSeconds);
 
@@ -288,13 +288,13 @@ void WeatherPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::st
 	std::string group = nodeConfig->getString("Group", "");
 	this->refreshTime = nodeConfig->getInt("RefreshTime", this->refreshTime);
 	if (this->refreshTime <= 0)
-		this->openhat->throwSettingsException(node + ": Please specify a non-negative meaningful RefreshTime in seconds");
+		this->openhat->throwSettingException(node + ": Please specify a non-negative meaningful RefreshTime in seconds");
 	if (this->refreshTime > 600)
-		this->openhat->throwSettingsException(node + ": Please do not specify more than 10 minutes RefreshTime");
+		this->openhat->throwSettingException(node + ": Please do not specify more than 10 minutes RefreshTime");
 
 	this->dataValiditySeconds = nodeConfig->getInt("DataValidity", this->dataValiditySeconds);
 	if (this->dataValiditySeconds <= 0)
-		this->openhat->throwSettingsException(node + ": Please specify a non-negative meaningful DataValidity in seconds");
+		this->openhat->throwSettingException(node + ": Please specify a non-negative meaningful DataValidity in seconds");
 
 	// enumerate keys of the plugin's nodes (in specified order)
 	this->openhat->logVerbose(node + ": Enumerating Weather nodes: " + node + ".Nodes", this->logVerbosity);
@@ -357,7 +357,7 @@ void WeatherPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::st
 			// add port to internal list
 			this->weatherPorts.push_back(port);
 		} else
-			this->openhat->throwSettingsException("This plugin does not support the port type", portType);
+			this->openhat->throwSettingException("This plugin does not support the port type", portType);
 
 		++nli;
 	}

@@ -17,21 +17,22 @@ pages:
         - Automation Examples: automation_examples.md
         - Ports:
             - Basic Ports: ports/basic_ports.md
-            - Logic Port: ports/logic_port.md
-            - Pulse Port: ports/pulse_port.md
-            - Selector Port: ports/selector_port.md
-            - Error Detector Port: ports/error_detector_port.md
-            - Logger Port: ports/logger_port.md
-            - Fader Port: ports/fader_port.md
-            - Scene Select Port: ports/scene_select_port.md
-            - File Port: ports/file_port.md
             - Aggregator Port: ports/aggregator_port.md
             - Counter Port: ports/counter_port.md
-            - Trigger Port: ports/trigger_port.md
-            - InfluxDB Port: ports/influxdb_port.md
+            - Error Detector Port: ports/error_detector_port.md
             - Exec Port: ports/exec_port.md
-            - Timer Port: ports/timer_port.md
             - Expression Port: ports/expression_port.md
+            - Fader Port: ports/fader_port.md
+            - File Port: ports/file_port.md
+            - InfluxDB Port: ports/influxdb_port.md
+            - Logger Port: ports/logger_port.md
+            - Logic Port: ports/logic_port.md
+            - Pulse Port: ports/pulse_port.md
+            - Scene Select Port: ports/scene_select_port.md
+            - Selector Port: ports/selector_port.md
+            - Test Port: ports/test_port.md
+            - Timer Port: ports/timer_port.md
+            - Trigger Port: ports/trigger_port.md
         - Plugins:
             - General:
                 - Web Server Plugin: plugins/webserver_plugin.md 

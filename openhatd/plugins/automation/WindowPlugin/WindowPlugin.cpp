@@ -255,7 +255,7 @@ void WindowPort::prepare() {
 		this->directionPort = this->findDigitalPort(this->ID(), "Direction", this->direction, true);
 		this->enablePort = this->findDigitalPort(this->ID(), "Enable", this->enable, true);
 	} else
-		this->openhat->throwSettingsException(this->ID() + ": Unknown window mode; only H-Bridge and SerialRelay are supported");
+		this->openhat->throwSettingException(this->ID() + ": Unknown window mode; only H-Bridge and SerialRelay are supported");
 
 	if (this->statusPortStr != "")
 		this->statusPort = this->findSelectPort(this->ID(), "StatusPort", this->statusPortStr, true);
@@ -1092,7 +1092,7 @@ void WindowPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::str
 	port->logVerbosity = this->openhat->getConfigLogVerbosity(nodeConfig, opdi::LogVerbosity::UNKNOWN);
 
 	if (nodeConfig->getInt("EnableDelay", 0) < 0)
-		this->openhat->throwSettingsException("EnableDelay may not be negative: " + this->openhat->to_string(port->enableDelay));
+		this->openhat->throwSettingException("EnableDelay may not be negative: " + this->openhat->to_string(port->enableDelay));
 	port->enableDelay = nodeConfig->getInt("EnableDelay", 0);
 
 	// read control mode
@@ -1104,11 +1104,11 @@ void WindowPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::str
 		port->motorAStr = this->openhat->getConfigString(nodeConfig, node, "MotorA", "", true);
 		port->motorBStr = this->openhat->getConfigString(nodeConfig, node, "MotorB", "", true);
 		if (nodeConfig->getInt("MotorDelay", 0) < 0)
-			this->openhat->throwSettingsException("MotorDelay may not be negative: " + this->openhat->to_string(port->motorDelay));
+			this->openhat->throwSettingException("MotorDelay may not be negative: " + this->openhat->to_string(port->motorDelay));
 		port->motorDelay = nodeConfig->getInt("MotorDelay", 0);
 		port->enable = nodeConfig->getString("Enable", "");
 		if (port->enableDelay < port->motorDelay)
-			this->openhat->throwSettingsException("If using MotorDelay, EnableDelay must be greater or equal: " + this->openhat->to_string(port->enableDelay));
+			this->openhat->throwSettingException("If using MotorDelay, EnableDelay must be greater or equal: " + this->openhat->to_string(port->enableDelay));
 	} else if (controlMode == "SerialRelay") {
 		this->openhat->logVerbose(node + ": Configuring WindowPort in Serial Relay Mode");
 		port->mode = WindowPort::SERIAL_RELAY;
@@ -1116,39 +1116,39 @@ void WindowPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::str
 		port->direction = this->openhat->getConfigString(nodeConfig, node, "Direction", "", true);
 		port->enable = this->openhat->getConfigString(nodeConfig, node, "Enable", "", true);
 	} else
-		this->openhat->throwSettingsException("ControlMode setting not supported; expected 'H-Bridge' or 'SerialRelay'", controlMode);
+		this->openhat->throwSettingException("ControlMode setting not supported; expected 'H-Bridge' or 'SerialRelay'", controlMode);
 
 	// legacy check
 	if (!this->openhat->getConfigString(nodeConfig, node, "Sensor", "", false).empty())
-		this->openhat->throwSettingsException("Setting 'Sensor' is deprecated, please use 'SensorClosed' instead");
+		this->openhat->throwSettingException("Setting 'Sensor' is deprecated, please use 'SensorClosed' instead");
 
 	// read additional configuration parameters
 	port->sensorClosedPortStr = this->openhat->getConfigString(nodeConfig, node, "SensorClosed", "", false);
 	port->sensorClosedValue = (uint8_t)nodeConfig->getInt("SensorClosedValue", 1);
 	if (port->sensorClosedValue > 1)
-		this->openhat->throwSettingsException("SensorClosedValue must be either 0 or 1: " + this->openhat->to_string((int)port->sensorClosedValue));
+		this->openhat->throwSettingException("SensorClosedValue must be either 0 or 1: " + this->openhat->to_string((int)port->sensorClosedValue));
 	port->sensorOpenPortStr = this->openhat->getConfigString(nodeConfig, node, "SensorOpen", "", false);
 	port->sensorOpenValue = (uint8_t)nodeConfig->getInt("SensorOpenValue", 1);
 	if (port->sensorClosedValue > 1)
-		this->openhat->throwSettingsException("SensorOpenValue must be either 0 or 1: " + this->openhat->to_string((int)port->sensorOpenValue));
+		this->openhat->throwSettingException("SensorOpenValue must be either 0 or 1: " + this->openhat->to_string((int)port->sensorOpenValue));
 	port->motorActive = (uint8_t)nodeConfig->getInt("MotorActive", 1);
 	if (port->motorActive > 1)
-		this->openhat->throwSettingsException("MotorActive must be either 0 or 1: " + this->openhat->to_string((int)port->motorActive));
+		this->openhat->throwSettingException("MotorActive must be either 0 or 1: " + this->openhat->to_string((int)port->motorActive));
 	port->enableActive = (uint8_t)nodeConfig->getInt("EnableActive", 1);
 	if (port->enableActive > 1)
-		this->openhat->throwSettingsException("EnableActive must be either 0 or 1: " + this->openhat->to_string((int)port->enableActive));
+		this->openhat->throwSettingException("EnableActive must be either 0 or 1: " + this->openhat->to_string((int)port->enableActive));
 	port->openingTime = nodeConfig->getInt("OpeningTime", 0);
 	if (port->openingTime <= 0)
-		this->openhat->throwSettingsException("OpeningTime must be specified and greater than 0: " + this->openhat->to_string(port->openingTime));
+		this->openhat->throwSettingException("OpeningTime must be specified and greater than 0: " + this->openhat->to_string(port->openingTime));
 	port->closingTime = nodeConfig->getInt64("ClosingTime", port->openingTime);
 	if (port->closingTime <= 0)
-		this->openhat->throwSettingsException("ClosingTime must be greater than 0: " + this->openhat->to_string(port->closingTime));
+		this->openhat->throwSettingException("ClosingTime must be greater than 0: " + this->openhat->to_string(port->closingTime));
 	port->autoOpenStr = this->openhat->getConfigString(nodeConfig, node, "AutoOpen", "", false);
 	port->autoCloseStr = this->openhat->getConfigString(nodeConfig, node, "AutoClose", "", false);
 	port->forceOpenStr = this->openhat->getConfigString(nodeConfig, node, "ForceOpen", "", false);
 	port->forceCloseStr = this->openhat->getConfigString(nodeConfig, node, "ForceClose", "", false);
 	if ((port->forceOpenStr != "") && (port->forceCloseStr != ""))
-		this->openhat->throwSettingsException("You cannot use ForceOpen and ForceClose at the same time");
+		this->openhat->throwSettingException("You cannot use ForceOpen and ForceClose at the same time");
 	port->statusPortStr = this->openhat->getConfigString(nodeConfig, node, "StatusPort", "", false);
 	port->errorPortStr = this->openhat->getConfigString(nodeConfig, node, "ErrorPorts", "", false);
 	port->resetPortStr = this->openhat->getConfigString(nodeConfig, node, "ResetPorts", "", false);
@@ -1158,7 +1158,7 @@ void WindowPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::str
 	} else if (resetTo == "Open") {
 		port->resetTo = WindowPort::RESET_TO_OPEN;
 	} else if (resetTo != "Off")
-		this->openhat->throwSettingsException("Invalid value for the ResetTo setting; expected 'Off', 'Closed' or 'Open'", resetTo);
+		this->openhat->throwSettingException("Invalid value for the ResetTo setting; expected 'Off', 'Closed' or 'Open'", resetTo);
 	port->positionAfterClose = nodeConfig->getInt("PositionAfterClose", -1);
 	port->positionAfterOpen = nodeConfig->getInt("PositionAfterOpen", -1);
 

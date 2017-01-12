@@ -21,7 +21,7 @@ BOOL WINAPI SignalHandler(_In_ DWORD dwCtrlType) {
 	case CTRL_CLOSE_EVENT:
 	case CTRL_LOGOFF_EVENT:
 		std::cout << "Interrupted, exiting" << std::endl;
-		Opdi->shutdown();
+		Opdi->shutdown(OPENHATD_INTERRUPTED);
 		return TRUE;
 	case CTRL_SHUTDOWN_EVENT:
 		return FALSE;
@@ -88,7 +88,7 @@ int _tmain(int argc, _TCHAR* argv[], _TCHAR* envp[])
 		exitcode = OPDI_DEVICE_ERROR;
 	}
 
-	Opdi->logNormal(Opdi->appName + " exited with code " + Opdi->to_string(exitcode));
+	Opdi->logNormal(Opdi->appName + " exited with code " + Opdi->to_string(exitcode) + ": " + Opdi->getResultCodeText(exitcode));
 
 	return exitcode;
 }

@@ -575,7 +575,7 @@ void WebServerPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::
 	this->documentRoot = openhat->resolveRelativePath(nodeConfig, node, this->documentRoot, docRootRelativeTo, driverPath, "DocumentRootRelativeTo");
 	this->logDebug("Resolved document root to: " + this->documentRoot);
 	if (!Poco::File(this->documentRoot).isDirectory())
-		this->openhat->throwSettingsException("Resolved document root folder does not exist or is not a folder: " + documentRoot);
+		this->openhat->throwSettingException("Resolved document root folder does not exist or is not a folder: " + documentRoot);
 		
 	// expose JSON-RPC API via special URL (can be disabled by setting the URL to "")
 	this->jsonRpcUrl = nodeConfig->getString("JsonRpcUrl", this->jsonRpcUrl);

@@ -33,11 +33,11 @@ void ExpressionPort::configure(ConfigurationView* config) {
 
 	this->expressionStr = config->getString("Expression", "");
 	if (this->expressionStr == "")
-		this->openhat->throwSettingsException(this->ID() + ": You have to specify an Expression");
+		this->openhat->throwSettingException(this->ID() + ": You have to specify an Expression");
 
 	this->outputPortStr = config->getString("OutputPorts", "");
 	if (this->outputPortStr == "")
-		this->openhat->throwSettingsException(this->ID() + ": You have to specify at least one output port in the OutputPorts setting");
+		this->openhat->throwSettingException(this->ID() + ": You have to specify at least one output port in the OutputPorts setting");
 
 	this->numIterations = config->getInt64("Iterations", 0);
 

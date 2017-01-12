@@ -312,16 +312,14 @@ int WindowsOpenHAT::setupTCP(const std::string& interface_, int port) {
 			
 				// shutdown requested?
 				if (this->shutdownRequested)
-					return OPDI_SHUTDOWN;
-
-				this->logNormal(std::string("Result: ") + this->getOPDIResult(err));
+					return this->shutdownExitCode;
 
 				break;
 			}
 		}
 	}
 
-	return 0;
+	return OPDI_STATUS_OK;
 }
 
 IOpenHATPlugin* WindowsOpenHAT::getPlugin(const std::string& driver) {

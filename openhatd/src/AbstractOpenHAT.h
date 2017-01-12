@@ -42,6 +42,10 @@ struct IOpenHATPlugin {
 
 namespace openhat {
 
+#define OPENHATD_INTERRUPTED	127
+#define OPENHATD_TEST_FAILED	128
+#define OPENHATD_TEST_EXIT		129
+
 #define OPENHAT_CONFIG_FILE_SETTING	"__OPENHATD_CONFIG_FILE_PATH"
 
 constexpr char OPENHAT_VERSION_ID[] =
@@ -53,22 +57,28 @@ constexpr int OPENHAT_MAJOR_VERSION = OPENHAT_VERSION_ID[0] - '0';
 constexpr int OPENHAT_MINOR_VERSION = OPENHAT_VERSION_ID[2] - '0';
 constexpr int OPENHAT_PATCH_VERSION = OPENHAT_VERSION_ID[4] - '0';
 
-class SettingsException : public Poco::Exception
+/// This exception is thrown when an error occurs while processing a configuration setting.
+///
+class SettingException : public Poco::Exception
 {
 public:
-	explicit SettingsException(std::string message, const std::string& detail = "") : Poco::Exception(message, detail) {};
+	explicit SettingException(std::string message, const std::string& detail = "") : Poco::Exception(message, detail) {};
 };
 
-/** The listener interface for plugin registrations. */
+/// The listener interface for plugin registrations.
+///
 struct IConnectionListener {
-	/** Is called when a master successfully completed the handshake. */
+	/// Is called when a master has successfully completed the handshake.
+	///
 	virtual void masterConnected(void) = 0;
 
-	/** Is called when a master has disconnected. */
+	/// Is called when a master has disconnected.
+	///
 	virtual void masterDisconnected(void) = 0;
 };
 
-/** The abstract base class for OpenHAT implementations. */
+/// The abstract base class for OpenHAT implementations.
+///
 class AbstractOpenHAT: public opdi::OPDI {
 protected:
 	int majorVersion;
@@ -94,8 +104,8 @@ protected:
 	typedef std::list<IConnectionListener*> ConnectionListenerList;
 	ConnectionListenerList connectionListeners;
 
-	typedef std::map<uint8_t, std::string> OPDICodeTexts;
-	OPDICodeTexts opdiCodeTexts;
+	typedef std::map<uint8_t, std::string> ResultCodeTexts;
+	ResultCodeTexts resultCodeTexts;
 
 	typedef std::map<std::string, std::string> LockedResources;
 	LockedResources lockedResources;
@@ -110,7 +120,8 @@ protected:
 	Poco::Stopwatch idleStopwatch;			// measures time until waiting() is called again
 	uint64_t totalMicroseconds;				// total time (doWork + idle)
 	int waitingCallsPerSecond;				// number of calls to waiting()
-	double framesPerSecond;					// average number of doWork iterations ("frames") processed per second
+	uint64_t currentFrame;					// number of the current doWork iteration ("frame")
+	double framesPerSecond;					// average number of doWork iterations processed per second
 	int targetFramesPerSecond;				// target number of doWork iterations per second
 
 	std::string heartbeatFile;
@@ -162,6 +173,9 @@ public:
 
 	virtual void showHelp(void);
 
+	/** Returns the current frame number. */
+	virtual uint64_t getCurrentFrame(void);
+
 	/** Returns the current user ID or name. */
 	virtual std::string getCurrentUser(void) = 0;
 
@@ -170,7 +184,7 @@ public:
 
 	virtual std::string getTimestampStr(void);
 
-	virtual std::string getOPDIResult(uint8_t code);
+	virtual std::string getResultCodeText(uint8_t code);
 
 	/** Returns the key's value from the configuration or the default value, if it is missing. If missing and isRequired is true, throws an exception. */
 	virtual std::string getConfigString(Poco::Util::AbstractConfiguration* config, const std::string &section, const std::string &key, const std::string &defaultValue, const bool isRequired);
@@ -208,8 +222,8 @@ public:
 	/** Called by the destructor of ConfigurationView, do not throw exceptions in this method! */
 	virtual void unusedConfigKeysDetected(const std::string& viewName, const std::vector<std::string>& unusedKeys);
 
-	/** Throws a SettingsException. Suppresses unused config key messages afterwards. */
-	virtual void throwSettingsException(const std::string& message, const std::string& detail = "");
+	/** Throws a SettingException. Suppresses unused config key messages afterwards. */
+	virtual void throwSettingException(const std::string& message, const std::string& detail = "");
 
 	/** Returns the name of the user to switch to, if specified in SwitchToUser */
 	std::string setupGeneralConfiguration(ConfigurationView* config);

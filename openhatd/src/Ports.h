@@ -694,4 +694,43 @@ public:
 	virtual void prepare() override;
 };
 
+
+/// A Test port is a DigitalPort that, when High, performs a set of predefined
+/// test comparisons in regular intervals. The interval can be specified in seconds,
+/// milliseconds or frames (number of performed doWork iterations) by setting the
+/// time base.
+/// You can specify whether a test should output a warning or exit with an error code
+/// if a test comparison fails. Also, a test can optionally cause the program to exit
+/// cleanly if a test has been completed, which is useful for automated testing.
+/// A test port requires a configuration section <ID>.Cases with a number of settings
+/// of the form <portID>:<property> = <value>. If a test is due the settings are processed
+/// by resolving the port and passing the property and value to the port's testValue method.
+/// This method will throw an exception if the test fails.
+/// Test ports are active (line = High) and hidden by default.
+class TestPort : public opdi::DigitalPort {
+protected:
+	enum class TimeBase {
+		SECONDS,
+		MILLISECONDS,
+		FRAMES
+	};
+
+	openhat::AbstractOpenHAT* openhat;
+
+	TimeBase timeBase;
+	uint64_t interval;
+	bool warnOnFailure;
+	bool exitAfterTest;
+
+	uint64_t lastExecution;
+
+	std::map<std::string, std::string> testValues;
+
+	virtual uint8_t doWork(uint8_t canSend) override;
+public:
+	TestPort(AbstractOpenHAT* openhat, const char* id);
+
+	virtual void configure(ConfigurationView* portConfig, ConfigurationView* parentConfig);
+};
+
 }		// namespace openhat

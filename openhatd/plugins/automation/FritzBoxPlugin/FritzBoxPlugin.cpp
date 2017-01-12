@@ -425,6 +425,10 @@ std::string FritzBoxPlugin::httpGet(const std::string& url) {
 		this->errorOccurred(this->nodeID + ": Error during HTTP GET for " + uri.toString() + ": " + this->openhat->getExceptionMessage(e));
 	}
 
+	// avoid further processing if shutdown was requested in the mean time
+	if (this->openhat->shutdownRequested)
+		throw Poco::Exception("Shutdown occurred");
+
 	return "";
 }
 
@@ -507,6 +511,7 @@ void FritzBoxPlugin::login(void) {
 void FritzBoxPlugin::checkLogin(void) {
 	// check whether we're currently logged in
 	std::string loginPage = this->httpGet("/login_sid.lua?sid=" + this->sid);
+
 	// error case
 	if (loginPage.empty()) {
 		this->sid = INVALID_SID;
@@ -718,7 +723,7 @@ void FritzBoxPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, cons
 		std::string deviceType = this->openhat->getConfigString(deviceConfig, deviceName, "Type", "", true);
 		int queryInterval = deviceConfig->getInt("QueryInterval", 30);
 		if (queryInterval < 1)
-			this->openhat->throwSettingsException(deviceName + ": Please specify a QueryInterval greater than 1: " + this->openhat->to_string(queryInterval));
+			this->openhat->throwSettingException(deviceName + ": Please specify a QueryInterval greater than 1: " + this->openhat->to_string(queryInterval));
 
 		if (deviceType == "FritzDECT200") {
 
@@ -758,7 +763,7 @@ void FritzBoxPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, cons
 			this->openhat->configureDialPort(portConfig, energyPort);
 			this->openhat->addPort(energyPort);
 		} else
-			this->openhat->throwSettingsException("This plugin does not support the device type", deviceType);
+			this->openhat->throwSettingException("This plugin does not support the device type", deviceType);
 
 		++nli;
 	}
@@ -779,12 +784,12 @@ void FritzBoxPlugin::masterDisconnected() {
 
 void FritzBoxPlugin::run(void) {
 
-	this->openhat->logDebug(this->nodeID + ": FritzBoxPlugin worker thread started", this->logVerbosity);
+	this->openhat->logVerbose(this->nodeID + ": FritzBoxPlugin worker thread started", this->logVerbosity);
 
 	while (!this->openhat->shutdownRequested) {
 		try {
 			Poco::Notification::Ptr notification = this->queue.waitDequeueNotification(100);
-			if (notification) {
+			if (!this->openhat->shutdownRequested && notification) {
 				ActionNotification::Ptr workNf = notification.cast<ActionNotification>();
 				if (workNf) {
 					std::string action;
@@ -817,7 +822,7 @@ void FritzBoxPlugin::run(void) {
 		}
 	}
 
-	this->openhat->logDebug(this->nodeID + ": FritzBoxPlugin worker thread terminated", this->logVerbosity);
+	this->openhat->logVerbose(this->nodeID + ": FritzBoxPlugin worker thread terminated", this->logVerbosity);
 }
 
 // plugin instance factory function

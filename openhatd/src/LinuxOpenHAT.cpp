@@ -84,7 +84,7 @@ static uint8_t io_receive(void* info, uint8_t* byte, uint16_t timeout, uint8_t c
 				} else
 				// perhaps Ctrl+C
 				if (errno == EINTR) {
-					Opdi->shutdown();
+					Opdi->shutdown(OPENHATD_INTERRUPTED);
 				}
 				else {
 					printf("Error: %d\n", errno);
@@ -160,7 +160,7 @@ sendloop:
 			} else
 			// perhaps Ctrl+C
 			if (errno == EINTR) {
-				Opdi->shutdown();
+				Opdi->shutdown(OPENHATD_INTERRUPTED);
 			}
 			else {
 				linuxOpenHAT->logError(std::string("Socket send failed: " ) + strerror(errno));
@@ -316,8 +316,6 @@ int LinuxOpenHAT::setupTCP(const std::string& /*interface_*/, int port) {
 
 	// adapted from: http://www.linuxhowtos.org/C_C++/socket.htm
 
-	int err = 0;
-
 	int sockfd, newsockfd;
 	socklen_t clilen;
 	struct sockaddr_in serv_addr, cli_addr;
@@ -402,7 +400,7 @@ int LinuxOpenHAT::setupTCP(const std::string& /*interface_*/, int port) {
 
 				this->logNormal((std::string("Connection attempt from ") + std::string(inet_ntoa(cli_addr.sin_addr))).c_str());
 
-				err = HandleTCPConnection(newsockfd);
+				int err = HandleTCPConnection(newsockfd);
 
 //				shutdown(newsockfd, SHUT_WR);
 
@@ -411,18 +409,19 @@ int LinuxOpenHAT::setupTCP(const std::string& /*interface_*/, int port) {
 
 				close(newsockfd);
 
+				if (err != OPDI_STATUS_OK)
+					return err;
+			
 				// shutdown requested?
 				if (this->shutdownRequested)
-					return OPDI_SHUTDOWN;
-
-				this->logVerbose(std::string("Result: ") + this->getOPDIResult(err));
+					return this->shutdownExitCode;
 
 				break;
 			}
 		}
 	}
 
-	return 0;
+	return OPDI_STATUS_OK;
 }
 
 IOpenHATPlugin* LinuxOpenHAT::getPlugin(const std::string& driver) {

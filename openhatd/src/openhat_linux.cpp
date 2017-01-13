@@ -22,7 +22,7 @@ void signal_handler(int) {
 
 	// tell the OPDI system to shut down
 	if (Opdi != NULL)
-		Opdi->shutdown();
+		Opdi->shutdown(OPENHATD_INTERRUPTED);
 }
 
 void signal_handler_term(int) {
@@ -30,7 +30,7 @@ void signal_handler_term(int) {
 
 	// tell the OPDI system to shut down
 	if (Opdi != NULL)
-		Opdi->shutdown();
+		Opdi->shutdown(OPENHATD_INTERRUPTED);
 }
 
 void signal_handler_abrt(int signum) {
@@ -118,7 +118,7 @@ int main(int argc, char* argv[], char* envp[])
 		exitcode = OPDI_DEVICE_ERROR;
 	}
 
-	Opdi->logNormal(Opdi->appName + " exited with code " + Opdi->to_string(exitcode));
+	Opdi->logNormal(Opdi->appName + " exited with code " + Opdi->to_string(exitcode) + ": " + Opdi->getResultCodeText(exitcode));
 
 	return exitcode;
 }

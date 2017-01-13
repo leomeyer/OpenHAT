@@ -78,11 +78,9 @@ The configuration files for these documentations contain placeholders for versio
 
 Ideally, testing is done on the target hardware with external components connected. Unfortunately, this is not possible with continuous integration.
 
-openhatd supports a test mode switched on by the command line flag `-t`. If this flag is set openhatd goes through the port initialization and configuration phase, then exits with code 0. Any error during these phases will fail the continuous integration tests.
+openhatd supports a test mode switched on by the command line flag `-t`. If this flag is set openhatd goes through the port initialization and configuration phase, then exits with code 0. Any error during these phases will fail the continuous integration tests (all configuration files supplied with an openhatd release should be at least checked with `-t` to ensure that they are free of superficial errors). This method only tests configuration file integrity and the correct operation of the startup phases. It does, however, not support functional testing and is therefore not a reliable indicator whether a build is free of certain bugs or not.
 
-This method only tests configuration file integrity and the correct operation of the startup phases. It does, however, not support functional testing and is therefore not a reliable indicator whether a build is free of certain bugs or not. It also does not catch regressions.
-
-Testing is going to be improved but there is still a lot of conceptual work to do.
+To test port state integrity and check for regressions you can use [Test ports](ports/test_port.md). Test ports are Digital ports that, when switched to High, perform regular tests on port properties. You can define an arbitrary number of Test ports, however, for automated tests there should be at least one test that terminates the program after it has been executed. Automatic tests are stored in the `testconfigs/automatic` directory and are not intended to be included in a release. 
 
 ## Versioning and compatibility
 

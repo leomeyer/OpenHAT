@@ -457,44 +457,13 @@ public:
 // Aggregator Port
 ///////////////////////////////////////////////////////////////////////////////
 
-/** An AggregatorPort is a DigitalPort that collects the values of another port
-* (the source port) and calculates with these historic values using specified
-* calculations. The values can be multiplied by a specified factor to account
-* for fractions that might otherwise be lost.
-* The query interval and the number of values to collect must be specified.
-* Additionally, a minimum and maximum delta value that must not be exceeded
-* can be specified to validate the incoming values. A new value is compared against
-* the last collected value. If the difference exceeds the specified bounds the
-* whole collection is invalidated as a safeguard against implausible results.
-* Each calculation presents its result as a DialPort. At startup all such ports
-* will signal an error (value unavailable). The port values will also become invalid 
-* if delta values are exceeded or if the source port signals an error.
-* A typical example for using this port is with a gas counter. Such a counter
-* emits impulses corresponding to a certain consumed gas value. If consumption
-* is low, the impulses will typically arrive very slowly, perhaps once every few
-* minutes. It is interesting to calculate the average gas consumption per hour
-* or per day. To achieve this values are collected over the specified period in
-* regular intervals. The Delta algorithm causes the value of the AggregatorPort
-* to be set to the difference of the last and the first value (moving window).
-* Another example is the calculation of averages, for example, temperature.
-* In this case you should can use Average or ArithmeticMean for the algorithm.
-* Using AllowIncomplete you can specify that the result should also be computed
-* if not all necessary values have been collected. For an averaging algorithm
-* the default is True, while for the Delta algorithm the default is false.
-* In the case of temperature it might be interesting to determine the minimum
-* and maximum in the specified range. 
-* The allowedErrors setting specifies how many errors querying a port's value
-* may occur in a row until the data is invalidated. In case of an error the last value
-* is repeated if it exists.
-* If the Persistent property of an AggregatorPort is true, the list of aggregated
-* values as well as the last timestamp of the aggregator is stored in the persistent
-* file. On startup, if there is a persisted state that is younger than the
-* specified interval the values are read into the list.
-* This behavior can be used to preserve values in between OpenHAT restarts.
-*/
+/// This port collects values over time and performs statistical calculations.
+/// <a href="../../ports/aggregator_port">See the Aggregator port documentation.</a>
 class AggregatorPort : public opdi::DigitalPort {
 friend class AbstractOpenHAT;
 protected:
+	/// Contains the algorithm types that can be used for calculations.
+	///
 	enum Algorithm {
 		UNKNOWN,
 		DELTA,
@@ -503,6 +472,8 @@ protected:
 		MAXIMUM
 	};
 
+	/// Encapsulates a calculation result as a dial port.
+	///
 	class Calculation : public opdi::DialPort {
 	public:		
 		Algorithm algorithm;
@@ -534,10 +505,17 @@ protected:
 
 	std::vector<Calculation*> calculations;
 
+	/// Collects the values in the specified interval and performs calculations.
+	///
 	virtual uint8_t doWork(uint8_t canSend) override;
 
+	/// Persists the values in the persistent file if applicable.
+	///
 	virtual void persist(void) override;
 
+	/// Clears the list of collected values and sets all calculation output ports
+	/// to the error state "value not available".
+	/// If clearPersistent is true the persistent storage is also cleared.
 	void resetValues(std::string reason, opdi::LogVerbosity logVerbosity, bool clearPersistent = true);
 
 public:
@@ -547,8 +525,12 @@ public:
 
 	virtual void configure(ConfigurationView* portConfig, ConfigurationView* parentConfig);
 
+	/// Resolves port IDs.
+	///
 	virtual void prepare() override;
 
+	/// Resets all values if the line is set to Low.
+	///
 	virtual void setLine(uint8_t newLine, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 };
 

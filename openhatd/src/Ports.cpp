@@ -2345,8 +2345,14 @@ void InfluxDBPort::prepare() {
 
 uint8_t TestPort::doWork(uint8_t canSend) {
 	// test only if High and interval is specified
-	if ((this->line == 0) || (this->interval <= 0))
+	if ((this->line == 0) || (this->interval <= 0)) {
+		// reset execution time (to start over when it's being switched on again)
+		this->lastExecution = 0;
 		return OPDI_STATUS_OK;
+	}
+
+	// remember whether we're setting lastExecution for the first time
+	bool setLastExecutionOnly = (this->lastExecution == 0);
 
 	// check whether the interval time is up, return if not
 	switch (this->timeBase) {
@@ -2372,6 +2378,13 @@ uint8_t TestPort::doWork(uint8_t canSend) {
 		else
 			return OPDI_STATUS_OK;
 	}
+
+	// During the first run, only set the last execution time to the current time.
+	// Avoid testing at the first iteration because this would cause the program
+	// to exit if ExitAfterTest is true which would totally disregard the test interval.
+	if (setLastExecutionOnly)
+		return OPDI_STATUS_OK;
+
 	this->logVerbose("Running test cases...");
 	bool testPassed = true;
 
@@ -2491,14 +2504,17 @@ void TestPort::configure(ConfigurationView* portConfig, ConfigurationView* paren
 				argList.push_back(item);
 		}
 		if (argList.size() != 2)
-			throw Poco::InvalidArgumentException(this->ID() + ": Test case definition error, expected <portID>:<property>, received: '" + *it + "'");
+			throw Poco::InvalidArgumentException(this->ID() + ": Test case definition error, expected <targetPortID>:<property>, found: '" + *it + "'");
+		if (nodes->getString(*it).empty())
+			throw Poco::InvalidArgumentException(this->ID() + ": Test case definition error, empty expected value for property: '" + *it + "'");
 
 		this->testValues[*it] = nodes->getString(*it);
 	}
 
-	if (this->testValues.size() == 0) {
+	if (this->testValues.size() == 0)
 		this->logWarning(std::string("No test cases configured in node ") + this->ID() + ".Cases; is this intended?");
-	}
+	else
+		this->logVerbose("Found " + this->to_string(this->testValues.size()) + " test cases.");
 }
 
 }		// namespace openhat

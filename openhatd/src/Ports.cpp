@@ -2012,7 +2012,7 @@ void CounterPort::prepare() {
 }
 
 void CounterPort::doIncrement(int64_t increment) {
-	uint64_t newPosition = this->position + increment;
+	int64_t newPosition = this->position + increment;
 
 	// detect underflow
 	if ((increment < 0) && (newPosition < this->minValue)) {

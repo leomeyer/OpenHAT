@@ -779,6 +779,10 @@ void DigitalPort::setLine(uint8_t line, ChangeSource changeSource) {
 		this->handleStateChange(changeSource);
 }
 
+uint8_t DigitalPort::getLine(void) const {
+	return this->line;
+}
+
 void DigitalPort::getState(uint8_t* mode, uint8_t* line) const {
 	this->checkError();
 
@@ -1074,6 +1078,10 @@ void SelectPort::setPosition(uint16_t position, ChangeSource changeSource) {
 		this->handleStateChange(changeSource);
 }
 
+uint16_t SelectPort::getPosition(void) const {
+	return this->position;
+}
+
 void SelectPort::getState(uint16_t* position) const {
 	this->checkError();
 
@@ -1153,14 +1161,22 @@ int64_t DialPort::getStep(void) {
 
 void DialPort::setMin(int64_t min) {
 	this->minValue = min;
+	// adjust position if necessary
+	if (this->position < this->minValue)
+		this->setPosition(this->minValue);
 }
 
 void DialPort::setMax(int64_t max) {
 	this->maxValue = max;
+	// adjust position if necessary
+	if (this->position > this->maxValue)
+		this->setPosition(this->maxValue);
 }
 
 void DialPort::setStep(uint64_t step) {
 	this->step = step;
+	// adjust position if necessary
+	this->setPosition(this->position);
 }
 
 void DialPort::setPosition(int64_t position, ChangeSource changeSource) {
@@ -1185,6 +1201,10 @@ void DialPort::setPosition(int64_t position, ChangeSource changeSource) {
 		this->handleStateChange(changeSource);
 }
 
+int64_t DialPort::getPosition(void) const {
+	return this->position;
+}
+
 void DialPort::getState(int64_t* position) const {
 	this->checkError();
 
@@ -1203,10 +1223,10 @@ bool DialPort::hasError(void) const {
 }
 
 void DialPort::testValue(const std::string & property, const std::string & expectedValue) {
-	if (property == "Min") {
+	if (property == "Minimum") {
 		return this->compareProperty(property, expectedValue, this->to_string(this->minValue));
 	}
-	if (property == "Max") {
+	if (property == "Maximum") {
 		return this->compareProperty(property, expectedValue, this->to_string(this->maxValue));
 	}
 	if (property == "Step") {

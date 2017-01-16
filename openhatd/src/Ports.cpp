@@ -71,9 +71,9 @@ void LogicPort::configure(ConfigurationView* config) {
 					this->function = ATMOST;
 					this->funcN = atoi(function.substr(prefix.size() + 1).c_str());
 				} else {
-					std::string prefix("EXACT");
+					std::string prefix("EXACTLY");
 					if (!function.compare(0, prefix.size(), prefix)) {
-						this->function = EXACT;
+						this->function = EXACTLY;
 						this->funcN = atoi(function.substr(prefix.size() + 1).c_str());
 					}
 				}
@@ -89,7 +89,7 @@ void LogicPort::configure(ConfigurationView* config) {
 		this->openhat->throwSettingException("Expected positive integer for function ATLEAST of LogicPort: " + function);
 	if ((this->function == ATMOST) && (this->funcN <= 0))
 		this->openhat->throwSettingException("Expected positive integer for function ATMOST of LogicPort: " + function);
-	if ((this->function == EXACT) && (this->funcN <= 0))
+	if ((this->function == EXACTLY) && (this->funcN <= 0))
 		this->openhat->throwSettingException("Expected positive integer for function EXACT of LogicPort: " + function);
 
 	this->negate = config->getBool("Negate", false);
@@ -160,7 +160,7 @@ uint8_t LogicPort::doWork(uint8_t canSend)  {
 	case ATMOST: if (highCount <= this->funcN)
 					 newLine = (this->negate ? 0 : 1);
 		break;
-	case EXACT: if (highCount == this->funcN)
+	case EXACTLY: if (highCount == this->funcN)
 					 newLine = (this->negate ? 0 : 1);
 		break;
 	}
@@ -1962,40 +1962,170 @@ void AggregatorPort::setLine(uint8_t newLine, ChangeSource changeSource) {
 // CounterPort
 ///////////////////////////////////////////////////////////////////////////////
 
-CounterPort::CounterPort(AbstractOpenHAT* openhat, const char* id) : opdi::DialPort(id), increment(openhat, 1), periodMs(openhat, 1000) {
+CounterPort::CounterPort(AbstractOpenHAT* openhat, const char* id) : opdi::DialPort(id), increment(openhat, 1), period(openhat, 1) {
 	this->opdi = this->openhat = openhat;
-	this->lastActionTime = 0;
+	this->setTypeGUID(TypeGUID);
+	this->setMin(LLONG_MIN);
+	this->setMax(LLONG_MAX);
+	this->setPosition(0);
+	this->setReadonly(true);
+
+	this->timeBase = TimeBase::SECONDS;
+	this->lastCountTime = 0;
 }
 
 void CounterPort::configure(ConfigurationView* nodeConfig) {
 	this->openhat->configureDialPort(nodeConfig, this);
 
-	this->increment.initialize(this, "Increment", nodeConfig->getString("Increment", this->to_string(this->increment.value())));
-	this->periodMs.initialize(this, "Period", nodeConfig->getString("Period", this->to_string(this->periodMs.value())));
+	std::string timeBaseStr = nodeConfig->getString("TimeBase", "");
+	if (timeBaseStr == "Seconds")
+		this->timeBase = TimeBase::SECONDS;
+	else
+	if (timeBaseStr == "Milliseconds")
+		this->timeBase = TimeBase::MILLISECONDS;
+	else
+	if (timeBaseStr == "Frames")
+		this->timeBase = TimeBase::FRAMES;
+	else
+	if (timeBaseStr != "")
+		this->openhat->throwSettingException(this->ID() + ": Invalid value for TimeBase, expected 'Seconds', 'Milliseconds', or 'Frames': " + timeBaseStr);
+
+	this->incrementStr = nodeConfig->getString("Increment", "");
+	this->periodStr = nodeConfig->getString("Period", "");
+
+	this->underflowPortStr = nodeConfig->getString("UnderflowPorts", "");
+	this->overflowPortStr = nodeConfig->getString("OverflowPorts", "");
 }
 
 void CounterPort::prepare() {
 	this->logDebug("Preparing port");
 	opdi::DialPort::prepare();
-	// start incrementing from now
-	this->lastActionTime = opdi_get_time_ms();
+
+	// initialize value resolvers if definitions have been specified
+	if (!this->incrementStr.empty())
+		this->increment.initialize(this, "Increment", this->incrementStr);
+	if (!this->periodStr.empty())
+		this->period.initialize(this, "Period", this->periodStr);
+	// resolve port lists
+	this->findDigitalPorts(this->ID(), "UnderflowPorts", this->underflowPortStr, this->underflowPorts);
+	this->findDigitalPorts(this->ID(), "OverflowPorts", this->overflowPortStr, this->overflowPorts);
 }
 
-void CounterPort::doIncrement() {
-	// get current increment from value resolver
-	int64_t increment = this->increment.value();
-	this->lastActionTime = opdi_get_time_ms();
-	this->setPosition(this->position + increment);
+void CounterPort::doIncrement(int64_t increment) {
+	uint64_t newPosition = this->position + increment;
+
+	// detect underflow
+	if ((increment < 0) && (newPosition < this->minValue)) {
+		// underflow detected, wrap around
+		newPosition = this->maxValue - (this->minValue - newPosition);
+		// set underflow ports to High
+		auto it = this->underflowPorts.begin();
+		auto ite = this->underflowPorts.end();
+		while (it != ite) {
+			(*it)->setLine(1);
+			++it;
+		}
+	} else if (increment < 0) {
+		// no underflow, reset underflow ports
+		auto it = this->underflowPorts.begin();
+		auto ite = this->underflowPorts.end();
+		while (it != ite) {
+			(*it)->setLine(0);
+			++it;
+		}
+	}
+	// detect overflow
+	if ((increment > 0) && (newPosition > this->maxValue)) {
+		// overflow detected, wrap around
+		newPosition = this->minValue + (newPosition - this->maxValue);
+		// set overflow ports to High
+		auto it = this->overflowPorts.begin();
+		auto ite = this->overflowPorts.end();
+		while (it != ite) {
+			(*it)->setLine(1);
+			++it;
+		}
+	} else if (increment > 0) {
+		// no overflow, reset overflow ports
+		auto it = this->overflowPorts.begin();
+		auto ite = this->overflowPorts.end();
+		while (it != ite) {
+			(*it)->setLine(0);
+			++it;
+		}
+	}
+
+	this->setPosition(newPosition);
+
+	switch (this->timeBase) {
+	case TimeBase::SECONDS:
+			this->lastCountTime = opdi_get_time_ms() / 1000;
+			break;
+	case TimeBase::MILLISECONDS:
+			this->lastCountTime = opdi_get_time_ms();
+			break;
+	case TimeBase::FRAMES:
+			this->lastCountTime = this->openhat->getCurrentFrame();
+			break;
+	}
 }
 
 uint8_t CounterPort::doWork(uint8_t canSend) {
 	opdi::DialPort::doWork(canSend);
 
-	// get current period from value resolver
-	int64_t period = this->periodMs.value();
-	// time up? negative periods disable periodic increments
-	if ((period > 0) && (opdi_get_time_ms() - this->lastActionTime > (uint64_t)period)) {
-		this->doIncrement();
+	int64_t period = 0;
+	try {
+		// get current period from value resolver
+		period = this->period.value();
+	}
+	catch (const Poco::Exception& pe) {
+		this->logExtreme("Error resolving period value from '" + this->periodStr + "': " + pe.message());
+	}
+
+	// a period of 0 or less does not modify the counter
+	if (period <= 0)
+		return OPDI_STATUS_OK;
+
+	// remember whether we're setting lastExecution for the first time
+	bool setLastExecutionOnly = (this->lastCountTime == 0);
+
+	// check whether the period is up, return if not
+	switch (this->timeBase) {
+	case TimeBase::SECONDS:
+		if (opdi_get_time_ms() / 1000 - period > this->lastCountTime) {
+			this->lastCountTime = opdi_get_time_ms() / 1000;
+			break;
+		}
+		else
+			return OPDI_STATUS_OK;
+	case TimeBase::MILLISECONDS:
+		if (opdi_get_time_ms() - period > this->lastCountTime) {
+			this->lastCountTime = opdi_get_time_ms();
+			break;
+		}
+		else
+			return OPDI_STATUS_OK;
+	case TimeBase::FRAMES:
+		if (this->openhat->getCurrentFrame() - period > this->lastCountTime) {
+			this->lastCountTime = this->openhat->getCurrentFrame();
+			break;
+		}
+		else
+			return OPDI_STATUS_OK;
+	}
+
+	// During the first run, only set the last execution time to the current time.
+	// Avoid testing at the first iteration because this would cause the program
+	// to exit if ExitAfterTest is true which would totally disregard the test interval.
+	if (setLastExecutionOnly)
+		return OPDI_STATUS_OK;
+
+	try {
+		// get current increment from value resolver
+		this->doIncrement(this->increment.value());
+	}
+	catch (const Poco::Exception& pe) {
+		this->logExtreme("Error resolving increment value from '" + this->periodStr + "': " + pe.message());
 	}
 
 	return OPDI_STATUS_OK;
@@ -2087,8 +2217,13 @@ void TriggerPort::prepare() {
 	this->findDigitalPorts(this->getID(), "OutputPorts", this->outputPortStr, this->outputPorts);
 	this->findDigitalPorts(this->getID(), "InverseOutputPorts", this->inverseOutputPortStr, this->inverseOutputPorts);
 	if (!this->counterPortStr.empty()) {
-		// find port and cast to CounterPort; if type does not match this will be nullptr
-		this->counterPort = dynamic_cast<CounterPort*>(this->findPort(this->getID(), "CounterPort", this->counterPortStr, false));
+		// find port
+		Port* cPort = this->findPort(this->getID(), "CounterPort", this->counterPortStr, false);
+		// check type by comparing the typeGUID
+		if (cPort->getTypeGUID() != CounterPort::TypeGUID)
+			throw Poco::InvalidArgumentException(this->ID() + ": The specified ID for setting CounterPort (" + this->counterPortStr + ") does not denote a valid CounterPort");
+		// cast to CounterPort; if type does not match this will be nullptr
+		this->counterPort = dynamic_cast<CounterPort*>(cPort);
 	}
 }
 
@@ -2187,7 +2322,7 @@ uint8_t TriggerPort::doWork(uint8_t canSend)  {
 		}
 		// increment optional counter port
 		if (this->counterPort != nullptr)
-			this->counterPort->doIncrement();
+			this->counterPort->doIncrement(1);
 	}
 
 	return OPDI_STATUS_OK;

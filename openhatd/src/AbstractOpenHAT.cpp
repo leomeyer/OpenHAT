@@ -750,16 +750,15 @@ void AbstractOpenHAT::setupInclude(ConfigurationView* config, ConfigurationView*
 void AbstractOpenHAT::configurePort(ConfigurationView* portConfig, opdi::Port* port, int defaultFlags) {
 	// ports can be hidden if allowed
 	if (this->allowHiddenPorts)
-		port->setHidden(portConfig->getBool("Hidden", false));
+		port->setHidden(portConfig->getBool("Hidden", port->isHidden()));
 
 	// ports can be readonly
-	port->setReadonly(portConfig->getBool("Readonly", false));
+	port->setReadonly(portConfig->getBool("Readonly", port->isReadonly()));
 
 	// ports can be persistent
-	port->setPersistent(portConfig->getBool("Persistent", false));
+	port->setPersistent(portConfig->getBool("Persistent", port->isPersistent()));
 
-	// the default label is the port ID
-	std::string portLabel = this->getConfigString(portConfig, port->ID(), "Label", port->ID(), false);
+	std::string portLabel = this->getConfigString(portConfig, port->ID(), "Label", port->getLabel(), false);
 	port->setLabel(portLabel.c_str());
 
 	std::string portDirCaps = this->getConfigString(portConfig, port->ID(), "DirCaps", "", false);
@@ -985,10 +984,10 @@ void AbstractOpenHAT::configureDialPort(ConfigurationView* portConfig, opdi::Dia
 	if (!stateOnly) {
 		this->configurePort(portConfig, port, 0);
 
-		int64_t min = portConfig->getInt64("Min", port->getMin());
-		int64_t max = portConfig->getInt64("Max", port->getMax());
+		int64_t min = portConfig->getInt64("Minimum", port->getMin());
+		int64_t max = portConfig->getInt64("Maximum", port->getMax());
 		if (min >= max)
-			this->throwSettingException("Wrong dial port setting: Max (" + to_string(max) + ") must be greater than Min (" + to_string(min) + ")");
+			this->throwSettingException("Wrong dial port setting: Maximum (" + to_string(max) + ") must be greater than Minimum (" + to_string(min) + ")");
 		int64_t step = portConfig->getInt64("Step", port->getStep());
 		if (step < 1)
 			this->throwSettingException("Wrong dial port setting: Step may not be negative or zero: " + to_string(step));
@@ -1032,7 +1031,7 @@ void AbstractOpenHAT::configureDialPort(ConfigurationView* portConfig, opdi::Dia
 
 	Poco::AutoPtr<Poco::Util::AbstractConfiguration> stateConfig = this->getConfigForState(portConfig, port->ID());
 
-	int64_t position = stateConfig->getInt64("Position", port->getMin());
+	int64_t position = stateConfig->getInt64("Position", port->getPosition());
 	// set port error to invalid if the value is out of range
 	if ((position < port->getMin()) || (position > port->getMax()))
 		port->setError(opdi::Port::Error::VALUE_NOT_AVAILABLE);

@@ -94,7 +94,6 @@ The purpose of this file is to provide a Select port plus an associated Exec por
 
 The shell script's parameters are the current value of the Select port and the value of the $Command parameter at include file load time. Now this involves a bit of trickery; note the `$$Name_Select` part which will be resolved in two stages: `$Name` will be replaced at include file load time; what remains is the ID of the Select port, for example `$Switch_Select`. When the Exec port is about to execute the script it replaces this value with the current position of the referenced Select port and passes the parameter string to the script which receives this value as its first parameter, `$1`.
 
-
 ## Relative Paths
 
 Some nodes in openhatd require the specification of filenames, for example include files or dynamic plugin libraries. Absolute paths can be used in all cases but this is rarely a good choice. However, relative paths can be ambiguous: it is not always clear what they are relative to.

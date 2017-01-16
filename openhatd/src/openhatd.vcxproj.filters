@@ -43,7 +43,6 @@
     <None Include="..\doc\complex_example_2.ini">
       <Filter>Ressourcendateien</Filter>
     </None>
-    <None Include="webdocro..\src.css" />
     <None Include="..\testconfigs\current.json">
       <Filter>Ressourcendateien\testconfigs</Filter>
     </None>
@@ -72,6 +71,9 @@
       <Filter>Ressourcendateien\testconfigs</Filter>
     </None>
     <None Include="..\testconfigs\window_test.ini">
+      <Filter>Ressourcendateien\testconfigs</Filter>
+    </None>
+    <None Include="..\testconfigs\test_aggregator.ini">
       <Filter>Ressourcendateien\testconfigs</Filter>
     </None>
   </ItemGroup>

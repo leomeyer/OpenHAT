@@ -677,6 +677,10 @@ public:
 	/// line = 1: high
 	virtual void setLine(uint8_t line, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT);
 
+	/// Retrieves the current line state.
+	///
+	virtual uint8_t getLine(void) const;
+
 	/// Retrieves the current port state.
 	///
 	virtual void getState(uint8_t* mode, uint8_t* line) const;
@@ -796,6 +800,10 @@ public:
 	///
 	virtual void setPosition(uint16_t position, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT);
 
+	/// Returns the current port position.
+	///
+	virtual uint16_t getPosition(void) const;
+
 	/// Returns the current port state, i. e. the selected label's position.
 	///
 	virtual void getState(uint16_t* position) const;
@@ -829,7 +837,7 @@ protected:
 
 public:
 	/// Constructs a Select port with the given ID.
-	/// Default values are: Min = 0, Max = 100, Step = 1.
+	/// Default values are: Minimum = 0, Maximum = 100, Step = 1.
 	explicit DialPort(const char* id);
 
 	/// Constructs a Select port with the given ID.
@@ -868,6 +876,10 @@ public:
 	/// Sets the port's position; position may be in the range of minValue..maxValue.
 	///
 	virtual void setPosition(int64_t position, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT);
+
+	/// Returns the current port position.
+	///
+	virtual int64_t getPosition(void) const;
 
 	/// Returns the current port position.
 	///

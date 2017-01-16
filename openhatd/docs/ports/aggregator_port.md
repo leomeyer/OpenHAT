@@ -1,4 +1,4 @@
-## Description
+## Aggregator Port Description
 
 An Aggregator port is a Digital port that collects values of other ports over time and performs statistical calculations on them. It can be used to retain a history of port values (useful for displaying a graph on a GUI, for example), or to calculate values such as the mean, minimum or maximum over a specified time, or the difference of the last and first element. Internally, the values are stored as fractional numbers of type `double`. The output of a specific calculation can be assigned to a Dial port. 
 
@@ -37,6 +37,9 @@ Aggregator ports can also persist their history in a persistent configuration fi
 Automatic aggregator ports, i. e. those that are automatically generated when a Dial port specifies a History setting, are automatically persisted if a persistent file has been specified.
 
 ## Settings
+
+### Type
+Fixed value `Aggregator`.
 
 ### SourcePort
 Required. The ID of the source port that should be used for retrieving values.

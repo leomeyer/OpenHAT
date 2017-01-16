@@ -112,9 +112,9 @@ Examples:
 - `group=^My.*`: Select all ports whose group starts with 'My'.
 - `MyPort1 tag=log !group=test`: Select MyPort1 plus all ports that have a tag named 'log' but not those whose group contains 'test' (case insensitive).
 
-## Value Resolvers
+## Value Resolvers <a name="value_resolvers"></a>
 
-Most port parameters expect numeric values as their settings. You can either specify these values directly in the configuration, in which case they remain fixed as long as openhatd is running, or use a so-called **value resolver** to tell openhatd to use the current runtime value of another ports as the parameter value. This allows for more complex interactions between ports. It is up to a port's implementation whether a value resolver can be used for a certain parameter or not.
+Most port parameters expect numeric values as their settings. You can either specify these values directly in the configuration, in which case they remain fixed as long as openhatd is running, or use a so-called **value resolver** to tell openhatd to use the current runtime value of another port as the parameter value. This allows for more complex interactions between ports. It is up to a port's implementation whether a value resolver can be used for a certain parameter or not.
 
 For example, a Fader port used for dimming lights might choose to take the current value of a dimmer port as a starting point for gradually fading out to zero. Providing a fixed value might have the unwanted effect of starting out at a higher value which would make the light brighter before fading out. To avoid this the value can be provided to the Fader port not only as a numeric value but as a port reference (a value resolver), too.
 

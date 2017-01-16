@@ -94,12 +94,12 @@
     <None Include="..\testconfigs\scene0.ini" />
     <None Include="..\testconfigs\scene1.ini" />
     <None Include="..\testconfigs\testconfig.ini" />
+    <None Include="..\testconfigs\test_aggregator.ini" />
     <None Include="..\testconfigs\test_include.ini" />
     <None Include="..\testconfigs\weather_test.ini" />
     <None Include="..\testconfigs\window_test.ini" />
     <None Include="exectest.bat" />
     <None Include="fileinputtest.txt" />
-    <None Include="webdocro..\src.css" />
     <None Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>

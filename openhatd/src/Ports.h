@@ -25,26 +25,9 @@ namespace openhat {
 // Logic Port
 ///////////////////////////////////////////////////////////////////////////////
 
-/** A LogicPort implements logic functions for digital ports. It supports
-* the following operations:
-* - OR (default): The line is High if at least one of its inputs is High
-* - AND: The line is High if all of its inputs are High
-* - XOR: The line is High if an odd number of its inputs is High
-* - ATLEAST (n): The line is High if at least n inputs are High
-* - ATMOST (n): The line is High if at most n inputs are High
-* - EXACT (n): The line is High if exactly n inputs are High
-* Additionally you can specify whether the output should be negated.
-* The LogicPort requires at least one digital port as input. The output
-* can optionally be distributed to an arbitrary number of digital ports.
-* Processing occurs in the OPDI waiting event loop.
-* All input ports' state is queried. If the logic function results in a change
-* of this port's state the new state is set on the output ports. This means that
-* there is no unnecessary continuous state propagation.
-* If the port is not hidden it will perform a self-refresh when the state changes.
-* Non-hidden output ports whose state is changed will be refreshed.
-* You can also specify inverted output ports who will be updated with the negated
-* state of this port.
-*/
+/// This port calculates a logic function over the Line values of Digital ports.
+/// <a href="../../ports/logic_port">See the Logic port documentation.</a>
+
 class LogicPort : public opdi::DigitalPort {
 protected:
 	enum LogicFunction {
@@ -54,7 +37,7 @@ protected:
 		XOR,
 		ATLEAST,
 		ATMOST,
-		EXACT
+		EXACTLY
 	};
 
 	openhat::AbstractOpenHAT* openhat;
@@ -538,29 +521,53 @@ public:
 // Counter Port
 ///////////////////////////////////////////////////////////////////////////////
 
-/** A CounterPort is a dial port whose value increments linearly with time.
-*   You can specify the period (in milliseconds) and the increment value.
-*   A CounterPort can also count the events detected by a TriggerPort.
-*   In this case, set the period to a value below 0 to only count the detected state changes.
-*/
+/// This port implements a counter that increments with time.
+/// <a href="../../ports/counter_port">See the Counter port documentation.</a>
 class CounterPort : public opdi::DialPort {
-
 protected:
+	enum class TimeBase {
+		SECONDS,
+		MILLISECONDS,
+		FRAMES
+	};
+
 	openhat::AbstractOpenHAT* openhat;
+
+	TimeBase timeBase;
+	std::string incrementStr;
 	opdi::ValueResolver<int64_t> increment;
-	opdi::ValueResolver<int64_t> periodMs;
+	std::string periodStr;
+	opdi::ValueResolver<int64_t> period;
+	std::string underflowPortStr;
+	opdi::DigitalPortList underflowPorts;
+	std::string overflowPortStr;
+	opdi::DigitalPortList overflowPorts;
 
-	uint64_t lastActionTime;
+	uint64_t lastCountTime;
 public:
+	/// The unique type GUID of a Counter port.
+	///
+	static constexpr const char* TypeGUID = "26f2710c-05ac-4e14-b6d3-a2ec79252890";
 
+	/// Creates a Counter port with the specified ID.
+	///
 	CounterPort(AbstractOpenHAT* openhat, const char* id);
 
+	/// Configures the port from the specified configuration view.
+	///
 	virtual void configure(ConfigurationView* nodeConfig);
 
+	/// Prepares the port for operation.
+	///
 	virtual void prepare() override;
 
-	virtual void doIncrement();
+	/// Increments the port's position by the specified increment.
+	/// Handles over- and underflow logic. This method may only be called
+	/// from within the doWork() method on the main thread!
+	virtual void doIncrement(int64_t increment);
 
+	/// Checks whether the period is up and increments the position if neccessary.
+	///
 	virtual uint8_t doWork(uint8_t canSend) override;
 };
 
@@ -568,21 +575,10 @@ public:
 // Trigger Port
 ///////////////////////////////////////////////////////////////////////////////
 
-/** A TriggerPort is a DigitalPort that continuously monitors one or more 
-* digital ports for changes of their state. If a state change is detected it
-* can change the state of other DigitalPorts.
-* Triggering can happen on a change from Low to High (rising edge), from
-* High to Low (falling edge), or on both changes.
-* The effected state change can either be to set the output DigitalPorts
-* High, Low, or toggle them. If you specify inverse output ports the state change
-* is inverted, except for the Toggle specification.
-* Disabling the TriggerPort sets all previously recorded port states to "unknown".
-* No change is performed the first time a DigitalPort is read when its current
-* state is unknown. A port that returns an error will also be set to "unknown".
-*/
+/// This port can monitor Digital ports for state changes.
+/// <a href="../../ports/trigger_port">See the Trigger port documentation.</a>
 class TriggerPort : public opdi::DigitalPort {
 protected:
-
 	enum TriggerType {
 		RISING_EDGE,
 		FALLING_EDGE,
@@ -677,18 +673,9 @@ public:
 };
 
 
-/// A Test port is a DigitalPort that, when High, performs a set of predefined
-/// test comparisons in regular intervals. The interval can be specified in seconds,
-/// milliseconds or frames (number of performed doWork iterations) by setting the
-/// time base.
-/// You can specify whether a test should output a warning or exit with an error code
-/// if a test comparison fails. Also, a test can optionally cause the program to exit
-/// cleanly if a test has been completed, which is useful for automated testing.
-/// A test port requires a configuration section <ID>.Cases with a number of settings
-/// of the form <portID>:<property> = <value>. If a test is due the settings are processed
-/// by resolving the port and passing the property and value to the port's testValue method.
-/// This method will throw an exception if the test fails.
-/// Test ports are active (line = High) and hidden by default.
+/// This port can be used to test the runtime values of other ports.
+/// <a href="../../ports/test_port">See the Test port documentation.</a>
+
 class TestPort : public opdi::DigitalPort {
 protected:
 	enum class TimeBase {

@@ -33,3 +33,4 @@ An optional ID of a Counter port that will be incremented by 1 when the trigger 
 
 ## Example
 
+{!testconfigs/test_trigger.ini!}

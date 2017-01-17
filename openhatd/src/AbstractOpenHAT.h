@@ -127,6 +127,7 @@ protected:
 	std::string heartbeatFile;
 
 	bool suppressUnusedParameterMessages;
+	std::string lastConfigKeyAccessMessage;		// used to suppress subsequent identical messages from nested configurations
 
 	virtual uint8_t idleTimeoutReached(void) override;
 
@@ -220,7 +221,7 @@ public:
 	virtual Poco::Util::AbstractConfiguration* getConfigForState(ConfigurationView* baseConfig, const std::string& viewName);
 
 	/** Called by the destructor of ConfigurationView, do not throw exceptions in this method! */
-	virtual void unusedConfigKeysDetected(const std::string& viewName, const std::vector<std::string>& unusedKeys);
+	virtual void unusedConfigKeysDetected(const std::string& sourceFile, const std::string& viewName, const std::vector<std::string>& unusedKeys);
 
 	/** Throws a SettingException. Suppresses unused config key messages afterwards. */
 	virtual void throwSettingException(const std::string& message, const std::string& detail = "");
@@ -317,6 +318,10 @@ public:
 	virtual void getEnvironment(std::map<std::string, std::string>& mapToFill);
 
 	virtual std::string getExceptionMessage(Poco::Exception& e);
+
+	/// Logs access to a config key with Debug log verbosity.
+	/// Suppresses subsequent identical messages.
+	virtual void logConfigKeyAccess(const std::string& message);
 };
 
 }		// namespace openhat

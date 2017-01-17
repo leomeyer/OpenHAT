@@ -9,8 +9,8 @@
 
 namespace openhat {
 
-/** Wrapper around IniFileConfiguration that can translate the file contents given the
-*   parameters supplied in the constructor. */
+/// Wrapper around IniFileConfiguration that can translate the file contents given the
+/// parameters supplied in the constructor.
 class OpenHATConfigurationFile : public Poco::Util::IniFileConfiguration
 {
 protected:
@@ -25,13 +25,13 @@ public:
 
 class AbstractOpenHAT;
 
-/** Wrapper around a configuration view that tracks all settings that have been retrieved
-*   from the configuration and can compare them against all supplied settings, to identify
-*   unused or misspelled configuration parameters. */
+/// Wrapper around a configuration view that tracks all settings that have been retrieved
+/// from the configuration and can compare them against all supplied settings, to identify
+/// unused or misspelled configuration parameters.
 class ConfigurationView : public Poco::Util::LayeredConfiguration {
 
 public:
-	ConfigurationView(AbstractOpenHAT* openhat, Poco::AutoPtr<Poco::Util::AbstractConfiguration> config, const std::string& section, bool checkUnused = true);
+	ConfigurationView(AbstractOpenHAT* openhat, Poco::AutoPtr<Poco::Util::AbstractConfiguration> config, const std::string& sourceFile, const std::string& section, bool checkUnused = true);
 
 	~ConfigurationView();
 
@@ -41,9 +41,10 @@ public:
 
 	void setCheckUnused(bool check);
 
+	const std::string sourceFile;
+	const std::string section;
 protected:
 	AbstractOpenHAT* openhat;
-	std::string section;
 	bool checkUnused;
 	mutable Poco::AutoPtr<Poco::Util::AbstractConfiguration> innerConfig;
 	mutable std::unordered_set<std::string> usedKeys;

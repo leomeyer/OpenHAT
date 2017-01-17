@@ -71,6 +71,11 @@ protected:
 	virtual void logWarn(const std::string& message) = 0;
 
 public:
+
+	/// Constructor
+	///
+	OPDI(void);
+
 	/// Flag that indicates that the OPDI system is being shutdown
 	///
 	bool shutdownRequested;

@@ -54,9 +54,9 @@ OpenHATConfigurationFile::OpenHATConfigurationFile(const std::string& path, std:
 
 // ConfigurationView
 
-ConfigurationView::ConfigurationView(AbstractOpenHAT* openhat, Poco::AutoPtr<Poco::Util::AbstractConfiguration> config, const std::string& section, bool checkUnused) {
+ConfigurationView::ConfigurationView(AbstractOpenHAT* openhat, Poco::AutoPtr<Poco::Util::AbstractConfiguration> config, const std::string& sourceFile, const std::string& section, bool checkUnused)
+	: sourceFile(sourceFile), section(section) {
 	this->openhat = openhat;
-	this->section = section;
 	this->checkUnused = checkUnused;
 	this->innerConfig = config;
 	this->add(this->innerConfig);
@@ -70,7 +70,7 @@ ConfigurationView::~ConfigurationView() {
 	this->getUnusedKeys(unusedKeys);
 
 	if (unusedKeys.size() > 0)
-		this->openhat->unusedConfigKeysDetected(this->section, unusedKeys);
+		this->openhat->unusedConfigKeysDetected(this->sourceFile, this->section, unusedKeys);
 }
 
 void ConfigurationView::addUsedKey(const std::string & key) {
@@ -82,12 +82,12 @@ bool ConfigurationView::getRaw(const std::string& key, std::string& value) const
 	Poco::Util::LayeredConfiguration::getRaw(key, value);
 	if (this->innerConfig->has(key)) {
 		if (!section.empty())
-			this->openhat->logDebug("Retrieved setting " + section + "." + key + ", value is: '" + value + "'");
+			this->openhat->logConfigKeyAccess((this->sourceFile.empty() ? std::string() : this->sourceFile + ": " ) + "Retrieved setting " + section + "." + key + ", value is: '" + value + "'");
 		this->usedKeys.insert(key);
 		return true;
 	} else
 		if (!section.empty())
-			this->openhat->logDebug("Setting " + section + "." + key + " not specified");
+			this->openhat->logConfigKeyAccess((this->sourceFile.empty() ? std::string() : this->sourceFile + ": ") + "Setting " + section + "." + key + " not specified");
 	return false;
 }
 

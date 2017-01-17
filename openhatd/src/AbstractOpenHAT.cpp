@@ -231,7 +231,7 @@ ConfigurationView* AbstractOpenHAT::readConfiguration(const std::string& filenam
 	Poco::Path filePath(filename);
 	fileConfig->setString(OPENHAT_CONFIG_FILE_SETTING, filePath.absolute().toString());
 
-	ConfigurationView* result = new ConfigurationView(this, fileConfig, "", false);
+	ConfigurationView* result = new ConfigurationView(this, fileConfig, filename, "", false);
 	return result;
 }
 
@@ -256,7 +256,7 @@ void AbstractOpenHAT::log(const std::string& text) {
 	// Important: log must be thread-safe.
 	Poco::Mutex::ScopedLock(this->mutex);
 
-	std::string msg = "[" + this->getTimestampStr() + "] " + (this->shutdownRequested ? "<AFTER SHUTDOWN> " : "") + text;
+	std::string msg = "[" + this->getTimestampStr() + "] " + (this->shutdownRequested ? "<SHUTDOWN> " : "") + text;
 	if (this->logger != nullptr) {
 		this->logger->information(msg);
 	} else {
@@ -462,7 +462,9 @@ opdi::LogVerbosity AbstractOpenHAT::getConfigLogVerbosity(ConfigurationView* con
 }
 
 Poco::AutoPtr<ConfigurationView> AbstractOpenHAT::createConfigView(Poco::Util::AbstractConfiguration* baseConfig, const std::string& viewName) {
-	return new ConfigurationView(this, baseConfig->createView(viewName), viewName);
+	// get configuration file setting from the file
+	std::string sourceFile = baseConfig->getString(OPENHAT_CONFIG_FILE_SETTING, "");
+	return new ConfigurationView(this, baseConfig->createView(viewName), sourceFile, viewName);
 }
 
 Poco::Util::AbstractConfiguration* AbstractOpenHAT::getConfigForState(ConfigurationView* baseConfig, const std::string& viewName) {
@@ -486,12 +488,12 @@ Poco::Util::AbstractConfiguration* AbstractOpenHAT::getConfigForState(Configurat
 	return newConfig;
 }
 
-void AbstractOpenHAT::unusedConfigKeysDetected(const std::string & viewName, const std::vector<std::string>& unusedKeys) {
+void AbstractOpenHAT::unusedConfigKeysDetected(const std::string& sourceFile, const std::string& viewName, const std::vector<std::string>& unusedKeys) {
 	if (this->suppressUnusedParameterMessages)
 		return;
 	auto ite = unusedKeys.cend();
 	for (auto it = unusedKeys.cbegin(); it != ite; ++it) {
-		this->logWarning("Unused configuration parameter in node " + viewName + ": " + *it);
+		this->logWarning((sourceFile.empty() ? std::string() : sourceFile + ": ") + "Unused configuration parameter in node " + viewName + ": " + *it);
 	}
 }
 
@@ -517,6 +519,7 @@ std::string AbstractOpenHAT::setupGeneralConfiguration(ConfigurationView* config
 		// determine CWD-relative path depending on location of config file
 		persistentFile = this->resolveRelativePath(general, "RelativeTo", persistentFile, "CWD");
 		Poco::File file(persistentFile);
+		Poco::Path filePath(persistentFile);
 
 		// the persistent configuration is not an INI file (because POCO can't write INI files)
 		// but a "properties-format" file
@@ -526,6 +529,7 @@ std::string AbstractOpenHAT::setupGeneralConfiguration(ConfigurationView* config
 		else
 			// file does not yet exist; will be created when persisting state
 			this->persistentConfig = new Poco::Util::PropertyFileConfiguration();
+		this->persistentConfig->setString(OPENHAT_CONFIG_FILE_SETTING, filePath.absolute().toString());
 		this->persistentConfigFile = persistentFile;
 	}
 
@@ -1295,7 +1299,7 @@ int AbstractOpenHAT::setupConnection(ConfigurationView* configuration, bool test
 		std::vector<std::string> unusedKeys;
 		config->getUnusedKeys(unusedKeys);
 		if (unusedKeys.size() > 0)
-			this->unusedConfigKeysDetected("Connection", unusedKeys);
+			this->unusedConfigKeysDetected(config->sourceFile, "Connection", unusedKeys);
 		config->setCheckUnused(false);	// no check needed afterwards
 
 		return this->setupTCP(interface_, port);
@@ -1614,6 +1618,13 @@ std::string AbstractOpenHAT::getExceptionMessage(Poco::Exception& e) {
 #endif
 	return (e.message().empty() ? "" : ": " + e.message()) + (what.empty() ? "" : " " + what)
 		+ (typeName.empty() ? "" : " (" + typeName + ")");
+}
+
+void AbstractOpenHAT::logConfigKeyAccess(const std::string& message) {
+	if (this->lastConfigKeyAccessMessage == message)
+		return;
+	this->lastConfigKeyAccessMessage = message;
+	this->logDebug(message);
 }
 
 }		// namespace openhat

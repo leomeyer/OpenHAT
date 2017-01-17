@@ -48,10 +48,12 @@ uint8_t OPDI::shutdownInternal(void) {
 	return this->shutdownExitCode;
 }
 
-uint8_t OPDI::setup(const char* slaveName, int idleTimeout) {
+OPDI::OPDI(void) {
 	this->shutdownRequested = false;
 	this->shutdownExitCode = OPDI_STATUS_OK;
+}
 
+uint8_t OPDI::setup(const char* slaveName, int idleTimeout) {
 	// initialize port list
 	this->ports.clear();
 	this->groups.clear();

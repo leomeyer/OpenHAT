@@ -548,8 +548,13 @@ opdi::Port* OPDI::findPort(const std::string& configPort, const std::string& set
 
 void OPDI::findPorts(const std::string& configPort, const std::string& setting, const std::string& portSpec, opdi::PortList &portList) {
 	std::vector<std::string> portIDs;
-	this->findPortIDs(portSpec, portIDs);
-	auto ite = portIDs.cend();
+	try {
+		this->findPortIDs(portSpec, portIDs);
+	}
+	catch (const Poco::Exception& e) {
+		// wrap execption, add details
+		throw Poco::InvalidArgumentException(configPort + ": Error resolving port list of setting " + setting + " ('" + portSpec + "'): " + e.message());
+	}	auto ite = portIDs.cend();
 	for (auto it = portIDs.cbegin(); it != ite; ++it) {
 		opdi::Port* port = this->findPort(configPort, setting, (*it), true);
 		if (port != nullptr)
@@ -575,16 +580,16 @@ opdi::DigitalPort* OPDI::findDigitalPort(const std::string& configPort, const st
 }
 
 void OPDI::findDigitalPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, opdi::DigitalPortList& portList) {
-	// split list at blanks
-	std::stringstream ss(portIDs);
-	std::string item;
-	while (std::getline(ss, item, ' ')) {
-		// ignore empty items
-		if (!item.empty()) {
-			opdi::DigitalPort* port = this->findDigitalPort(configPort, setting, item, true);
-			if (port != nullptr)
-				portList.push_back(port);
-		}
+	opdi::PortList pList;
+	// find ports by port list specification
+	this->findPorts(configPort, setting, portIDs, pList);
+	// go through list, check for digital ports
+	auto ite = pList.cend();
+	for (auto it = pList.cbegin(); it != ite; ++it) {
+		opdi::Port* port = *it;
+		if (strcmp(port->getType(), OPDI_PORTTYPE_DIGITAL))
+			throw Poco::InvalidArgumentException(configPort + ": Error resolving port list of setting " + setting + ": The port " + port->ID() + " is not a Digital port");
+		portList.push_back(dynamic_cast<DigitalPort*>(port));
 	}
 }
 
@@ -606,16 +611,16 @@ opdi::AnalogPort* OPDI::findAnalogPort(const std::string& configPort, const std:
 }
 
 void OPDI::findAnalogPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, opdi::AnalogPortList& portList) {
-	// split list at blanks
-	std::stringstream ss(portIDs);
-	std::string item;
-	while (std::getline(ss, item, ' ')) {
-		// ignore empty items
-		if (!item.empty()) {
-			opdi::AnalogPort* port = this->findAnalogPort(configPort, setting, item, true);
-			if (port != nullptr)
-				portList.push_back(port);
-		}
+	opdi::PortList pList;
+	// find ports by port list specification
+	this->findPorts(configPort, setting, portIDs, pList);
+	// go through list, check for digital ports
+	auto ite = pList.cend();
+	for (auto it = pList.cbegin(); it != ite; ++it) {
+		opdi::Port* port = *it;
+		if (strcmp(port->getType(), OPDI_PORTTYPE_ANALOG))
+			throw Poco::InvalidArgumentException(configPort + ": Error resolving port list of setting " + setting + ": The port " + port->ID() + " is not an Analog port");
+		portList.push_back(dynamic_cast<AnalogPort*>(port));
 	}
 }
 

@@ -841,14 +841,16 @@ void AbstractOpenHAT::configureDigitalPort(ConfigurationView* portConfig, opdi::
 	std::string portMode = this->getConfigString(stateConfig, port->ID(), "Mode", "", false);
 	if (portMode == "Input") {
 		port->setMode(OPDI_DIGITAL_MODE_INPUT_FLOATING);
+/* these modes are no longer necessary
 	} else if (portMode == "Input with pullup") {
 		port->setMode(OPDI_DIGITAL_MODE_INPUT_PULLUP);
 	} else if (portMode == "Input with pulldown") {
 		port->setMode(OPDI_DIGITAL_MODE_INPUT_PULLDOWN);
+*/
 	} else if (portMode == "Output") {
 		port->setMode(OPDI_DIGITAL_MODE_OUTPUT);
 	} else if (portMode != "")
-		this->throwSettingException("Unknown Mode specified; expected 'Input', 'Input with pullup', 'Input with pulldown', or 'Output'", portMode);
+		this->throwSettingException("Unknown Mode specified; expected 'Input'" /*, 'Input with pullup', 'Input with pulldown',*/ " or 'Output'", portMode);
 
 	std::string portLine = this->getConfigString(stateConfig, port->ID(), "Line", "", false);
 	if (portLine == "High") {

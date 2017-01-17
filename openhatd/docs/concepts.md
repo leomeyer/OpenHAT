@@ -4,54 +4,40 @@ In order to use openhatd it is necessary to understand some basic concepts. This
 
 The basic automation building block in openhatd is called a **Port**. Everything in openhatd revolves around the configuration of ports, their current state and their connections to other ports. Ports encapsulate simple or advanced behavior and get or provide information from or to other ports. It is the combination of ports that makes complex automation behavior possible.
 
-You can think of ports as internal variables of the system. Ports can be exposed on a user interface, giving read-only or writable access to the user. openhatd can automatically log the values of ports. At the same time, ports do implement the system's functionality, for example window operation state machines, weather data file parsing etc.
+You can think of ports as internal variables of the system. Ports can be exposed on a user interface, giving read-only or writable access to the user. openhatd can automatically log the values of ports. At the same time, ports implement the system's advanced functionality, for example window operation state machines, weather data file parsing etc.
 
-There are different types of ports in openhatd. To be able to model automation behavior with ports you'll have to understand these different types of ports and their properties and functions. The basic properties of all types of ports are:
-
- - A unique **ID** which is a text string preferably without blanks and special characters, for example "Window1"
- - A **hidden** flag which decides whether to display this port on a user interface or not
- - An optional **label** and **icon** specification to display on a user interface (if the port is not hidden)
- - An optional **unit** specification which determines value conversions, formatting etc.
- - A **readonly** flag which decides whether a user may change this port's value or not
- - A **persistent** flag which decides whether the state of this port is stored permanently in an external file
- - An optional **group** ID (ports can be ordered into hierarchical groups)
- - A **refresh mode** that decides how changes in the port's state affect the connected user interfaces
- - Freely assignable **tag** values
-
-Port IDs should contain only upper- and lowercase characters, digits, and the underscore. They should not start with a digit. The technical reason for this is that port IDs can be referred to from within expression formulas and other constructs which use a certain syntax. Using special characters in port IDs might interfere with this syntax. Additionally, port IDs are case sensitive in some contexts but may not be in others. For this reason (and for readability) it is strongly discouraged to rely on port ID case sensitivity.
+There are different types of ports in openhatd. To be able to model automation behavior with ports you'll have to understand these different types of ports and their properties and functions.
 
 Ports can have **errors**. This is normal because many ports interact with resources of the environment or external components that may fail or become unavailable. openhatd provides mechanisms to gracefully deal with such errors. See [Port Overview - Errors](ports.md#port_errors) for more details. 
 
 Basically, ports are of five different types:
 
-### <a name="digital_port"></a>Digital Port
+### Digital Port<a name="digital_port"></a>
 
 ![](images/digital_port.png)
 
 The Digital port is the most elementary port type. A Digital port has a **Mode** and a **Line** state. Modes can be **Input** and **Output**, and the line can be either **Low** or **High**. Mode and Line default to Input and Low.
 
-The Digital port is modeled after a digital I/O pin of a microcontroller. The important thing here is that a Digital port's state is always known, and it is either Low or High. Basically, the Digital port models a switch. In openhatd it is used for "things that can be on or off", no matter whether the state of these things is controlled directly by a user or by internal functions, or whether the Digital port is a physical actor, an internal variable or behavioral component or reflects the state of some outside sensor (by reading its state from some driver).
+[More information about Digital ports](ports/basic_ports.md#digital_port)
 
-Typical examples of Digital ports are LEDs or relays (output only), and switches or buttons (input only). However, most higher-level functions in openhatd are also modeled as Digital ports, thus giving you the ability to switch these functions on or off. For example, a Pulse port can periodically change the state of one or more Digital ports (its "outputs"). The Pulse port itself is again a Digital port, and it will only be active if its Line state is High. Thus, you can switch the Pulse port on or off using a user interface, or the Pulse port can again be controlled by any other port that accepts a Digital port as an output. In this way you can connect elementary blocks together to form complex behavior.
-
-### <a name="analog_port"></a>Analog Port
+### Analog Port<a name="analog_port"></a>
 
 ![](images/analog_port.png)
 
 The Analog port is modeled after the the properties of an A/D or D/A port of a microcontroller. Its value ranges from 0 to 2^n - 1, with n being a value between 8 and 12 inclusively.
-The Analog port also has a **Reference** setting (internal/external), and a **Mode** (input/output). The Analog port is less useful in an openhatd automation context because it is modeled so close to the metal. In most cases it is better to use a Dial port instead.
+The Analog port also has a voltage **Reference** setting (internal/external), and a **Mode** (input/output). The Analog port is less useful in an openhatd automation context because it is modeled so close to the metal. In most cases it is better to use a Dial port instead.
 
-### <a name="dial_port"></a>Dial Port
+[More information about Analog ports](ports/basic_ports.md#analog_port)
+
+### Dial Port<a name="dial_port"></a>
 
 ![](images/dial_port.png)
 
 The Dial port is the most versatile and flexible port. It represents a 64 bit signed integer value referred to as **Position**. There's a **Minimum**, **Maximum** and a **Step** setting which limit the possible values of a Dial port to a meaningful range; for example, to represent an ambient temperature in degrees Celsius you could limit the range to -50..50. The defaults are 0, 100 and 1 for Minimum, Maximum and Step.
 
-openhatd does not do floating point arithmetics internally. You therefore cannot store fractional values in ports. This is not a problem in practice, though; if you need to represent for example tenths of degrees Celsius you could specify the above range as -500..500 and divide the value by 10 for all internal calculations. If the value has to be presented to a user the conversion happens in the UI component; the port's unit specification tells the UI what the value is exactly and what options there are for converting and formatting the value. This also helps with localizing the UI; for example, even though the value is processed internally as tenths of degrees Celsius the UI might choose to display it as degrees Fahrenheit, by means of a conversion routine specified for this unit. The most important thing here is to remember what the internal value actually means for a specific Dial port.
+[More information about Dial ports](ports/basic_ports.md#dial_port)
 
-Dial ports can represent numeric information as well as dates and times. As usual with openhatd ports, the value of a Dial port might be set by a user, or it might be the result of an internal calculation, or it might reflect the state of some hardware or other external component (like the content of a file). The best way to initially think about a Dial port is as of a universal numeric variable.
-
-### <a name="select_port"></a>Select Port
+### Select Port<a name="select_port"></a>
 
 ![](images/select_port.png)
 
@@ -59,7 +45,9 @@ The Select port represents a set of distinct **labeled options**. The currently 
 
 A Select port supports up to 65535 different labels (or states), but for practical purposes it is recommended to keep this number as low as possible.
 
-### <a name="streaming_port"></a>Streaming Port
+[More information about Select ports](ports/basic_ports.md#select_port)
+
+### Streaming Port<a name="streaming_port"></a>
 
 A Streaming port can be used to transfer text or binary data. Its use in openhatd, for now, is very limited.
 
@@ -164,9 +152,9 @@ You should be able to change the settings of the "Hello" and the "World" port by
 
 If you have the AndroPDI Remote Control app for Android, you can connect to openhatd by adding a new TCP/IP device and entering your test PC's host name.
 
-## Log Verbosity <a name="logVerbosity"></a>
+## Log Verbosity <a name="log_verbosity"></a>
 
-openhatd can be configured to output more or less information about its operation using the `LogVerbosity` setting in the `General` section, or command line flags. The last command line flag counts and takes precedence over the configuration file setting.  
+openhatd can be configured to output more or less information about its operation using the `LogVerbosity` setting in the `General` section, via command line flags, or on the plugin and port level. The last command line flag counts and takes precedence over the configuration file setting. Individual port log verbosities again take precedence over the command line flag.
 
  	[General]
 	LogVerbosity = Debug
@@ -179,7 +167,7 @@ The log levels are somewhat loosely defined from lowest to highest (a higher log
  
 - `Verbose` (`-v` on the command line): Recommended if some amount of information is required. Will log important non-regular events (i. e. events that occur due to user interaction, or happen infrequently) plus some technical information. Suitable for monitoring a system in production when issues are expected.
  
-- `Debug` (`-d` on the command line): Will additionally log less imortant regular events plus more detailed technical information, but not from within the doWork loop. Logs access to configuration settings which is especially useful when troubleshooting included configuration files with substituted parameters. Can produce a large amount of log messages. Recommended for testing or troublehooting if you need additional hints about system behaviour, but not for normal operation.
+- `Debug` (`-d` on the command line): Will additionally log less important regular events plus more detailed technical information. Logs access to configuration settings which is especially useful when troubleshooting included configuration files with substituted parameters. Can produce a large amount of log messages. Recommended for testing or troublehooting if you need additional hints about system behaviour, but not for normal operation.
  
 - `Extreme` (`-e` on the command line): Will additionally output messages from the inner doWork loop. This level will generate log messages in every frame and will quickly produce a lot of output. Recommended for isolated testing in very special circumstances.
  
@@ -199,7 +187,7 @@ For example, the log output in `Verbose` mode of the above example is:
 
 Individual nodes or ports can specify their own log levels which then take precedence. This allows you to selectively increase or decrease log levels for certain ports independent from the general configuration. The individual port log levels do even override the command line flag. Use them for debugging and testing only.
 
-## Groups
+## Groups <a name="groups"></a>
 
 Groups are useful if there are many ports and you need some kind of logical structure to make them more manageable. A port can be assigned to exactly one group. Groups have an ID, a label and an optional parent group which allows you to construct hierarchies of groups. How exactly groups are presented to the user is up to a GUI implementation; however, the intended way is to show a tree of labels for the user to choose from, and to display the ports of the selected group node and all of its sub-groups.
 
@@ -230,9 +218,9 @@ Port nodes can refer to groups by specifying the `Group` property:
 	Type = DigitalPort
 	Group = DigitalPorts	
 
-`DigitalPorts` is a sub-group of `MainGroup`, meaning that if `MainGroup` is selected on a GUI all of its ports will be shown as well. If, however, `DigitalPorts` is selected only its own ports are displayed.    
+`DigitalPorts` is a sub-group of `MainGroup`, meaning that if `MainGroup` is selected on a GUI all of `DigitalPorts`' ports will be displayed, too. If, however, `DigitalPorts` is selected only its own ports are displayed.    
 
-## Persistent Settings
+## Persistent Settings <a name="persistent_settings"></a>
 
 The state of ports can be persisted, i. e. saved to a separate configuration file, whenever the port state changes. This allows an automation model to store user preferences that are permanent over reboots or process restarts. It does not matter whether the state change is the result of a user interaction or of an internal function; however, it is recommended to persist the state of ports that are changed by the user only. State persistence requires loading and saving of files with the corresponding disk I/O, and if many changes need to be saved it not only introduces additional system load but may also wear out SD cards or other storage media unneccessarily.
 
@@ -259,7 +247,7 @@ The persistent configuration file does not use the INI file format (for technica
 On systems that use an SD card as their primary storage care should be taken to put the persistent configuration file into a ramdisk and save/restore to/from SD card on stopping and starting the openhatd service to reduce SD card wear.
 
 
-## Unit Specifications <a name="unitSpecifications"></a>
+## Unit Specifications <a name="unit_specifications"></a>
 
 Units are a very important concept in openhatd. A port's unit specification tells a user interface how to present the value to the user. Units apply to numeric values only, i. e. they are useful with Analog and Dial ports. They are not validated or used for internal purposes in openhatd, so they are basically tags or labels that can be anything; but as they are hints for client UIs you should make sure that UIs understand the specified units. 
 

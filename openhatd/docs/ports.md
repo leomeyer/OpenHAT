@@ -1,5 +1,5 @@
 
-All ports in openhatd are built upon one of the [basic port types](concepts.md#ports). The ports described here implement specific functionality, extending the capabilities of the basic types.
+All ports in openhatd are built upon one of the [basic port types](ports/basic_ports.md). The ports described here implement specific functionality, extending the capabilities of the basic types.
 
 Please see [Automation Examples](automation_examples.md) to understand how to combine ports to model automation behavior. 
 
@@ -7,7 +7,7 @@ At the end of this document you will find information about [port errors](#port_
 
 ## [Logic Port](ports/logic_port.md)
 
-The Logic port allows you to process the state of one or more Digital ports by applying a logic function (OR, AND, XOR, ATLEAST(n), ATMOST(n), EXACT(n) and their inversions). The Logic port is a Digital port whose state reflects the current result of its logic function. The result can also be applied to other Digital ports.
+The Logic port allows you to process the state of one or more Digital ports by applying a logic function (OR, AND, XOR, ATLEAST(n), ATMOST(n), EXACTLY(n) and their inversions). The Logic port is a Digital port whose state reflects the current result of its logic function. The result can also be applied to other Digital ports.
 
 ## [Pulse Port](ports/pulse_port.md)
 
@@ -85,7 +85,7 @@ The user interfaces indicate port errors by displaying an error symbol, hiding t
 	
 How a port reacts to other ports' errors is specified in the port's documentation.
 
-## Port Lists <a name="port_lists"></a>
+## Port Lists Specifications <a name="port_lists"></a>
 
 Many ports connect to other ports, mostly as inputs or outputs. For example, a Logic port's output is expected to be a number of other Digital ports in the automation model. Internally these ports need to build a list of their connected ports. This list must be provided in the configuration.
 
@@ -94,16 +94,16 @@ There are a number of rules you can use when specifying port lists. Ports can be
 Port list specifications are a space-separated list that allow the following components:
 
 - An asterisk `*` includes all ports of the model.
-- Port IDs that must match exactly
-- `id=regex`: All ports whose ID matches the specified regular expression
-- `group=regex`: All ports whose group matches the specified regular expression
-- `tag=regex`: All ports who have at least one tag that matches the specified regular expression  
+- Port IDs that must match exactly, separated by space.
+- `id=regex`: All ports whose ID matches the specified regular expression.
+- `group=regex`: All ports whose group matches the specified regular expression.
+- `tag=regex`: All ports who have at least one tag that matches the specified regular expression.  
 
 All components, except `*`, can be inverted by prepending an exclamation mark `!`.
 
 Regular expressions are implemented using PCRE, the [Perl Compatible Regular Expressions library by Philip Hazel](http://www.pcre.org). Refer to the [Regular Expression Syntax](http://www.pcre.org/current/doc/html/pcre2pattern.html) for more information.
 
-Regular expression searches are case insensitive.
+Port IDs must be specified with the correct case. Regular expression searches are case insensitive.
 
 Examples:
 

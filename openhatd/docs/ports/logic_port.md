@@ -21,7 +21,7 @@ The logic port updates the specified optional output ports only if its state cha
 Fixed value `Logic`.
 
 ### InputPorts
-Required. A space-separated list of IDs of Digital ports whose Line values should be considered as inputs. 
+Required. A [port list specification](../concepts.md#port_lists) for Digital ports whose Line values should be considered as inputs. 
 
 ### Function
 Optional. One of `OR` (default), `AND`, `XOR`, `ATLEAST`, `ATMOST`, or `EXACTLY`. The keywords `ATLEAST`, `ATMOST` and `EXACTLY` are expected to be followed by a blank and a positive integer number parameter.
@@ -30,10 +30,10 @@ Optional. One of `OR` (default), `AND`, `XOR`, `ATLEAST`, `ATMOST`, or `EXACTLY`
 Optional boolean value. If `True`, the result of the logic function is inverted.
 
 ### OutputPorts
-Optional space-separated list of IDs of Digital ports that are updated when the result of the logic calculation changes.
+An optional [port list specification](../concepts.md#port_lists) for Digital ports that are updated when the result of the logic calculation changes.
 
 ### InverseOutputPorts
-Optional space-separated list of IDs of Digital ports that are updated when the result of the logic calculation changes. The Line state of these ports is set to the inverted result.
+An optional [port list specification](../concepts.md#port_lists) for Digital ports that are updated when the result of the logic calculation changes. The Line state of these ports is set to the inverted result.
 
 ## Example
 

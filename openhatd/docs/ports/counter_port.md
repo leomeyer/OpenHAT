@@ -39,10 +39,10 @@ The value by which to increase or decrease the port's value. The value increases
 You can specify a [ValueResolver](../ports.md#value_resolvers) whose value is resolved when the period is up. If the ValueResolver returns an error the counter is not changed.
 
 ### UnderflowPorts
-A list of IDs of Digital ports that should be set to High when an underflow occurs.
+An optional [port list specification](../concepts.md#port_lists) for Digital ports that should be set to High when an underflow occurs.
 
 ### OverflowPorts
-A list of IDs of Digital ports that should be set to High when an overflow occurs.
+An optional [port list specification](../concepts.md#port_lists) for Digital ports that should be set to High when an overflow occurs.
 
 ## Example
 

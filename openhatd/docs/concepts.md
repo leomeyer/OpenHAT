@@ -12,7 +12,7 @@ Ports can have **errors**. This is normal because many ports interact with resou
 
 Basically, ports are of five different types:
 
-### Digital Port<a name="digital_port"></a>
+### Digital Port <a name="digital_port"></a>
 
 ![](images/digital_port.png)
 
@@ -20,7 +20,7 @@ The Digital port is the most elementary port type. A Digital port has a **Mode**
 
 [More information about Digital ports](ports/basic_ports.md#digital_port)
 
-### Analog Port<a name="analog_port"></a>
+### Analog Port <a name="analog_port"></a>
 
 ![](images/analog_port.png)
 
@@ -29,7 +29,7 @@ The Analog port also has a voltage **Reference** setting (internal/external), an
 
 [More information about Analog ports](ports/basic_ports.md#analog_port)
 
-### Dial Port<a name="dial_port"></a>
+### Dial Port <a name="dial_port"></a>
 
 ![](images/dial_port.png)
 
@@ -37,7 +37,7 @@ The Dial port is the most versatile and flexible port. It represents a 64 bit si
 
 [More information about Dial ports](ports/basic_ports.md#dial_port)
 
-### Select Port<a name="select_port"></a>
+### Select Port <a name="select_port"></a>
 
 ![](images/select_port.png)
 
@@ -47,7 +47,7 @@ A Select port supports up to 65535 different labels (or states), but for practic
 
 [More information about Select ports](ports/basic_ports.md#select_port)
 
-### Streaming Port<a name="streaming_port"></a>
+### Streaming Port <a name="streaming_port"></a>
 
 A Streaming port can be used to transfer text or binary data. Its use in openhatd, for now, is very limited.
 
@@ -59,7 +59,7 @@ Once preparation is complete openhatd will enter the **running phase**. In this 
 
 openhatd will listen to operating system signals to determine when it is about to be terminated. After it receives a termination or interrupt signal it will loop through all ports to give them a chance to perform cleanups or persistence tasks before the program finally exits. 
 
-## Time in openhatd
+## Time in openhatd <a name="time"></a>
 
 openhatd is not a real time system. For operations that must be regularly timed (such as periodic refreshes of port state, timer actions, pulses etc.) the most finely grained unit is the millisecond. Some settings do have to be specified in milliseconds, others in seconds (depending on what makes more sense). However, there is no guarantee that a specified duration in openhatd is exact, but it is guaranteed not to be shorter.
 

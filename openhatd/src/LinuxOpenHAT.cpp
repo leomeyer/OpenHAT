@@ -409,7 +409,7 @@ int LinuxOpenHAT::setupTCP(const std::string& /*interface_*/, int port) {
 
 				close(newsockfd);
 
-				if (err != OPDI_STATUS_OK)
+				if ((err != OPDI_STATUS_OK) && (err != OPDI_DISCONNECTED))
 					return err;
 			
 				// shutdown requested?

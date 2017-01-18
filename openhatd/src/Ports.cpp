@@ -46,7 +46,7 @@ LogicPort::~LogicPort() {
 }
 
 void LogicPort::configure(ConfigurationView* config) {
-	this->openhat->configurePort(config, this, 0);
+	this->openhat->configureDigitalPort(config, this, false);
 	this->logVerbosity = this->openhat->getConfigLogVerbosity(config, opdi::LogVerbosity::UNKNOWN);
 
 	std::string function = config->getString("Function", "OR");
@@ -218,7 +218,7 @@ uint8_t LogicPort::doWork(uint8_t canSend)  {
 // Pulse Port
 ///////////////////////////////////////////////////////////////////////////////
 
-PulsePort::PulsePort(AbstractOpenHAT* openhat, const char* id) : opdi::DigitalPort(id, OPDI_PORTDIRCAP_OUTPUT, 0), period(openhat), dutyCycle(openhat), pulses(openhat) {
+PulsePort::PulsePort(AbstractOpenHAT* openhat, const char* id) : opdi::DigitalPort(id, OPDI_PORTDIRCAP_OUTPUT, 0), period(openhat), dutyCycle(openhat) {
 	this->opdi = this->openhat = openhat;
 	this->negate = false;
 
@@ -229,25 +229,16 @@ PulsePort::PulsePort(AbstractOpenHAT* openhat, const char* id) : opdi::DigitalPo
 	this->pulseState = -1;
 	this->lastStateChangeTime = 0;
 	this->disabledState = -1;
-	this->pulseCount = -1;
 }
 
 PulsePort::~PulsePort() {
 }
 
 void PulsePort::configure(ConfigurationView* config) {
-	this->openhat->configurePort(config, this, 0);
+	this->openhat->configureDigitalPort(config, this, false);
 	this->logVerbosity = this->openhat->getConfigLogVerbosity(config, opdi::LogVerbosity::UNKNOWN);
 
 	this->negate = config->getBool("Negate", false);
-
-	std::string portLine = config->getString("Line", "");
-	if (portLine == "High") {
-		this->setLine(1);
-	} else if (portLine == "Low") {
-		this->setLine(0);
-	} else if (portLine != "")
-		this->openhat->throwSettingException("Unknown Line specified; expected 'Low' or 'High'", portLine);
 
 	std::string disabledState = config->getString("DisabledState", "");
 	if (disabledState == "High") {
@@ -255,27 +246,22 @@ void PulsePort::configure(ConfigurationView* config) {
 	} else if (disabledState == "Low") {
 		this->disabledState = 0;
 	} else if (disabledState != "")
-		this->openhat->throwSettingException("Unknown DisabledState specified; expected 'Low' or 'High'", disabledState);
+		this->openhat->throwSettingException(this->ID() + ": Unsupported DisabledState; expected 'Low' or 'High': " + disabledState);
 
 	this->enablePortStr = config->getString("EnablePorts", "");
 	this->outputPortStr = config->getString("OutputPorts", "");
 	this->inverseOutputPortStr = config->getString("InverseOutputPorts", "");
 
-	this->period.initialize(this, "Period", config->getString("Period", "-1"));
+	std::string periodStr = this->openhat->getConfigString(config, this->ID(), "Period", "", true);
+	this->period.initialize(this, "Period", periodStr);
 	if (!this->period.validate(1, INT_MAX))
-		this->openhat->throwSettingException("Specify a positive integer value for the Period setting of a PulsePort: " + this->to_string(this->period.value()));
+		this->openhat->throwSettingException(this->ID() + ": Specify a positive integer value for the Period setting of a PulsePort: " + periodStr);
 
 	// duty cycle is specified in percent
-	this->dutyCycle.initialize(this, "DutyCycle", config->getString("DutyCycle", "50"));
+	std::string dutyCycleStr = this->openhat->getConfigString(config, this->ID(), "DutyCycle", "", true);
+	this->dutyCycle.initialize(this, "DutyCycle", dutyCycleStr);
 	if (!this->dutyCycle.validate(0, 100))
-		this->openhat->throwSettingException("Specify a percentage value from 0 - 100 for the DutyCycle setting of a PulsePort: " + this->to_string(this->dutyCycle.value()));
-
-	// number of pulses
-	if (config->hasProperty("Pulses")) {
-		this->pulses.initialize(this, "Pulses", config->getString("Pulses", "-1"));
-		if (!this->pulses.validate(1, INT_MAX))
-			this->openhat->throwSettingException("Specify a positive integer value for the Pulses setting of a PulsePort: " + this->to_string(this->pulses.value()));
-	}
+		this->openhat->throwSettingException(this->ID() + ": Specify a percentage value from 0 - 100 for the DutyCycle setting of a PulsePort: " + dutyCycleStr);
 }
 
 void PulsePort::prepare() {
@@ -299,55 +285,79 @@ uint8_t PulsePort::doWork(uint8_t canSend)  {
 		auto it = this->enablePorts.begin();
 		auto ite = this->enablePorts.end();
 		while (it != ite) {
-			uint8_t mode;
-			uint8_t line;
 			try {
-				(*it)->getState(&mode, &line);
+				highCount += (*it)->getLine() == 1;
 			} catch (Poco::Exception &e) {
-				this->logNormal("Error querying port " + (*it)->ID() + ": " + this->openhat->getExceptionMessage(e));
+				this->logExtreme("Error querying port " + (*it)->ID() + ": " + this->openhat->getExceptionMessage(e));
 			}
-			highCount += line;
-			++it;
 			if (highCount > 0)
 				break;
+			++it;
 		}
 		// pulse is enabled if there is at least one EnablePort with High
 		enabled |= highCount > 0;
 	}
 
-	int32_t period = this->period.value();
-	if (period < 0) {
-		this->logWarning("Period may not be negative: " + to_string(period));
-		return OPDI_STATUS_OK;
+	int32_t period = 0;
+	double dutyCycle = 0;
+	bool error = false;
+
+	try {
+		period = this->period.value();
+		if (period < 1) {
+			this->logWarning("Period may not be zero or less: " + to_string(period));
+			error = true;
+		}
+	}
+	catch (Poco::Exception e) {
+		this->logExtreme("Error resolving period value: " + this->openhat->getExceptionMessage(e));
+		error = true;
 	}
 
-	double dutyCycle = this->dutyCycle.value();
-	if (dutyCycle < 0) {
-		this->logWarning("DutyCycle may not be negative: " + to_string(dutyCycle));
-		return OPDI_STATUS_OK;
+	try {
+		dutyCycle = this->dutyCycle.value();
+		if (dutyCycle < 0) {
+			this->logWarning("DutyCycle may not be negative: " + to_string(dutyCycle));
+			error = true;
+		}
+		if (dutyCycle > 100) {
+			this->logWarning("DutyCycle may not exceed 100%: " + to_string(dutyCycle));
+			error = true;
+		}
 	}
-	if (dutyCycle > 100) {
-		this->logWarning("DutyCycle may not exceed 100%: " + to_string(dutyCycle));
-		return OPDI_STATUS_OK;
+	catch (Poco::Exception e) {
+		this->logExtreme("Error resolving duty cycle value: " + this->openhat->getExceptionMessage(e));
+		error = true;
 	}
 
 	// determine new line level
 	uint8_t newState = this->pulseState;
 
-	if (enabled) {
-		// check whether the time for state change has been reached
-		uint64_t timeDiff = opdi_get_time_ms() - this->lastStateChangeTime;
-		// current state (logical) Low?
-		if (this->pulseState == (this->negate ? 1 : 0)) {
-			// time up to High reached?
-			if (timeDiff > period * (1.0 - dutyCycle / 100.0)) 
-				// switch to (logical) High
-				newState = (this->negate ? 0 : 1);
-		} else {
-			// time up to Low reached?
-			if (timeDiff > period * dutyCycle / 100.0)
-				// switch to (logical) Low
-				newState = (this->negate ? 1 : 0);
+	if (enabled && !error) {
+		// a duty cycle of 0 means always off
+		if (dutyCycle == 0)
+			// switch to (logical) Low
+			newState = (this->negate ? 1 : 0);
+		// a duty cycle of 100 means always off
+		else if (dutyCycle == 100)
+			// switch to (logical) High
+			newState = (this->negate ? 0 : 1);
+		else {
+			// check whether the time for state change has been reached
+			uint64_t timeDiff = opdi_get_time_ms() - this->lastStateChangeTime;
+			// current state (logical) Low?
+			if (this->pulseState == (this->negate ? 1 : 0)) {
+				// time up to High reached?
+				if (timeDiff > period * (1.0 - dutyCycle / 100.0))
+					// switch to (logical) High
+					newState = (this->negate ? 0 : 1);
+			}
+			else {
+				// time up to Low reached?
+				if (timeDiff > period * dutyCycle / 100.0)
+					// switch to (logical) Low
+					newState = (this->negate ? 1 : 0);
+			}
 		}
 	} else {
 		// if the port is not enabled, and an inactive state is specified, set it
@@ -366,9 +376,9 @@ uint8_t PulsePort::doWork(uint8_t canSend)  {
 		// set the new state
 		this->pulseState = newState;
 
+		// regular output ports
 		auto it = this->outputPorts.begin();
 		auto ite = this->outputPorts.end();
-		// regular output ports
 		while (it != ite) {
 			try {
 				(*it)->setLine(newState);
@@ -403,13 +413,14 @@ SelectorPort::SelectorPort(AbstractOpenHAT* openhat, const char* id) : opdi::Dig
 	opdi::DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
 	// set the line to an invalid state
 	this->line = -1;
+	this->errorState = -1;		// undefined
 }
 
 SelectorPort::~SelectorPort() {
 }
 
 void SelectorPort::configure(ConfigurationView* config) {
-	this->openhat->configurePort(config, this, 0);
+	this->openhat->configureDigitalPort(config, this, false);
 	this->logVerbosity = this->openhat->getConfigLogVerbosity(config, opdi::LogVerbosity::UNKNOWN);
 
 	this->selectPortStr = config->getString("SelectPort", "");
@@ -421,18 +432,27 @@ void SelectorPort::configure(ConfigurationView* config) {
 	int pos = config->getInt("Position", -1);
 	if ((pos < 0) || (pos > 65535))
 		this->openhat->throwSettingException(this->ID() + ": You have to specify a SelectPort position that is greater than -1 and lower than 65536");
-
 	this->position = pos;
+
+	std::string errState = config->getString("ErrorState", "");
+	if (errState == "High") {
+		this->errorState = 1;
+	}
+	else if (errState == "Low") {
+		this->errorState = 0;
+	}
+	else if (errState != "")
+		this->openhat->throwSettingException(this->ID() + ": Unsupported ErrorState; expected 'Low' or 'High': " + errState);
 }
 
 void SelectorPort::setLine(uint8_t line, ChangeSource changeSource) {
 	opdi::DigitalPort::setLine(line, changeSource);
 	if (this->line == 1) {
-		this->logDebug("Setting Port " + this->selectPort->ID() + " to position " + to_string(this->position));
+		this->logDebug("Setting Port '" + this->selectPort->ID() + "' to position " + to_string(this->position));
 		// set the specified select port to the specified position
 		this->selectPort->setPosition(this->position);
 	} else {
-		this->logDebug("Warning: Setting selector port line to Low has no effect on SelectPort");
+		this->logDebug("Warning: Setting Selector port line to Low has no effect");
 	}
 	// set output ports' lines
 	auto it = this->outputPorts.cbegin();
@@ -460,7 +480,18 @@ uint8_t SelectorPort::doWork(uint8_t canSend)  {
 
 	// check whether the select port is in the specified position
 	uint16_t pos;
-	this->selectPort->getState(&pos);
+	try {
+		// get current position (may result in an error)
+		this->selectPort->getState(&pos);
+	}
+	catch (const Poco::Exception& e) {
+		this->logExtreme("Error querying Select port '" + this->selectPort->ID() + "': " + this->openhat->getExceptionMessage(e));
+		// error state specified?
+		if (this->errorState >= 0)
+			this->setLine(this->errorState);
+		return OPDI_STATUS_OK;
+	}
+
 	if (pos == this->position) {
 		if (this->line != 1) {
 			this->logDebug("Port " + this->selectPort->ID() + " is in position " + to_string(this->position) + ", switching SelectorPort to High");
@@ -2078,8 +2109,8 @@ uint8_t CounterPort::doWork(uint8_t canSend) {
 		// get current period from value resolver
 		period = this->period.value();
 	}
-	catch (const Poco::Exception& pe) {
-		this->logExtreme("Error resolving period value from '" + this->periodStr + "': " + pe.message());
+	catch (const Poco::Exception& e) {
+		this->logExtreme("Error resolving period value from '" + this->periodStr + "': " + this->openhat->getExceptionMessage(e));
 	}
 
 	// a period of 0 or less does not modify the counter
@@ -2124,8 +2155,8 @@ uint8_t CounterPort::doWork(uint8_t canSend) {
 		// get current increment from value resolver
 		this->doIncrement(this->increment.value());
 	}
-	catch (const Poco::Exception& pe) {
-		this->logExtreme("Error resolving increment value from '" + this->periodStr + "': " + pe.message());
+	catch (const Poco::Exception& e) {
+		this->logExtreme("Error resolving increment value from '" + this->periodStr + "': " + this->openhat->getExceptionMessage(e));
 	}
 
 	return OPDI_STATUS_OK;
@@ -2552,18 +2583,18 @@ uint8_t TestPort::doWork(uint8_t canSend) {
 			testPassed = false;
 			// test has failed
 			if (this->warnOnFailure)
-				this->logWarning("Test failed: " + tvme.message());
+				this->logWarning("Test failed: " + this->openhat->getExceptionMessage(tvme));
 			else {
-				this->openhat->logError(this->ID() + ": Test failed: " + tvme.message());
+				this->openhat->logError(this->ID() + ": Test failed: " + this->openhat->getExceptionMessage(tvme));
 				return OPENHATD_TEST_FAILED;
 			}
 		}
 		catch (const Poco::Exception& pe) {
 			testPassed = false;
 			if (this->warnOnFailure)
-				this->logWarning("Test failed due to: " + pe.message());
+				this->logWarning("Test failed due to: " + this->openhat->getExceptionMessage(pe));
 			else {
-				this->openhat->logError(this->ID() + ": Test failed due to : " + pe.message());
+				this->openhat->logError(this->ID() + ": Test failed due to : " + this->openhat->getExceptionMessage(pe));
 				return OPENHATD_TEST_FAILED;
 			}
 		}

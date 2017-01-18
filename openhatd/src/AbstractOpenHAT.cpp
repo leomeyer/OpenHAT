@@ -1607,7 +1607,7 @@ void AbstractOpenHAT::getEnvironment(std::map<std::string, std::string>& mapToFi
 	mapToFill.insert(this->environment.begin(), this->environment.end());
 }
 
-std::string AbstractOpenHAT::getExceptionMessage(Poco::Exception& e) {
+std::string AbstractOpenHAT::getExceptionMessage(const Poco::Exception& e) {
 	std::string what(e.what());
 #ifdef __GNUG__
 	int status;

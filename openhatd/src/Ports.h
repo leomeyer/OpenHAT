@@ -27,7 +27,6 @@ namespace openhat {
 
 /// This port calculates a logic function over the Line values of Digital ports.
 /// <a href="../../ports/logic_port">See the Logic port documentation.</a>
-
 class LogicPort : public opdi::DigitalPort {
 protected:
 	enum LogicFunction {
@@ -51,17 +50,29 @@ protected:
 	opdi::DigitalPortList outputPorts;
 	opdi::DigitalPortList inverseOutputPorts;
 
+	/// Evaluates the logic function.
+	///
 	virtual uint8_t doWork(uint8_t canSend) override;
 
 public:
+	/// Creates a Logic port with the specified ID.
+	///
 	LogicPort(AbstractOpenHAT* openhat, const char* id);
 
+	/// Virtual destructor.
+	///
 	virtual ~LogicPort();
 
+	/// Configures the port.
+	///
 	virtual void configure(ConfigurationView* config);
 
+	/// This method ensures that the Line of a Logic port cannot be set directly.
+	///
 	virtual void setLine(uint8_t line, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 
+	/// Prepares the port for operation.
+	///
 	virtual void prepare() override;
 };
 
@@ -69,20 +80,14 @@ public:
 // Pulse Port
 ///////////////////////////////////////////////////////////////////////////////
 
-/** A pulse port generates a digital pulse with a defined period (measured
-* in milliseconds) and a duty cycle in percent. The pulse is active if the line
-* of this port is set to High. If enable digital ports are specified the
-* pulse is also being generated if at least one of the enable ports is High.
-* The output can be normal or inverted. There are two lists of output digital
-* ports which receive the normal or inverted output respectively.
-*/
+/// This port generates a digital pulse with a defined period and duty cycle.
+/// <a href="../../ports/pulse_port">See the Pulse port documentation.</a>
 class PulsePort : public opdi::DigitalPort {
 protected:
 	openhat::AbstractOpenHAT* openhat;
 	bool negate;
 	opdi::ValueResolver<int32_t> period;
 	opdi::ValueResolver<double> dutyCycle;
-	opdi::ValueResolver<int32_t> pulses;
 	int8_t disabledState;
 	std::string enablePortStr;
 	std::string outputPortStr;
@@ -94,16 +99,26 @@ protected:
 	// state
 	uint8_t pulseState;
 	uint64_t lastStateChangeTime;
-	int32_t pulseCount;
+
+	/// This method generates the pulse if the Line is High.
+	///
 	virtual uint8_t doWork(uint8_t canSend) override;
 
 public:
+	/// Creates a Pulse port with the specified ID.
+	///
 	PulsePort(AbstractOpenHAT* openhat, const char* id);
 
+	/// Virtual destructor.
+	///
 	virtual ~PulsePort();
 
+	/// Configures the port.
+	///
 	virtual void configure(ConfigurationView* config);
 
+	/// Prepares the port for operation.
+	///
 	virtual void prepare() override;
 };
 
@@ -111,10 +126,9 @@ public:
 // Selector Port
 ///////////////////////////////////////////////////////////////////////////////
 
-/** A SelectorPort is a DigitalPort that is High when the specified select port
-*   is in the specified position and Low otherwise. If set to High it will switch
-*   the select port to the specified position. If set to Low, it will do nothing.
-*/
+/// This port implements a DigitalPort that is High when a specified Select port
+/// is in a certain position and Low otherwise.
+/// <a href="../../ports/selector_port">See the Selector port documentation.</a>
 class SelectorPort : public opdi::DigitalPort {
 protected:
 	openhat::AbstractOpenHAT* openhat;
@@ -122,19 +136,30 @@ protected:
 	opdi::SelectPort* selectPort;
 	std::string outputPortStr;
 	opdi::DigitalPortList outputPorts;
+	int8_t errorState;
 	uint16_t position;
 
 	virtual uint8_t doWork(uint8_t canSend) override;
 
 public:
+	/// Creates a Selector port with the specified ID.
+	///
 	SelectorPort(AbstractOpenHAT* openhat, const char* id);
 
+	/// Virtual destructor.
+	///
 	virtual ~SelectorPort();
 
+	/// Configures the port.
+	///
 	virtual void configure(ConfigurationView* config);
 
+	/// Sets the specified Select port to the defined position if line is 1.
+	///
 	virtual void setLine(uint8_t line, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 
+	/// Prepares the port for operation.
+	///
 	virtual void prepare();
 };
 

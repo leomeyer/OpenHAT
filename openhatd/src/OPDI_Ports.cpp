@@ -118,11 +118,19 @@ void Port::handleStateChange(ChangeSource changeSource) {
 	case ChangeSource::CHANGESOURCE_USER: pl = &this->onChangeUserPorts; break;
 	default: return;
 	}
+	if (pl->size() > 0)
+		this->logDebug(std::string("State change detected. Iterating through port change list for: ") + (changeSource == ChangeSource::CHANGESOURCE_INT ? "internal" : "user") + " change");
 	// go through ports
 	auto it = pl->begin();
 	auto ite = pl->end();
 	while (it != ite) {
-		(*it)->setLine(1);
+		// Set the Line of the target port.
+		// Theoretically this could result in an infinite loop if a port references
+		// other ports forming a cycle. However, as the state change handler is only
+		// triggered if the port value is actually changed the function should
+		// return immediately for ports that have already been set to 1.
+		// The original changeSource is propagated to the target port.
+		(*it)->setLine(1, changeSource);
 		++it;
 	}
 }
@@ -763,7 +771,7 @@ void DigitalPort::setMode(uint8_t mode, ChangeSource changeSource) {
 
 void DigitalPort::setLine(uint8_t line, ChangeSource changeSource) {
 	if (line > 1)
-		throw PortError(this->ID() + ": Digital port line not supported: " + this->to_string((int)line));
+		throw PortError(this->ID() + ": Digital port line value not supported: " + this->to_string((int)line));
 	if (this->error != Error::VALUE_OK)
 		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
 	bool changed = (line != this->line);
@@ -1160,13 +1168,20 @@ int64_t DialPort::getStep(void) {
 }
 
 void DialPort::setMin(int64_t min) {
+	if (min > this->maxValue)
+		// adjust max value accordingly
+		this->maxValue = min + (this->maxValue - this->minValue);
 	this->minValue = min;
+
 	// adjust position if necessary
 	if (this->position < this->minValue)
 		this->setPosition(this->minValue);
 }
 
 void DialPort::setMax(int64_t max) {
+	if (max < this->minValue)
+		// adjust min value accordingly
+		this->minValue = max - (this->maxValue - this->minValue);
 	this->maxValue = max;
 	// adjust position if necessary
 	if (this->position > this->maxValue)

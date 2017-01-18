@@ -317,7 +317,7 @@ public:
 
 	virtual void getEnvironment(std::map<std::string, std::string>& mapToFill);
 
-	virtual std::string getExceptionMessage(Poco::Exception& e);
+	virtual std::string getExceptionMessage(const Poco::Exception& e);
 
 	/// Logs access to a config key with Debug log verbosity.
 	/// Suppresses subsequent identical messages.

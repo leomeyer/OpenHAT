@@ -554,7 +554,8 @@ void OPDI::findPorts(const std::string& configPort, const std::string& setting, 
 	catch (const Poco::Exception& e) {
 		// wrap execption, add details
 		throw Poco::InvalidArgumentException(configPort + ": Error resolving port list of setting " + setting + " ('" + portSpec + "'): " + e.message());
-	}	auto ite = portIDs.cend();
+	}
+	auto ite = portIDs.cend();
 	for (auto it = portIDs.cbegin(); it != ite; ++it) {
 		opdi::Port* port = this->findPort(configPort, setting, (*it), true);
 		if (port != nullptr)

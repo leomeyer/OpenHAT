@@ -310,7 +310,7 @@ int WindowsOpenHAT::setupTCP(const std::string& interface_, int port) {
 
 				err = HandleTCPConnection(&csock);
 
-				if (err != OPDI_STATUS_OK)
+				if ((err != OPDI_STATUS_OK) && (err != OPDI_DISCONNECTED))
 					return err;
 			
 				// shutdown requested?

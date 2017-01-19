@@ -701,27 +701,27 @@ double OPDI::getPortValue(opdi::Port* port) const {
 		value = line;
 	}
 	else
-		if (port->getType()[0] == OPDI_PORTTYPE_ANALOG[0]) {
-			// analog port: relative value (0..1)
-			value = ((opdi::AnalogPort*)port)->getRelativeValue();
-		}
-		else
-			if (port->getType()[0] == OPDI_PORTTYPE_DIAL[0]) {
-				// dial port: absolute value
-				int64_t position;
-				((opdi::DialPort*)port)->getState(&position);
-				value = (double)position;
-			}
-			else
-				if (port->getType()[0] == OPDI_PORTTYPE_SELECT[0]) {
-					// select port: current position number
-					uint16_t position;
-					((opdi::SelectPort*)port)->getState(&position);
-					value = position;
-				}
-				else
-					// port type not supported
-					throw Poco::Exception("Port type not supported");
+	if (port->getType()[0] == OPDI_PORTTYPE_ANALOG[0]) {
+		// analog port: relative value (0..1)
+		value = ((opdi::AnalogPort*)port)->getRelativeValue();
+	}
+	else
+	if (port->getType()[0] == OPDI_PORTTYPE_DIAL[0]) {
+		// dial port: absolute value
+		int64_t position;
+		((opdi::DialPort*)port)->getState(&position);
+		value = (double)position;
+	}
+	else
+	if (port->getType()[0] == OPDI_PORTTYPE_SELECT[0]) {
+		// select port: current position number
+		uint16_t position;
+		((opdi::SelectPort*)port)->getState(&position);
+		value = position;
+	}
+	else
+		// port type not supported
+		throw Poco::Exception("Port type not supported");
 
 	return value;
 }

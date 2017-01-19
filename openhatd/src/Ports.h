@@ -691,10 +691,8 @@ public:
 	virtual void prepare() override;
 };
 
-
 /// This port can be used to test the runtime values of other ports.
 /// <a href="../../ports/test_port">See the Test port documentation.</a>
-
 class TestPort : public opdi::DigitalPort {
 protected:
 	enum class TimeBase {
@@ -725,6 +723,29 @@ public:
 	/// Configures the port.
 	///
 	virtual void configure(ConfigurationView* portConfig, ConfigurationView* parentConfig);
+};
+
+/// This port can be used to assign state to target ports.
+/// <a href="../../ports/assignment_port">See the Assigment port documentation.</a>
+class AssignmentPort : public opdi::DigitalPort {
+protected:
+	openhat::AbstractOpenHAT* openhat;
+
+	std::map<std::string, opdi::ValueResolver<double>> assignmentValues;
+
+public:
+	/// Creates an Assignment port with the specified ID.
+	///
+	AssignmentPort(AbstractOpenHAT* openhat, const char* id);
+
+	/// Configures the port.
+	///
+	virtual void configure(ConfigurationView* portConfig, ConfigurationView* parentConfig);
+
+	/// This method assigns the specified values to the target ports if the line is changed to High.
+	/// The changeSource is propagated to the target ports so as it looks as if the changeSource
+	/// was the same as the one that changed this port.
+	virtual void setLine(uint8_t line, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 };
 
 }		// namespace openhat

@@ -2632,7 +2632,7 @@ void TestPort::configure(ConfigurationView* portConfig, ConfigurationView* paren
 	this->warnOnFailure = portConfig->getBool("WarnOnFailure", this->warnOnFailure);
 	this->exitAfterTest = portConfig->getBool("ExitAfterTest", this->exitAfterTest);
 
-	// enumerate calculations
+	// enumerate test cases
 	this->logVerbose(std::string("Enumerating test cases: ") + this->ID() + ".Cases");
 
 	Poco::AutoPtr<ConfigurationView> nodes = this->openhat->createConfigView(portConfig, "Cases");
@@ -2664,6 +2664,105 @@ void TestPort::configure(ConfigurationView* portConfig, ConfigurationView* paren
 		this->logWarning(std::string("No test cases configured in node ") + this->ID() + ".Cases; is this intended?");
 	else
 		this->logVerbose("Found " + this->to_string(this->testValues.size()) + " test cases.");
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// AssignmentPort
+///////////////////////////////////////////////////////////////////////////////
+
+AssignmentPort::AssignmentPort(AbstractOpenHAT* openhat, const char* id) : opdi::DigitalPort(id)  {
+	this->opdi = this->openhat = openhat;
+	this->setMode(OPDI_DIGITAL_MODE_OUTPUT);
+}
+
+void AssignmentPort::configure(ConfigurationView* portConfig, ConfigurationView* parentConfig) {
+	this->openhat->configureDigitalPort(portConfig, this);
+
+	// enumerate assignments
+	this->logVerbose(std::string("Enumerating assignments: ") + this->ID() + ".Assignments");
+
+	Poco::AutoPtr<ConfigurationView> nodes = this->openhat->createConfigView(portConfig, "Assignments");
+	portConfig->addUsedKey("Assignments");
+
+	// get list of assignments
+	ConfigurationView::Keys assignments;
+	nodes->keys("", assignments);
+
+	// create ordered list of cases (std::map internally orders by keys)
+	for (auto it = assignments.begin(), ite = assignments.end(); it != ite; ++it) {
+		// initialize ValueResolver (a bit cumbersome to avoid the need for a standard constructor)
+		this->assignmentValues.emplace(std::map<std::string, opdi::ValueResolver<double>>::value_type(*it, opdi::ValueResolver<double>(this->openhat)));
+		this->assignmentValues.find(*it)->second.initialize(this, *it, nodes->getString(*it));
+	}
+
+	if (this->assignmentValues.size() == 0)
+		this->logWarning(std::string("No assignments configured in node ") + this->ID() + ".Assignments; is this intended?");
+	else
+		this->logVerbose("Found " + this->to_string(this->assignmentValues.size()) + " assignments.");
+}
+
+void AssignmentPort::setLine(uint8_t line, ChangeSource changeSource) {
+	// Important: this method does not call the base method to avoid
+	// refreshes and OnChange* handler processing. They are not necessary
+	// because the line is immediately returned to Low.
+	// It is necessary to remember the value internally to avoid recursive
+	// calls due to cycles in the assignment configuration, however.
+	
+	// state changed to High?
+	if ((this->line == 0) && (line == 1)) {
+		this->line = 1;
+
+		// process assignments
+		auto it = this->assignmentValues.begin();
+		auto ite = this->assignmentValues.end();
+		while (it != ite) {
+
+			try {
+				// find port
+				opdi::Port* port = this->openhat->findPort(this->id, "assignment definition", it->first, true);
+				if (port == nullptr)
+					throw Poco::Exception("Port not found");
+
+				// resolve current assignment value
+				double value = this->assignmentValues.find(it->first)->second.value();
+
+				// assignment depends on port type
+				if (port->getType()[0] == OPDI_PORTTYPE_DIGITAL[0]) {
+					((opdi::DigitalPort*)port)->setLine(value == 0 ? 0 : 1, changeSource);
+				}
+				else
+				if (port->getType()[0] == OPDI_PORTTYPE_ANALOG[0]) {
+					// analog port: relative value (0..1)
+					((opdi::AnalogPort*)port)->setRelativeValue(value, changeSource);
+				}
+				else
+				if (port->getType()[0] == OPDI_PORTTYPE_DIAL[0]) {
+					// dial port: absolute value
+					int64_t position = (int64_t)value;
+					((opdi::DialPort*)port)->setPosition(position, changeSource);
+				}
+				else
+				if (port->getType()[0] == OPDI_PORTTYPE_SELECT[0]) {
+					// select port: current position number
+					uint16_t position = (uint16_t)value;
+					((opdi::SelectPort*)port)->setPosition(position, changeSource);
+				}
+				else
+					// port type not supported
+					throw Poco::Exception("Port type not supported");
+
+				this->logDebug("Assigned value to " + port->ID() + ": " + this->to_string(value));
+			}
+			catch (const Poco::Exception& pe) {
+				this->logExtreme(this->ID() + ": Assignment to port '" + it->first + "' failed due to : " + this->openhat->getExceptionMessage(pe));
+			}
+
+			++it;
+		}
+	}
+
+	// the line is always Low
+	this->line = 0;
 }
 
 }		// namespace openhat

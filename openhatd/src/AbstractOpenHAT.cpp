@@ -1218,12 +1218,13 @@ void AbstractOpenHAT::setupNode(ConfigurationView* config, const std::string& no
 	} else
 	if (nodeType == "InfluxDB") {
 		this->setupPort<InfluxDBPort>(nodeConfig, node);
-	}
-	else
+	} else
 	if (nodeType == "Test") {
 		this->setupPortEx<TestPort>(nodeConfig, config, node);
-	}
-	else
+	} else
+	if (nodeType == "Assignment") {
+		this->setupPortEx<AssignmentPort>(nodeConfig, config, node);
+	} else
 		this->throwSettingException("Invalid configuration: Unknown node type: " + nodeType);
 }
 

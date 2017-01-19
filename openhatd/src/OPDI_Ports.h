@@ -746,7 +746,7 @@ public:
 
 	/// Sets the value from a factor between 0 and 1.
 	///
-	virtual void setRelativeValue(double value);
+	virtual void setRelativeValue(double value, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT);
 
 	/// Returns true if the port is in an error state.
 	///

@@ -847,7 +847,7 @@ AnalogPort::AnalogPort(const char* id) : Port(id, OPDI_PORTTYPE_ANALOG, OPDI_POR
 	this->mode = 0;
 	this->value = 0;
 	this->reference = 0;
-	this->resolution = 0;
+	this->resolution = 12;		// default
 }
 
 AnalogPort::AnalogPort(const char* id, const char* dircaps, const int32_t flags) : AnalogPort(id) {
@@ -948,8 +948,8 @@ double AnalogPort::getRelativeValue(void) {
 	return value * 1.0 / ((1 << resolution) - 1);
 }
 
-void AnalogPort::setRelativeValue(double value) {
-	this->setValue(static_cast<int32_t>(value * ((1 << this->resolution) - 1)));
+void AnalogPort::setRelativeValue(double value, ChangeSource changeSource) {
+	this->setValue(static_cast<int32_t>(value * ((1 << this->resolution) - 1)), changeSource);
 }
 
 uint8_t AnalogPort::getMode() {

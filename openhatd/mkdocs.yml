@@ -18,8 +18,9 @@ pages:
         - Ports:
             - Basic Ports: ports/basic_ports.md
             - Aggregator Port: ports/aggregator_port.md
+            - Assignment Port: ports/assignment_port.md
             - Counter Port: ports/counter_port.md
-            - Error Detector Port: ports/error_detector_port.md
+            - ErrorDetector Port: ports/error_detector_port.md
             - Exec Port: ports/exec_port.md
             - Expression Port: ports/expression_port.md
             - Fader Port: ports/fader_port.md

@@ -9,7 +9,7 @@ The actual duration of the pulses depends on the time resolution of the doWork l
 ## Applications
 The Pulse port can be used if you need blinking lights or LEDs, for example for indicators. Please note that a Pulse port is too slow to do PWM, so it should not be used for dimming lights.
 
-A Pulse port can also be used to control internal automation. If itself is included in its output port list it will be automatically deactivated when the pulse becomes low again. This behaviour can be used to trigger other actions, for example reset other ports, after some delay. See the example below for practical instance of this configuration. 
+A Pulse port can also be used to control internal automation. If itself is included in its output port list it will be automatically deactivated when the pulse becomes low again. This behaviour can be used to trigger other actions, for example reset other ports, after some delay. See the example below for a practical instance of this configuration. 
 
 ## Settings
 

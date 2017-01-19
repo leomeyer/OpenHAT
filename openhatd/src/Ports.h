@@ -59,10 +59,6 @@ public:
 	///
 	LogicPort(AbstractOpenHAT* openhat, const char* id);
 
-	/// Virtual destructor.
-	///
-	virtual ~LogicPort();
-
 	/// Configures the port.
 	///
 	virtual void configure(ConfigurationView* config);
@@ -109,10 +105,6 @@ public:
 	///
 	PulsePort(AbstractOpenHAT* openhat, const char* id);
 
-	/// Virtual destructor.
-	///
-	virtual ~PulsePort();
-
 	/// Configures the port.
 	///
 	virtual void configure(ConfigurationView* config);
@@ -139,16 +131,14 @@ protected:
 	int8_t errorState;
 	uint16_t position;
 
+	/// This method checks the target Select port.
+	///
 	virtual uint8_t doWork(uint8_t canSend) override;
 
 public:
 	/// Creates a Selector port with the specified ID.
 	///
 	SelectorPort(AbstractOpenHAT* openhat, const char* id);
-
-	/// Virtual destructor.
-	///
-	virtual ~SelectorPort();
 
 	/// Configures the port.
 	///
@@ -167,11 +157,9 @@ public:
 // Error Detector Port
 ///////////////////////////////////////////////////////////////////////////////
 
-/** An ErrorDetectorPort is a DigitalPort whose state is determined by one or more 
-*   specified ports. If any of these ports will have an error, i. e. their hasError()
-*   method returns true, the state of this port will be High and Low otherwise.
-*   The logic level can be negated.
-*/
+/// This port implements a DigitalPort that is High when any of a number of 
+/// specified ports is in an error state.
+/// <a href="../../ports/error_detector_port">See the ErrorDetector port documentation.</a>
 class ErrorDetectorPort : public opdi::DigitalPort {
 protected:
 	openhat::AbstractOpenHAT* openhat;
@@ -179,15 +167,21 @@ protected:
 	std::string inputPortStr;
 	opdi::PortList inputPorts;
 
+	/// This method checks whether any of the input ports has an error.
+	///
 	virtual uint8_t doWork(uint8_t canSend) override;
 
 public:
+	/// Creates an ErrorDetector port with the specified ID.
+	///
 	ErrorDetectorPort(AbstractOpenHAT* openhat, const char* id);
 
-	virtual ~ErrorDetectorPort();
-
+	/// Configures the port.
+	///
 	virtual void configure(ConfigurationView* config);
 
+	/// Prepares the port for operation.
+	///
 	virtual void prepare() override;
 };
 
@@ -195,8 +189,8 @@ public:
 // Serial Streaming Port
 ///////////////////////////////////////////////////////////////////////////////
 
-/** Defines a serial streaming port that supports streaming from and to a serial port device.
- */
+/// Defines a serial streaming port that supports streaming from and to a serial port device.
+///
 class SerialStreamingPort : public opdi::StreamingPort {
 friend class OPDI;
 
@@ -216,10 +210,16 @@ protected:
 	virtual uint8_t doWork(uint8_t canSend) override;
 
 public:
+	/// Creates a SerialStreaming port with the specified ID.
+	///
 	SerialStreamingPort(AbstractOpenHAT* openhat, const char* id);
 
+	/// Virtual destructor.
+	///
 	virtual ~SerialStreamingPort();
 
+	/// Configures the port.
+	///
 	virtual void configure(ConfigurationView* config);
 
 	virtual int write(char* bytes, size_t length) override;
@@ -334,8 +334,6 @@ protected:
 public:
 	FaderPort(AbstractOpenHAT* openhat, const char* id);
 
-	virtual ~FaderPort();
-
 	virtual void configure(ConfigurationView* config);
 
 	virtual void setLine(uint8_t line, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
@@ -367,8 +365,6 @@ protected:
 
 public:
 	SceneSelectPort(AbstractOpenHAT* openhat, const char* id);
-
-	virtual ~SceneSelectPort();
 
 	virtual void configure(ConfigurationView* config, ConfigurationView* parentConfig);
 
@@ -528,8 +524,6 @@ protected:
 
 public:
 	AggregatorPort(AbstractOpenHAT* openhat, const char* id);
-
-	~AggregatorPort();
 
 	virtual void configure(ConfigurationView* portConfig, ConfigurationView* parentConfig);
 
@@ -720,10 +714,16 @@ protected:
 
 	std::map<std::string, std::string> testValues;
 
+	/// Performs the tests if necessary.
+	///
 	virtual uint8_t doWork(uint8_t canSend) override;
 public:
+	/// Creates a Test port with the specified ID.
+	///
 	TestPort(AbstractOpenHAT* openhat, const char* id);
 
+	/// Configures the port.
+	///
 	virtual void configure(ConfigurationView* portConfig, ConfigurationView* parentConfig);
 };
 

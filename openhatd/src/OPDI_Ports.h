@@ -192,7 +192,7 @@ protected:
 
 	/// Causes the port to be refreshed by sending a refresh message to a connected master.
 	/// Only if the port is not hidden.
-	virtual uint8_t refresh();
+	virtual uint8_t refresh(void);
 
 	/// Updates the extended info string of the port that will be sent to connected masters.
 	///
@@ -300,7 +300,7 @@ protected:
 	void compareProperty(const std::string& property, const std::string& expectedValue, bool actualValue);
 
 public:
-	/// Virtual destructor for the port.
+	/// Virtual destructor for the port. Required for destructors of derived classes to be called.
 	///
 	virtual ~Port();
 
@@ -377,7 +377,7 @@ public:
 
 	/// Returns the port ID as a std::string.
 	///
-	std::string ID() const;
+	std::string ID(void) const;
 
 	/// Returns the port type as a constant of value OPDI_PORTTYPE_*.
 	///
@@ -653,10 +653,6 @@ public:
 	/// Specify one or more of the OPDI_DIGITAL_PORT_* values for flags, or'ed together, to specify pullup/pulldown resistors.
 	DigitalPort(const char* id, const char*  dircaps, const int32_t flags);
 
-	/// Virtual destructor.
-	///
-	virtual ~DigitalPort();
-
 	/// Sets the direction capabilities of the port.
 	///
 	void setDirCaps(const char* dirCaps);
@@ -717,10 +713,6 @@ public:
 	/// Specify one or more of the OPDI_ANALOG_PORT_RESOLUTION_* values for flags, or'ed together, to specify supported resolutions.
 	/// Default settings are: Mode = Input, Reference = Internal.
 	AnalogPort(const char* id, const char*  dircaps, const int32_t flags);
-
-	/// Virtual destructor.
-	///
-	virtual ~AnalogPort();
 
 	/// Sets the port mode (opdi_set_analog_port_mode).
 	/// mode = 0: input

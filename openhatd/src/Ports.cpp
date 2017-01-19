@@ -42,9 +42,6 @@ LogicPort::LogicPort(AbstractOpenHAT* openhat, const char* id) : opdi::DigitalPo
 	this->line = -1;
 }
 
-LogicPort::~LogicPort() {
-}
-
 void LogicPort::configure(ConfigurationView* config) {
 	this->openhat->configureDigitalPort(config, this, false);
 	this->logVerbosity = this->openhat->getConfigLogVerbosity(config, opdi::LogVerbosity::UNKNOWN);
@@ -231,9 +228,6 @@ PulsePort::PulsePort(AbstractOpenHAT* openhat, const char* id) : opdi::DigitalPo
 	this->disabledState = -1;
 }
 
-PulsePort::~PulsePort() {
-}
-
 void PulsePort::configure(ConfigurationView* config) {
 	this->openhat->configureDigitalPort(config, this, false);
 	this->logVerbosity = this->openhat->getConfigLogVerbosity(config, opdi::LogVerbosity::UNKNOWN);
@@ -416,9 +410,6 @@ SelectorPort::SelectorPort(AbstractOpenHAT* openhat, const char* id) : opdi::Dig
 	this->errorState = -1;		// undefined
 }
 
-SelectorPort::~SelectorPort() {
-}
-
 void SelectorPort::configure(ConfigurationView* config) {
 	this->openhat->configureDigitalPort(config, this, false);
 	this->logVerbosity = this->openhat->getConfigLogVerbosity(config, opdi::LogVerbosity::UNKNOWN);
@@ -532,9 +523,6 @@ ErrorDetectorPort::ErrorDetectorPort(AbstractOpenHAT* openhat, const char* id) :
 	this->line = -1;
 }
 
-ErrorDetectorPort::~ErrorDetectorPort() {
-}
-
 void ErrorDetectorPort::configure(ConfigurationView* config) {
 	this->openhat->configureDigitalPort(config, this);	
 	this->logVerbosity = this->openhat->getConfigLogVerbosity(config, opdi::LogVerbosity::UNKNOWN);
@@ -588,6 +576,8 @@ SerialStreamingPort::SerialStreamingPort(AbstractOpenHAT* openhat, const char* i
 }
 
 SerialStreamingPort::~SerialStreamingPort() {
+	if (device != nullptr)
+		this->device->Close();
 }
 
 uint8_t SerialStreamingPort::doWork(uint8_t canSend)  {
@@ -701,6 +691,8 @@ LoggerPort::LoggerPort(AbstractOpenHAT* openhat, const char* id) : opdi::Streami
 }
 
 LoggerPort::~LoggerPort() {
+	if (this->outFile.is_open())
+		this->outFile.close();
 }
 
 std::string LoggerPort::getPortStateStr(opdi::Port* port) {
@@ -824,9 +816,6 @@ FaderPort::FaderPort(AbstractOpenHAT* openhat, const char* id) : opdi::DigitalPo
 	this->actionToPerform = NONE;
 
 	opdi::DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
-}
-
-FaderPort::~FaderPort() {
 }
 
 void FaderPort::configure(ConfigurationView* config) {
@@ -1040,9 +1029,6 @@ uint8_t FaderPort::doWork(uint8_t canSend)  {
 SceneSelectPort::SceneSelectPort(AbstractOpenHAT* openhat, const char* id) : opdi::SelectPort(id) {
 	this->opdi = this->openhat = openhat;
 	this->positionSet = false;
-}
-
-SceneSelectPort::~SceneSelectPort() {
 }
 
 void SceneSelectPort::configure(ConfigurationView* config, ConfigurationView* parentConfig) {
@@ -1839,9 +1825,6 @@ AggregatorPort::AggregatorPort(AbstractOpenHAT* openhat, const char* id) :
 	this->setLine(1);
 	this->errors = 0;
 	this->firstRun = true;
-}
-
-AggregatorPort::~AggregatorPort() {
 }
 
 void AggregatorPort::configure(ConfigurationView* config, ConfigurationView* parentConfig) {

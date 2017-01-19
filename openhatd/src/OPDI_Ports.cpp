@@ -693,9 +693,6 @@ DigitalPort::DigitalPort(const char* id, const char* dircaps, const int32_t flag
 	this->line = 0;
 }
 
-DigitalPort::~DigitalPort() {
-}
-
 void DigitalPort::setDirCaps(const char* dirCaps) {
 	Port::setDirCaps(dirCaps);
 
@@ -856,9 +853,6 @@ AnalogPort::AnalogPort(const char* id) : Port(id, OPDI_PORTTYPE_ANALOG, OPDI_POR
 AnalogPort::AnalogPort(const char* id, const char* dircaps, const int32_t flags) : AnalogPort(id) {
 	this->setDirCaps(dircaps);
 	this->flags = flags;
-}
-
-AnalogPort::~AnalogPort() {
 }
 
 void AnalogPort::setMode(uint8_t mode, ChangeSource changeSource) {

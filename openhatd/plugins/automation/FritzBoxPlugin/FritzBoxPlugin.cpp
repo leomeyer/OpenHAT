@@ -28,6 +28,8 @@
 
 #define INVALID_SID		"0000000000000000"
 
+// FRITZ!Box HTTP API: see https://avm.de/fileadmin/user_upload/Global/Service/Schnittstellen/AHA-HTTP-Interface.pdf
+
 namespace {
 
 class FritzBoxPlugin;
@@ -56,7 +58,8 @@ public:
 		SETSWITCHSTATEHIGH,
 		SETSWITCHSTATELOW,
 		GETPOWER,
-		GETENERGY
+		GETENERGY,
+		GETTEMPERATURE
 	};
 
 	ActionType type;
@@ -78,6 +81,7 @@ class FritzBoxPlugin : public IOpenHATPlugin, public openhat::IConnectionListene
 	friend class FritzDECT200Switch;
 	friend class FritzDECT200Power;
 	friend class FritzDECT200Energy;
+	friend class FritzDECT200Temperature;
 
 protected:
 	std::string nodeID;
@@ -125,6 +129,8 @@ public:
 
 	virtual void getSwitchPower(FritzPort* port);
 
+	virtual void getTemperature(FritzPort* port);
+
 	virtual void masterConnected(void) override;
 	virtual void masterDisconnected(void) override;
 
@@ -169,7 +175,6 @@ public:
 	virtual uint8_t doWork(uint8_t canSend) override;
 };
 
-
 class FritzDECT200Energy : public opdi::DialPort, public FritzPort {
 	friend class FritzBoxPlugin;
 protected:
@@ -181,6 +186,21 @@ protected:
 
 public:
 	FritzDECT200Energy(FritzBoxPlugin* plugin, const std::string& id, const std::string& ain, int queryInterval);
+
+	virtual uint8_t doWork(uint8_t canSend) override;
+};
+
+class FritzDECT200Temperature : public opdi::DialPort, public FritzPort {
+	friend class FritzBoxPlugin;
+protected:
+	FritzBoxPlugin* plugin;
+
+	int32_t temperature;
+
+	virtual void setTemperature(int32_t temperature);
+
+public:
+	FritzDECT200Temperature(FritzBoxPlugin* plugin, const std::string& id, const std::string& ain, int queryInterval);
 
 	virtual uint8_t doWork(uint8_t canSend) override;
 };
@@ -240,13 +260,12 @@ void FritzDECT200Switch::setSwitchState(int8_t switchState) {
 	this->valueSet = true;
 }
 
-
 FritzDECT200Power::FritzDECT200Power(FritzBoxPlugin* plugin, const std::string& id, const std::string& ain, int queryInterval) : 
 	opdi::DialPort(id.c_str()), FritzPort(id, ain, queryInterval) {
 	this->plugin = plugin;
 	this->power = -1;	// unknown
 	this->lastQueryTime = 0;
-	this->valueSet = false;
+	this->valueSet = true;		// causes setError in doWork
 
 	this->minValue = 0;
 	this->maxValue = 2300000;	// measured in mW; 2300 W is maximum power load for the DECT200
@@ -291,13 +310,12 @@ void FritzDECT200Power::setPower(int32_t power) {
 	this->valueSet = true;
 }
 
-
 FritzDECT200Energy::FritzDECT200Energy(FritzBoxPlugin* plugin, const std::string& id, const std::string& ain, int queryInterval) : 
 	opdi::DialPort(id.c_str()), FritzPort(id, ain, queryInterval) {
 	this->plugin = plugin;
 	this->energy = -1;	// unknown
 	this->lastQueryTime = 0;
-	this->valueSet = false;
+	this->valueSet = true;		// causes setError in doWork
 
 	this->minValue = 0;
 	this->maxValue = 2147483647;	// measured in Wh
@@ -342,6 +360,56 @@ void FritzDECT200Energy::setEnergy(int32_t energy) {
 	this->valueSet = true;
 }
 
+FritzDECT200Temperature::FritzDECT200Temperature(FritzBoxPlugin* plugin, const std::string& id, const std::string& ain, int queryInterval) :
+	opdi::DialPort(id.c_str()), FritzPort(id, ain, queryInterval) {
+	this->plugin = plugin;
+	this->temperature = -9999;	// unknown
+	this->lastQueryTime = 0;
+	this->valueSet = true;		// causes setError in doWork
+
+	// value is measured in centidegrees Celsius
+	this->minValue = -1000;			// -100°C
+	this->maxValue = 1000;			// +100°C
+	this->step = 1;
+	this->position = 0;
+
+	this->setUnit("temperature_centiDegreesCelsius");
+	this->setIcon("thermometer_celsius");
+
+	// port is readonly
+	this->setReadonly(true);
+}
+
+uint8_t FritzDECT200Temperature::doWork(uint8_t canSend) {
+	opdi::DialPort::doWork(canSend);
+
+	// time for refresh?
+	if (opdi_get_time_ms() - this->lastQueryTime > this->queryInterval * 1000) {
+		this->plugin->queue.enqueueNotification(new ActionNotification(ActionNotification::GETTEMPERATURE, this));
+		this->lastQueryTime = opdi_get_time_ms();
+	}
+
+	Poco::Mutex::ScopedLock lock(this->mutex);
+
+	// has a value been returned?
+	if (this->valueSet) {
+		// values <= -9999 signifies an error
+		if (this->temperature > -9999)
+			opdi::DialPort::setPosition(this->temperature);
+		else
+			this->setError(Error::VALUE_NOT_AVAILABLE);
+		this->valueSet = false;
+	}
+
+	return OPDI_STATUS_OK;
+}
+
+void FritzDECT200Temperature::setTemperature(int32_t temperature) {
+	Poco::Mutex::ScopedLock lock(this->mutex);
+
+	this->temperature = temperature;
+	this->valueSet = true;
+}
 
 ////////////////////////////////////////////////////////
 // Plugin implementation
@@ -646,6 +714,32 @@ void FritzBoxPlugin::getSwitchPower(FritzPort* port) {
 	powerPort->setPower(power);
 }
 
+void FritzBoxPlugin::getTemperature(FritzPort* port) {
+	// port must be a DECT 200 temperature port
+	FritzDECT200Temperature* tempPort = (FritzDECT200Temperature*)port;
+
+	this->checkLogin();
+	// problem?
+	if (this->sid == INVALID_SID) {
+		tempPort->setError(opdi::Port::Error::VALUE_NOT_AVAILABLE);
+		return;
+	}
+
+	// query the FritzBox
+	std::string result = httpGet("/webservices/homeautoswitch.lua?ain=" + tempPort->ain + "&switchcmd=gettemperature&sid=" + this->sid);
+	// problem?
+	if (result.empty()) {
+		tempPort->setError(opdi::Port::Error::VALUE_NOT_AVAILABLE);
+		return;
+	}
+
+	// parse result
+	int temp = -9999;
+	Poco::NumberParser::tryParse(result, temp);
+
+	tempPort->setTemperature(temp);
+}
+
 void FritzBoxPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const std::string& node, openhat::ConfigurationView* nodeConfig, openhat::ConfigurationView* parentConfig, const std::string& /*driverPath*/) {
 	this->openhat = abstractOpenHAT;
 	this->nodeID = node;
@@ -671,7 +765,7 @@ void FritzBoxPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, cons
 	this->logVerbosity = this->openhat->getConfigLogVerbosity(nodeConfig, this->openhat->getLogVerbosity());
 
 	// enumerate keys of the plugin's nodes (in specified order)
-	this->openhat->logVerbose("Enumerating FritzBox devices: " + node + ".Devices", this->logVerbosity);
+	this->openhat->logVerbose(node + ": Enumerating FritzBox devices: " + node + ".Devices", this->logVerbosity);
 
 	Poco::AutoPtr<openhat::ConfigurationView> nodes = this->openhat->createConfigView(nodeConfig, "Devices");
 	nodeConfig->addUsedKey("Devices");
@@ -714,7 +808,7 @@ void FritzBoxPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, cons
 	while (nli != nlie) {
 		std::string deviceName = nli->get<1>();
 
-		this->openhat->logVerbose("Setting up FritzBoxPlugin device: " + deviceName, this->logVerbosity);
+		this->openhat->logVerbose(node + ": Setting up FritzBoxPlugin device: " + deviceName, this->logVerbosity);
 
 		// get device section from the configuration>
 		Poco::AutoPtr<openhat::ConfigurationView> deviceConfig = this->openhat->createConfigView(parentConfig, deviceName);
@@ -726,44 +820,87 @@ void FritzBoxPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, cons
 			this->openhat->throwSettingException(deviceName + ": Please specify a QueryInterval greater than 1: " + this->openhat->to_string(queryInterval));
 
 		if (deviceType == "FritzDECT200") {
-
 			// get AIN (required)
 			std::string ain = this->openhat->getConfigString(deviceConfig, deviceName, "AIN", "", true);
 
-			this->openhat->logVerbose("Setting up FritzBoxPlugin device port: " + deviceName + "_Switch", this->logVerbosity);
-			Poco::AutoPtr<openhat::ConfigurationView> portConfig = this->openhat->createConfigView(parentConfig, deviceName + "_Switch");
-			// setup the switch port instance and add it
-			FritzDECT200Switch* switchPort = new FritzDECT200Switch(this, deviceName + "_Switch", ain, queryInterval);
-			// set default group: FritzBox's node's group
-			switchPort->setGroup(group);
-			// set default log verbosity
-			switchPort->logVerbosity = this->logVerbosity;
-			this->openhat->configureDigitalPort(portConfig, switchPort);
-			this->openhat->addPort(switchPort);
+			if (parentConfig->hasProperty(deviceName + "_Switch.Type")) {
+				this->openhat->logVerbose(node + ": Setting up FritzBoxPlugin device port: " + deviceName + "_Switch", this->logVerbosity);
+				Poco::AutoPtr<openhat::ConfigurationView> portConfig = this->openhat->createConfigView(parentConfig, deviceName + "_Switch");
+				// check type
+				if (portConfig->getString("Type") != "DigitalPort")
+					this->openhat->throwSettingException(node + ": FritzDECT200 Switch device port must be of type 'DigitalPort'");
+				// setup the switch port instance and add it
+				FritzDECT200Switch* switchPort = new FritzDECT200Switch(this, deviceName + "_Switch", ain, queryInterval);
+				// set default group: FritzBox's node's group
+				switchPort->setGroup(group);
+				// set default log verbosity
+				switchPort->logVerbosity = this->logVerbosity;
+				// allow only basic settings to be changed
+				this->openhat->configurePort(portConfig, switchPort, 0);
+				this->openhat->addPort(switchPort);
+			} else {
+				this->openhat->logVerbose(node + ": FritzBoxPlugin device port: " + deviceName + "_Switch.Type not found, ignoring", this->logVerbosity);
+			}
 
-			this->openhat->logVerbose("Setting up FritzBoxPlugin device port: " + deviceName + "_Power", this->logVerbosity);
-			portConfig = this->openhat->createConfigView(parentConfig, deviceName + "_Power");
-			// setup the power port instance and add it
-			FritzDECT200Power* powerPort = new FritzDECT200Power(this, deviceName + "_Power", ain, queryInterval);
-			// set default group: FritzBox's node's group
-			powerPort->setGroup(group);
-			// set default log verbosity
-			powerPort->logVerbosity = this->logVerbosity;
-			this->openhat->configureDialPort(portConfig, powerPort);
-			this->openhat->addPort(powerPort);
+			if (parentConfig->hasProperty(deviceName + "_Power.Type")) {
+				this->openhat->logVerbose(node + ": Setting up FritzBoxPlugin device port: " + deviceName + "_Power", this->logVerbosity);
+				Poco::AutoPtr<openhat::ConfigurationView> portConfig = this->openhat->createConfigView(parentConfig, deviceName + "_Power");
+				// check type
+				if (portConfig->getString("Type") != "DialPort")
+					this->openhat->throwSettingException(node + ": FritzDECT200 Power device port must be of type 'DialPort'");
+				// setup the power port instance and add it
+				FritzDECT200Power* powerPort = new FritzDECT200Power(this, deviceName + "_Power", ain, queryInterval);
+				// set default group: FritzBox's node's group
+				powerPort->setGroup(group);
+				// set default log verbosity
+				powerPort->logVerbosity = this->logVerbosity;
+				// allow only basic settings to be changed
+				this->openhat->configurePort(portConfig, powerPort, 0);
+				this->openhat->addPort(powerPort);
+			} else {
+				this->openhat->logVerbose(node + ": FritzBoxPlugin device port: " + deviceName + "_Power.Type not found, ignoring", this->logVerbosity);
+			}
 
-			this->openhat->logVerbose("Setting up FritzBoxPlugin device port: " + deviceName + "_Energy", this->logVerbosity);
-			portConfig = this->openhat->createConfigView(parentConfig, deviceName + "_Energy");
-			// setup the energy port instance and add it
-			FritzDECT200Energy* energyPort = new FritzDECT200Energy(this, deviceName + "_Energy", ain, queryInterval);
-			// set default group: FritzBox's node's group
-			energyPort->setGroup(group);
-			// set default log verbosity
-			energyPort->logVerbosity = this->logVerbosity;
-			this->openhat->configureDialPort(portConfig, energyPort);
-			this->openhat->addPort(energyPort);
+			if (parentConfig->hasProperty(deviceName + "_Energy.Type")) {
+				this->openhat->logVerbose(node + ": Setting up FritzBoxPlugin device port: " + deviceName + "_Energy", this->logVerbosity);
+				Poco::AutoPtr<openhat::ConfigurationView> portConfig = this->openhat->createConfigView(parentConfig, deviceName + "_Energy");
+				// check type
+				if (portConfig->getString("Type") != "DialPort")
+					this->openhat->throwSettingException(node + ": FritzDECT200 Energy device port must be of type 'DialPort'");
+				// setup the energy port instance and add it
+				FritzDECT200Energy* energyPort = new FritzDECT200Energy(this, deviceName + "_Energy", ain, queryInterval);
+				// set default group: FritzBox's node's group
+				energyPort->setGroup(group);
+				// set default log verbosity
+				energyPort->logVerbosity = this->logVerbosity;
+				// allow only basic settings to be changed
+				this->openhat->configurePort(portConfig, energyPort, 0);
+				this->openhat->addPort(energyPort);
+			} else {
+				this->openhat->logVerbose(node + ": FritzBoxPlugin device port: " + deviceName + "_Energy.Type not found, ignoring", this->logVerbosity);
+			}
+
+			if (parentConfig->hasProperty(deviceName + "_Temperature.Type")) {
+				this->openhat->logVerbose(node + ": Setting up FritzBoxPlugin device port: " + deviceName + "_Temperature", this->logVerbosity);
+				Poco::AutoPtr<openhat::ConfigurationView> portConfig = this->openhat->createConfigView(parentConfig, deviceName + "_Temperature");
+				// check type
+				if (portConfig->getString("Type") != "DialPort")
+					this->openhat->throwSettingException(node + ": FritzDECT200 Temperature device port must be of type 'DialPort'");
+				// setup the energy port instance and add it
+				FritzDECT200Temperature* temperaturePort = new FritzDECT200Temperature(this, deviceName + "_Temperature", ain, queryInterval);
+				// set default group: FritzBox's node's group
+				temperaturePort->setGroup(group);
+				// set default log verbosity
+				temperaturePort->logVerbosity = this->logVerbosity;
+				// allow only basic settings to be changed
+				this->openhat->configurePort(portConfig, temperaturePort, 0);
+				this->openhat->addPort(temperaturePort);
+			} else {
+				this->openhat->logVerbose(node + ": FritzBoxPlugin device port: " + deviceName + "_Temperature.Type not found, ignoring", this->logVerbosity);
+			}
+
 		} else
-			this->openhat->throwSettingException("This plugin does not support the device type", deviceType);
+			this->openhat->throwSettingException(node + ": This plugin does not support the device type '" + deviceType + "'");
 
 		++nli;
 	}
@@ -773,7 +910,7 @@ void FritzBoxPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, cons
 	this->workThread.setName(node + " work thread");
 	this->workThread.start(*this);
 
-	this->openhat->logVerbose(this->nodeID + ": FritzBoxPlugin setup completed successfully", this->logVerbosity);
+	this->openhat->logVerbose(node + ": FritzBoxPlugin setup completed successfully", this->logVerbosity);
 }
 
 void FritzBoxPlugin::masterConnected() {
@@ -801,6 +938,7 @@ void FritzBoxPlugin::run(void) {
 					case ActionNotification::SETSWITCHSTATEHIGH: action = "SETSWITCHSTATEHIGH"; break;
 					case ActionNotification::GETENERGY: action = "GETENERGY"; break;
 					case ActionNotification::GETPOWER: action = "GETPOWER"; break;
+					case ActionNotification::GETTEMPERATURE: action = "GETTEMPERATURE"; break;
 					}
 					FritzPort* fp = (FritzPort*)workNf->port;
 					std::string portID = fp->id;
@@ -814,6 +952,7 @@ void FritzBoxPlugin::run(void) {
 					case ActionNotification::SETSWITCHSTATEHIGH: this->setSwitchState(workNf->port, 1); break;
 					case ActionNotification::GETENERGY: this->getSwitchEnergy(workNf->port); break;
 					case ActionNotification::GETPOWER: this->getSwitchPower(workNf->port); break;
+					case ActionNotification::GETTEMPERATURE: this->getTemperature(workNf->port); break;
 					}
 				}
 			}

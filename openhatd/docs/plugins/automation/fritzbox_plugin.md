@@ -104,7 +104,7 @@ Default settings:
 	Icon = powermeter
 
 #### Energy port
-The energy port reflects the total energy consumption since the last . It is measured in watt hours (Wh). The max value is 2147483647. An energy port is readonly by default.
+The energy port reflects the total energy consumption since starting or resetting the DECT200. It is measured in watt hours (Wh). The max value is 2147483647. An energy port is readonly by default.
 
 Default settings:
 

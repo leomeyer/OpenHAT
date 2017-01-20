@@ -1,4 +1,4 @@
-## Overview
+## openhatd Overview
 
 openhatd, the **Open Home Automation Toolkit server**, is an open source, cross-platform automation server written in C++11. It can be configured for a variety of automation tasks. Features are:
 
@@ -20,7 +20,7 @@ openhatd, the **Open Home Automation Toolkit server**, is an open source, cross-
 	 - Radio-controlled power sockets (experimental)
  - Built-in functions:
 	 - Timer that supports periodical, astronomic (sunset/sunrise) or manual scheduling
-	 - Expression engine for complex mathematical calculations
+	 - Expression engine for simple or complex mathematical calculations
 	 - Interoperation with the OS: Monitor files to read input, execute OS commands
 	 - Logic functions for changing outputs based on logical conditions
 	 - Pulse with configurable duration and duty cycle
@@ -66,7 +66,7 @@ You can test openhatd on Windows or Linux first before deploying it in a "real" 
 
 When openhatd has started you can open the web GUI using a browser. Go to [http://localhost:8080](http://localhost:8080).
 
-To control openhatd using an Android device, download and install the AndroPDI Remote Control app on the device. You may have to temporarily allow the installation of third-party apps. Start the app and create a new TCP/IP device entry. Enter the name or IP address of the machine running openhatd as the host name. The default port is 13110. Tap the device entry to open a connection to openhatd. After connecting, tap it again to view the list of ports exposed by openhatd and play with them.
+To control openhatd using an Android device, download and install the [AndroPDI Remote Control app](https://play.google.com/store/apps/details?id=org.openhat.androPDI) on the device. Start the app and create a new TCP/IP device entry. Enter the name or IP address of the machine running openhatd as the host name. The default port is 13110. Tap the device entry to open a connection to openhatd. After connecting, tap it again to view the list of ports exposed by openhatd and play with them.
 
 To become familiar with the possibilities of openhatd please start with [Basic Concepts](concepts.md). You should then read up on the [ports](ports.md) provided by openhatd and how to [configure](configuration.md) the system before having a look at the [automation examples](automation_examples.md).
 

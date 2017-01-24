@@ -297,6 +297,12 @@ int AbstractOpenHAT::startup(const std::vector<std::string>& args, const std::ma
 	this->environment["$DATETIME"] = Poco::DateTimeFormatter::format(Poco::LocalDateTime(), this->timestampFormat);
 	this->environment["$LOG_DATETIME"] = Poco::DateTimeFormatter::format(Poco::LocalDateTime(), "%Y%m%d_%H%M%S");
 	this->environment["$CWD"] = Poco::Path::current();
+	this->environment["$PLATFORM_SPECIFIC_SHELLSCRIPT_EXTENSION"] =
+#ifdef _WINDOWS_
+		".bat";
+#else
+		".sh";
+#endif
 
 	std::string configFile;
 

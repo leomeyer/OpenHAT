@@ -34,81 +34,30 @@ namespace openhat {
 *   same process is to be started again.
 */
 class ExecPort : public opdi::DigitalPort {
-protected:
-
-	enum ChangeType {
-		CHANGED_TO_HIGH,
-		CHANGED_TO_LOW,
-		ANY_CHANGE
-	};
-
-	class ProcessIO {
-		std::unique_ptr<Poco::Pipe> outPipe;
-		std::unique_ptr<Poco::Pipe> errPipe;
-		std::unique_ptr<Poco::Pipe> inPipe;
-
-		Poco::PipeInputStream pis;	// stdout
-		Poco::PipeInputStream pes;	// stderr
-		Poco::PipeOutputStream pos;	// stdin
-
-		ExecPort* execPort;
-
-	public:
-		ProcessIO(ExecPort* execPort, std::unique_ptr<Poco::Pipe> outPipe, std::unique_ptr<Poco::Pipe> errPipe, std::unique_ptr<Poco::Pipe> inPipe)
-			: pis(*outPipe.get()), pes(*errPipe.get()), pos(*inPipe.get()) {
-			this->execPort = execPort;
-		}
-
-		void process() {
-			// this does not work (on Windows, at least)
-			// because iostream does not support async I/O
-			// TODO check whether this can be solved with async I/O
-			/*
-			// does the stdin stream request data?
-			if (this->pos.rdbuf()->) {
-				// data cannot be served, the process must be killed
-				this->execPort->logWarning("Process " + this->execPort->to_string(this->execPort->processPID) + " requests data that cannot be provided, killing the process");
-				Poco::Process::kill(this->execPort->processPID);
-			}
-			// check whether stream data is available
-			if (this->pes.rdbuf()->in_avail() > 0) {
-				// read data from the stream
-				std::string data;
-				Poco::StreamCopier::copyToString(this->pes, data);
-				this->execPort->logNormal("stderr: " + data);
-			}
-			if (this->pis.rdbuf()->in_avail() > 0) {
-				// read data from the stream
-				std::string data;
-				Poco::StreamCopier::copyToString(this->pis, data);
-				this->execPort->logVerbose("stdout: " + data);
-			}
-			*/
-		}
-	};
 
 protected:
 	openhat::AbstractOpenHAT* openhat;
 	std::string programName;
 	std::string parameters;
-	ChangeType changeType;
-	int64_t waitTimeMs;
-	int64_t resetTimeMs;
 	int64_t killTimeMs;
-	bool forceKill;
+	std::string exitCodePortStr;
+	opdi::DialPort* exitCodePort;
 
-	uint8_t lastState;
-	Poco::Timestamp lastTriggerTime;
+	bool startRequested;
+	bool hasTerminated;
+	uint64_t lastStartTime;
 	Poco::ProcessHandle* processHandle;
 	Poco::Process::PID processPID;
 	Poco::Thread waitThread;
 	Poco::RunnableAdapter<ExecPort> waiter;
-	std::unique_ptr<ProcessIO> processIO;
+	int exitCode;
+	Poco::Pipe* inPipe;
+	Poco::Pipe* outPipe;
+	Poco::Pipe* errPipe;
+	std::unique_ptr<Poco::PipeInputStream> outStr;
+	std::unique_ptr<Poco::PipeInputStream> errStr;
 
-	void waitForProcessEnd() {
-		Poco::Process::wait(*this->processHandle);
-		free(this->processHandle);
-	}
+	void waitForProcessEnd();
 
 	virtual uint8_t doWork(uint8_t canSend);
 
@@ -120,6 +69,10 @@ public:
 	virtual void configure(ConfigurationView* config);
 
 	virtual void prepare() override;
+
+	/// This method ensures that the Line of an Exec port cannot be set to Low if a process is running.
+	///
+	virtual void setLine(uint8_t line, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 };
 
 }		// namespace openhat

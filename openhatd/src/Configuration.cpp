@@ -36,9 +36,16 @@ OpenHATConfigurationFile::OpenHATConfigurationFile(const std::string& path, std:
 	}
 
 	// replace parameters in content
-	for (auto iterator = parameters.begin(), iteratorEnd = parameters.end(); iterator != iteratorEnd; ++iterator) {
-		std::string key = iterator->first;
-		std::string value = iterator->second;
+	// sort parameters by length in descending order
+	// to ensure that longer parameters are replaced first
+	std::vector<std::string> paramKeys;
+	for (auto const& param : parameters)
+		paramKeys.push_back(param.first);
+	std::sort(paramKeys.begin(), paramKeys.end(), [](const std::string &s1, const std::string &s2) { return s1.size() > s2.size(); });
+
+	for (auto iterator = paramKeys.begin(), iteratorEnd = paramKeys.end(); iterator != iteratorEnd; ++iterator) {
+		std::string key = *iterator;
+		std::string value = parameters[*iterator];
 
 		size_t start = 0;
 		while ((start = content.find(key, start)) != std::string::npos) {

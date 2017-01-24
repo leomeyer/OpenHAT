@@ -30,13 +30,13 @@ You can specify a [ValueResolver](../ports.md#value_resolvers) whose value is re
 If this optional flag is `True` the logical meaning of the pulse output is inverted. Default is `False`. 
 
 ### EnablePorts
-An optional [port list specification](../concepts.md#port_lists) for Digital ports. The pulse is generated if at least one of the enable ports is High.
+An optional [port list specification](../ports.md#port_lists) for Digital ports. The pulse is generated if at least one of the enable ports is High.
 
 ### OutputPorts
-An optional [port list specification](../concepts.md#port_lists) for Digital ports. The output of the pulse is applied to these ports directly.
+An optional [port list specification](../ports.md#port_lists) for Digital ports. The output of the pulse is applied to these ports directly.
 
 ### InverseOutputPorts
-An optional [port list specification](../concepts.md#port_lists) for Digital ports. The output of the pulse is inverted and applied to these ports.
+An optional [port list specification](../ports.md#port_lists) for Digital ports. The output of the pulse is inverted and applied to these ports.
 
 ### DisabledState
 Optional value of either `Low` or `High`. If this value is set it determines the logical output state of the pulse when it is disabled (i. e. set to `Low`). The output value is applied directly to the output ports and inverted for the inverted output ports.

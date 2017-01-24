@@ -24,4 +24,4 @@ Required. A value between 0 and 65535 that specifies the monitored Select port's
 An optional value of either `Low` or `High`. If querying the Select port returns an error and this value is set, the Selector port's line will be set to it.
 
 ### OutputPorts
-An optional [port list specification](../concepts.md#port_lists) for Digital ports.
+An optional [port list specification](../ports.md#port_lists) for Digital ports.

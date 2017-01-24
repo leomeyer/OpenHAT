@@ -8,7 +8,7 @@ An ErrorDetector port is a Digital port whose state is determined by the error s
 Fixed value `ErrorDetector`.
 
 ### InputPorts
-A required [port list specification](../concepts.md#port_lists) for ports of any type that are considered for error detection.
+A required [port list specification](../ports.md#port_lists) for ports of any type that are considered for error detection.
 
 ### Negate
 If this optional flag is `True` the ErrorDetector port is `High` if no error is detected and `Low` otherwise. Default is `False`. 

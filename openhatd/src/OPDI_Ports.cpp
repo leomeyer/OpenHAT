@@ -475,39 +475,36 @@ Port::~Port() {
 
 // find function delegates
 
-Port * Port::findPort(const std::string & configPort, const std::string & setting, const std::string & portID, bool required)
-{
+Port* Port::findPort(const std::string & configPort, const std::string & setting, const std::string & portID, bool required) {
 	return this->opdi->findPort(configPort, setting, portID, required);
 }
 
-void Port::findPorts(const std::string & configPort, const std::string & setting, const std::string & portIDs, PortList & portList)
-{
+void Port::findPorts(const std::string & configPort, const std::string & setting, const std::string & portIDs, PortList & portList) {
 	this->opdi->findPorts(configPort, setting, portIDs, portList);
 }
 
-DigitalPort * Port::findDigitalPort(const std::string & configPort, const std::string & setting, const std::string & portID, bool required)
-{
+DigitalPort* Port::findDigitalPort(const std::string & configPort, const std::string & setting, const std::string & portID, bool required) {
 	return this->opdi->findDigitalPort(configPort, setting, portID, required);
 }
 
-void Port::findDigitalPorts(const std::string & configPort, const std::string & setting, const std::string & portIDs, DigitalPortList & portList)
-{
+void Port::findDigitalPorts(const std::string & configPort, const std::string & setting, const std::string & portIDs, DigitalPortList & portList) {
 	this->opdi->findDigitalPorts(configPort, setting, portIDs, portList);
 }
 
-AnalogPort * Port::findAnalogPort(const std::string & configPort, const std::string & setting, const std::string & portID, bool required)
-{
+AnalogPort* Port::findAnalogPort(const std::string & configPort, const std::string & setting, const std::string & portID, bool required) {
 	return this->opdi->findAnalogPort(configPort, setting, portID, required);
 }
 
-void Port::findAnalogPorts(const std::string & configPort, const std::string & setting, const std::string & portIDs, AnalogPortList & portList)
-{
+void Port::findAnalogPorts(const std::string & configPort, const std::string & setting, const std::string & portIDs, AnalogPortList & portList) {
 	this->opdi->findAnalogPorts(configPort, setting, portIDs, portList);
 }
 
-SelectPort * Port::findSelectPort(const std::string & configPort, const std::string & setting, const std::string & portID, bool required)
-{
+SelectPort* Port::findSelectPort(const std::string & configPort, const std::string & setting, const std::string & portID, bool required) {
 	return this->opdi->findSelectPort(configPort, setting, portID, required);
+}
+
+DialPort* Port::findDialPort(const std::string & configPort, const std::string & setting, const std::string & portID, bool required) {
+	return this->opdi->findDialPort(configPort, setting, portID, required);
 }
 
 void Port::logWarning(const std::string& message) {
@@ -550,8 +547,7 @@ void Port::logExtreme(const std::string& message) {
 	}
 }
 
-std::string Port::getChangeSourceText(ChangeSource changeSource)
-{
+std::string Port::getChangeSourceText(ChangeSource changeSource) {
 	switch (changeSource) {
 	case ChangeSource::CHANGESOURCE_INT: return "Internal";
 	case ChangeSource::CHANGESOURCE_USER: return "User";

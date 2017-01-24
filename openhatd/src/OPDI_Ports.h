@@ -217,7 +217,7 @@ protected:
 	virtual void handleStateChange(ChangeSource changeSource);
 
 	/// Finds the port with the specified portID. Delegates to the OPDI.findPort method.
-	/// If portID.isEmpty() and required is true, throws an exceptions whose message refers to the configPort and setting. 
+	/// If portID.isEmpty() and required is true, throws an exception whose message refers to the configPort and setting. 
 	/// This method is intended to be used during the preparation phase to resolve port specifications. 
 	/// configPort will usually be the ID of the resolving port, and setting the 
 	/// configuration parameter name that contained the portID specification.
@@ -229,43 +229,51 @@ protected:
 	/// configuration parameter name that contained the portIDs specification.
 	void findPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, PortList& portList);
 
-	/// Finds the Digital port with the specified portID. Delegates to the OPDI.findPort method.
-	/// If portID.isEmpty() and required is true, throws an exceptions whose message refers to the configPort and setting. 
+	/// Finds the Digital port with the specified portID. Delegates to the OPDI.findDigitalPort method.
+	/// If portID.isEmpty() and required is true, throws an exception whose message refers to the configPort and setting. 
 	/// This method is intended to be used during the preparation phase to resolve port specifications. 
 	/// configPort will usually be the ID of the resolving port, and setting the 
 	/// configuration parameter name that contained the portID specification.
 	/// Throws an exception if the port is found but is not a Digital port.
 	DigitalPort* findDigitalPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required);
 
-	/// Finds the Digital ports with the specified portIDs. Delegates to the OPDI.findPorts method.
+	/// Finds the Digital ports with the specified portIDs. Delegates to the OPDI.findDigitalPorts method.
 	/// This method is intended to be used during the preparation phase to resolve port specifications. 
 	/// configPort will usually be the ID of the resolving port, and setting the 
 	/// configuration parameter name that contained the portIDs specification.
 	/// Throws an exception if a port is not found or a found port is not a Digital port.
 	void findDigitalPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, DigitalPortList& portList);
 
-	/// Finds the Analog port with the specified portID. Delegates to the OPDI.findPort method.
-	/// If portID.isEmpty() and required is true, throws an exceptions whose message refers to the configPort and setting. 
+	/// Finds the Analog port with the specified portID. Delegates to the OPDI.findAnalogPort method.
+	/// If portID.isEmpty() and required is true, throws an exception whose message refers to the configPort and setting. 
 	/// This method is intended to be used during the preparation phase to resolve port specifications. 
 	/// configPort will usually be the ID of the resolving port, and setting the 
 	/// configuration parameter name that contained the portID specification.
 	/// Throws an exception if the port is found but is not an Analog port.
 	AnalogPort* findAnalogPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required);
 
-	/// Finds the Analog ports with the specified portIDs. Delegates to the OPDI.findPorts method.
+	/// Finds the Analog ports with the specified portIDs. Delegates to the OPDI.findAnalogPorts method.
 	/// This method is intended to be used during the preparation phase to resolve port specifications. 
 	/// configPort will usually be the ID of the resolving port, and setting the 
 	/// configuration parameter name that contained the portIDs specification.
 	/// Throws an exception if a port is not found or a found port is not an Analog port.
 	void findAnalogPorts(const std::string& configPort, const std::string& setting, const std::string& portIDs, AnalogPortList& portList);
 
-	/// Finds the Select port with the specified portID. Delegates to the OPDI.findPort method.
-	/// If portID.isEmpty() and required is true, throws an exceptions whose message refers to the configPort and setting. 
+	/// Finds the Select port with the specified portID. Delegates to the OPDI.findSelectPort method.
+	/// If portID.isEmpty() and required is true, throws an exception whose message refers to the configPort and setting. 
 	/// This method is intended to be used during the preparation phase to resolve port specifications. 
 	/// configPort will usually be the ID of the resolving port, and setting the 
 	/// configuration parameter name that contained the portID specification.
 	/// Throws an exception if the port is found but is not a Select port.
 	SelectPort* findSelectPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required);
+
+	/// Finds the Dial port with the specified portID. Delegates to the OPDI.findDialPort method.
+	/// If portID.isEmpty() and required is true, throws an exception whose message refers to the configPort and setting. 
+	/// This method is intended to be used during the preparation phase to resolve port specifications. 
+	/// configPort will usually be the ID of the resolving port, and setting the 
+	/// configuration parameter name that contained the portID specification.
+	/// Throws an exception if the port is found but is not a Dial port.
+	DialPort* findDialPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required);
 
 	/// Logs a message with log verbosity Warning.
 	///

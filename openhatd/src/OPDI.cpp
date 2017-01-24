@@ -566,7 +566,7 @@ void OPDI::findPorts(const std::string& configPort, const std::string& setting, 
 opdi::DigitalPort* OPDI::findDigitalPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required) {
 	// locate port by ID
 	opdi::Port* port = this->findPortByID(portID.c_str());
-	// no found but required?
+	// not found but required?
 	if (port == nullptr) {
 		if (required)
 			throw Poco::DataException(configPort + ": Port required by setting " + setting + " not found: " + portID);
@@ -575,7 +575,7 @@ opdi::DigitalPort* OPDI::findDigitalPort(const std::string& configPort, const st
 
 	// port type must be "digital"
 	if (port->getType()[0] != OPDI_PORTTYPE_DIGITAL[0])
-		throw Poco::DataException(configPort + ": Port specified in setting " + setting + " is not a digital port: " + portID);
+		throw Poco::DataException(configPort + ": Port specified in setting " + setting + " is not a Digital port: " + portID);
 
 	return (opdi::DigitalPort*)port;
 }
@@ -597,7 +597,7 @@ void OPDI::findDigitalPorts(const std::string& configPort, const std::string& se
 opdi::AnalogPort* OPDI::findAnalogPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required) {
 	// locate port by ID
 	opdi::Port* port = this->findPortByID(portID.c_str());
-	// no found but required?
+	// not found but required?
 	if (port == nullptr) {
 		if (required)
 			throw Poco::DataException(configPort + ": Port required by setting " + setting + " not found: " + portID);
@@ -606,7 +606,7 @@ opdi::AnalogPort* OPDI::findAnalogPort(const std::string& configPort, const std:
 
 	// port type must be "analog"
 	if (port->getType()[0] != OPDI_PORTTYPE_ANALOG[0])
-		throw Poco::DataException(configPort + ": Port specified in setting " + setting + " is not an analog port: " + portID);
+		throw Poco::DataException(configPort + ": Port specified in setting " + setting + " is not an Analog port: " + portID);
 
 	return (opdi::AnalogPort*)port;
 }
@@ -628,7 +628,7 @@ void OPDI::findAnalogPorts(const std::string& configPort, const std::string& set
 opdi::SelectPort* OPDI::findSelectPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required) {
 	// locate port by ID
 	opdi::Port* port = this->findPortByID(portID.c_str());
-	// no found but required?
+	// not found but required?
 	if (port == nullptr) {
 		if (required)
 			throw Poco::DataException(configPort + ": Port required by setting " + setting + " not found: " + portID);
@@ -637,9 +637,26 @@ opdi::SelectPort* OPDI::findSelectPort(const std::string& configPort, const std:
 
 	// port type must be "select"
 	if (port->getType()[0] != OPDI_PORTTYPE_SELECT[0])
-		throw Poco::DataException(configPort + ": Port specified in setting " + setting + " is not a select port: " + portID);
+		throw Poco::DataException(configPort + ": Port specified in setting " + setting + " is not a Select port: " + portID);
 
 	return (opdi::SelectPort*)port;
+}
+
+opdi::DialPort* OPDI::findDialPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required) {
+	// locate port by ID
+	opdi::Port* port = this->findPortByID(portID.c_str());
+	// not found but required?
+	if (port == nullptr) {
+		if (required)
+			throw Poco::DataException(configPort + ": Port required by setting " + setting + " not found: " + portID);
+		return nullptr;
+	}
+
+	// port type must be "dial"
+	if (port->getType()[0] != OPDI_PORTTYPE_DIAL[0])
+		throw Poco::DataException(configPort + ": Port specified in setting " + setting + " is not a Dial port: " + portID);
+
+	return (opdi::DialPort*)port;
 }
 
 LogVerbosity OPDI::getLogVerbosity(void)

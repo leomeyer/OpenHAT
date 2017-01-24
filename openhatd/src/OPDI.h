@@ -222,6 +222,8 @@ public:
 
 	virtual opdi::SelectPort* findSelectPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required);
 
+	virtual opdi::DialPort* findDialPort(const std::string& configPort, const std::string& setting, const std::string& portID, bool required);
+
 	virtual LogVerbosity getLogVerbosity(void);
 
 	virtual void logWarning(const std::string& message);

@@ -193,6 +193,7 @@ uint8_t ExecPort::doWork(uint8_t canSend)  {
 			}
 			catch (Poco::Exception &e) {
 				this->logNormal("ERROR: Unable to start program '" + this->programName + "': " + this->openhat->getExceptionMessage(e));
+				this->setLine(0);
 			}
 		}		// switched to High
 	}

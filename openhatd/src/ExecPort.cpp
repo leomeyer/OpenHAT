@@ -1,10 +1,17 @@
 #include "ExecPort.h"
 
+#include "Poco/File.h"
+
 namespace openhat {
 
 ///////////////////////////////////////////////////////////////////////////////
 // Exec Port
 ///////////////////////////////////////////////////////////////////////////////
+
+#ifdef linux
+#include <sys/types.h>
+#include <sys/wait.h>
+#endif
 
 ExecPort::ExecPort(AbstractOpenHAT* openhat, const char* id) : opdi::DigitalPort(id, OPDI_PORTDIRCAP_OUTPUT, 0), waiter(*this, &ExecPort::waitForProcessEnd) {
 	this->opdi = this->openhat = openhat;
@@ -63,7 +70,18 @@ void ExecPort::setLine(uint8_t line, ChangeSource changeSource) {
 }
 
 void ExecPort::waitForProcessEnd() {
-	while (Poco::Process::isRunning(*this->processHandle)) {
+	// Poco::Process does not work correctly on Linux, so we need to have
+	// platform specific code here (isRunning reports true for defunct processes)
+
+	// if this->processPID == 0 it means that the Exec port killed the processed
+	// and the process is being terminated (which may work or not)
+	// anyway, monitoring stops and cleanup takes place in this condition
+#ifdef linux
+	int status = 0;
+	while ((this->processPID > 0) && !waitpid(this->processPID, &status, WNOHANG)) {
+#else
+	while ((this->processPID > 0) && Poco::Process::isRunning(this->processPID)) {
+#endif
 		// read data from the stream
 		std::string data;
 		Poco::StreamCopier::copyToString(*errStr, data);
@@ -88,8 +106,16 @@ void ExecPort::waitForProcessEnd() {
 		}
 		Poco::Thread::sleep(1);
 	}
-	this->exitCode = this->processHandle->wait();
-	this->hasTerminated = true;
+	// if the process has been killed by the Exec port
+	// we don't set the exit code and terminated flag
+	if (this->processPID > 0) {
+#ifdef linux
+		this->exitCode = WEXITSTATUS(status);
+#else
+		this->exitCode = this->processHandle->wait();
+#endif
+		this->hasTerminated = true;
+	}
 	outStr->close();
 	errStr->close();
 	free(this->inPipe);
@@ -114,13 +140,18 @@ uint8_t ExecPort::doWork(uint8_t canSend)  {
 	// process still running?
 	if (this->processPID != 0) {
 		if (Poco::Process::isRunning(this->processPID)) {
-			uint64_t timeDiff = opdi_get_time_ms() - this->lastStartTime;
+			int64_t timeDiff = opdi_get_time_ms() - this->lastStartTime;
 			// kill time up?
 			if ((this->killTimeMs > 0) && (timeDiff > this->killTimeMs)) {
 				this->logVerbose("Kill time exceeded: Trying to kill previously started process with PID " + this->to_string(this->processPID));
-
 				// kill process
 				Poco::Process::kill(this->processPID);
+				// reset process ID to stop stream monitoring
+				this->processPID = 0;
+				// set exitCodePort to an error specified
+				if (this->exitCodePort != nullptr)
+					this->exitCodePort->setError(opdi::Port::Error::VALUE_NOT_AVAILABLE);
+				this->setLine(0);
 			}
 		}
 	} else {
@@ -128,73 +159,89 @@ uint8_t ExecPort::doWork(uint8_t canSend)  {
 		if (this->startRequested) {
 			this->startRequested = false;
 
-			// build parameter string
-			std::string params(this->parameters);
-
-			typedef std::map<std::string, std::string> PortValues;
-			PortValues portValues;
-			std::string allPorts;
-			// go through all ports
-			opdi::PortList pl = this->openhat->getPorts();
-			auto pli = pl.begin();
-			auto plie = pl.end();
-			while (pli != plie) {
-				std::string val = this->openhat->getPortStateStr(*pli);
-				if (val.empty())
-					val = "<error>";
-				// store value
-				portValues[std::string("$") + (*pli)->ID()] = val;
-				allPorts += (*pli)->ID() + "=" + val + " ";
-				++pli;
-			}
-			portValues["$ALL_PORTS"] = allPorts;
-
-			// replace parameters in content
-			for (auto iterator = portValues.begin(), iteratorEnd = portValues.end(); iterator != iteratorEnd; ++iterator) {
-				std::string key = iterator->first;
-				std::string value = iterator->second;
-
-				size_t start = 0;
-				while ((start = params.find(key, start)) != std::string::npos) {
-					params.replace(start, key.length(), value);
-				}
-			}
-
-			this->logDebug("Preparing start of program '" + this->programName + "'");
-			this->logDebug("Parameters: " + params);
-
-			// split parameters
-			std::vector<std::string> argList;
-			std::stringstream ss(params);
-			std::string item;
-			while (std::getline(ss, item, ' ')) {
-				if (!item.empty())
-					argList.push_back(item);
-			}
-
-			// execute program
-			try {
-				// start process, register pipes for IO redirection
-				this->inPipe = new Poco::Pipe;
-				this->outPipe = new Poco::Pipe;
-				this->errPipe = new Poco::Pipe;
-				this->processHandle = new Poco::ProcessHandle(Poco::Process::launch(this->programName, argList, this->inPipe, this->outPipe, this->errPipe));
-				this->processPID = this->processHandle->id();
-				this->outStr = std::make_unique<Poco::PipeInputStream>(*outPipe);
-				this->errStr = std::make_unique<Poco::PipeInputStream>(*errPipe);
-
-				this->logVerbose("Started program '" + this->programName + "' with PID " + this->to_string(this->processPID));
-
-				// create a thread that waits for the process to terminate
-				// otherwise, on Linux, child processes will remain defunct
-				this->waitThread.start(waiter);
-
-				this->lastStartTime = opdi_get_time_ms();
-			}
-			catch (Poco::Exception &e) {
-				this->logNormal("ERROR: Unable to start program '" + this->programName + "': " + this->openhat->getExceptionMessage(e));
+			// check whether the program exists
+			Poco::File file(this->programName);
+			if (!file.exists()) {
+				this->openhat->logError(this->ID() + ": Cannot start program (file does not exist): " + this->programName);
+				// set exitCodePort to an error specified
+				if (this->exitCodePort != nullptr)
+					this->exitCodePort->setError(opdi::Port::Error::VALUE_NOT_AVAILABLE);
 				this->setLine(0);
-			}
+			} else
+			{
+				// build parameter string
+				std::string params(this->parameters);
+
+				typedef std::map<std::string, std::string> PortValues;
+				PortValues portValues;
+				// fill environment values
+				this->openhat->getEnvironment(portValues);
+				std::string allPorts;
+				// go through all ports
+				opdi::PortList pl = this->openhat->getPorts();
+				auto pli = pl.begin();
+				auto plie = pl.end();
+				while (pli != plie) {
+					std::string val = this->openhat->getPortStateStr(*pli);
+					if (val.empty())
+						val = "<error>";
+					// store value
+					portValues[std::string("$") + (*pli)->ID()] = val;
+					allPorts += (*pli)->ID() + "=" + val + " ";
+					++pli;
+				}
+				portValues["$ALL_PORTS"] = allPorts;
+
+				// replace parameters in content
+				for (auto iterator = portValues.begin(), iteratorEnd = portValues.end(); iterator != iteratorEnd; ++iterator) {
+					std::string key = iterator->first;
+					std::string value = iterator->second;
+
+					size_t start = 0;
+					while ((start = params.find(key, start)) != std::string::npos) {
+						params.replace(start, key.length(), value);
+					}
+				}
+
+				this->logDebug("Preparing start of program '" + this->programName + "'");
+				this->logDebug("Parameters: " + params);
+
+				// split parameters
+				std::vector<std::string> argList;
+				std::stringstream ss(params);
+				std::string item;
+				while (std::getline(ss, item, ' ')) {
+					if (!item.empty())
+						argList.push_back(item);
+				}
+
+				// execute program
+				try {
+					// start process, register pipes for IO redirection
+					this->inPipe = new Poco::Pipe;
+					this->outPipe = new Poco::Pipe;
+					this->errPipe = new Poco::Pipe;
+					this->processHandle = new Poco::ProcessHandle(Poco::Process::launch(this->programName, argList, this->inPipe, this->outPipe, this->errPipe));
+					this->processPID = this->processHandle->id();
+					this->outStr = make_unique<Poco::PipeInputStream>(*outPipe);
+					this->errStr = make_unique<Poco::PipeInputStream>(*errPipe);
+
+					this->logVerbose("Started program '" + this->programName + "' with PID " + this->to_string(this->processPID));
+
+					// create a thread that waits for the process to terminate
+					// otherwise, on Linux, child processes will remain defunct
+					this->waitThread.start(waiter);
+
+					this->lastStartTime = opdi_get_time_ms();
+				}
+				catch (Poco::Exception &e) {
+					this->openhat->logError(this->ID() + ": Unable to start program '" + this->programName + "': " + this->openhat->getExceptionMessage(e));
+					// set exitCodePort to an error specified
+					if (this->exitCodePort != nullptr)
+						this->exitCodePort->setError(opdi::Port::Error::VALUE_NOT_AVAILABLE);
+					this->setLine(0);
+				}
+			}		// program file exists
 		}		// switched to High
 	}
 	return OPDI_STATUS_OK;

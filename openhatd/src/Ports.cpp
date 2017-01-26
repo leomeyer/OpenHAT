@@ -1140,7 +1140,7 @@ uint8_t SceneSelectPort::doWork(uint8_t canSend)  {
 		}
 
 		// open the config file
-		ConfigurationView config(this->openhat, new OpenHATConfigurationFile(sceneFile, parameters), "", false);
+		ConfigurationView config(this->openhat, new OpenHATConfigurationFile(sceneFile, parameters), "", "", false);
 
 		// go through sections of the scene file
 		ConfigurationView::Keys sectionKeys;

@@ -4,22 +4,23 @@ This document explains how openhatd processes configuration files. It also cover
 
 Please also see [general information about configuration files](concepts.md#configuration). 
 
-## Configuration Parameters<a name="parameters"></a>
+## Configuration Parameters <a name="parameters"></a>
 
 When opening a configuration file openhatd performs a case-sensitive text substitution of certain placeholders in the file. These placeholders have the form `$NAME` with NAME being the parameter name. By convention these should be all uppercase. openhatd provides the following parameters:
 
 1. Environment variables (e. g. `HOSTNAME`)
-2. Command line parameters specified using the `-p` option  (Example: `-p NAME=value`)
+2. Command line parameters specified using the `-p` option  (Example: `-p name=value`)
 3. Internally provided parameters, these are:
 	1. `OPENHAT_VERSION`: The version of openhatd at compile time in format MAJOR.MINOR.PATCH
 	2. `DATETIME`: The startup timestamp in format %Y-%m-%d %H:%M:%S.%i
 	3. `LOG_DATETIME`: The startup timestamp in format %Y%m%d_%H%M%S, useful for creating log file names
 	4. `CWD`: The absolute path of the current working directory
+	5. `PLATFORM_SPECIFIC_SHELLSCRIPT_EXTENSION`: `.bat` on Windows, `.sh` on Linux
 4. When including configuration files, all parameters that are specified with the include directive (see below).
 
 Placeholders that have no corresponding parameter are not replaced. In [log verbosity](concepts.md#logVerbosity) Debug and Extreme all access to configuration settings is logged. This allows for easy inspection of actual settings values at runtime.
 
-## Including Configuration Files<a name="includes"></a>
+## Including Configuration Files <a name="includes"></a>
 
 Configuration files are included by specifying `Type = Include`. An include node must contain the `Filename` setting. Relative paths are assumed to be relative to the current configuration file. This can be overridden using the `RelativeTo` setting (see "Relative paths" below).
 
@@ -94,7 +95,7 @@ The purpose of this file is to provide a Select port plus an associated Exec por
 
 The shell script's parameters are the current value of the Select port and the value of the $Command parameter at include file load time. Now this involves a bit of trickery; note the `$$Name_Select` part which will be resolved in two stages: `$Name` will be replaced at include file load time; what remains is the ID of the Select port, for example `$Switch_Select`. When the Exec port is about to execute the script it replaces this value with the current position of the referenced Select port and passes the parameter string to the script which receives this value as its first parameter, `$1`.
 
-## Relative Paths
+## Relative Paths <a name="relative_paths">
 
 Some nodes in openhatd require the specification of filenames, for example include files or dynamic plugin libraries. Absolute paths can be used in all cases but this is rarely a good choice. However, relative paths can be ambiguous: it is not always clear what they are relative to.
 
@@ -111,7 +112,7 @@ To specify a path relative to the current working directory the above include fi
 	Filename = MyInclude.ini
 	RelativeTo = CWD 
 
-### Configuration string format<a name="configurationStringFormat"></a>
+### Configuration string format <a name="configurationStringFormat"></a>
 
 openhatd (and the OPDI libraries) use a special format for certain configuration values that is called the "configuration string format". This format can be described by:
 

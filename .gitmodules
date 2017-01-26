@@ -20,3 +20,6 @@
 [submodule "libraries/rpi/raspberry-remote"]
 	path = libraries/rpi/raspberry-remote
 	url = https://github.com/xkonni/raspberry-remote.git
+[submodule "openhatd/plugins/WebServerPlugin/webdocroot/opdi_assets"]
+	path = openhatd/plugins/WebServerPlugin/webdocroot/opdi_assets
+	url = https://github.com/leomeyer/opdi_assets.git

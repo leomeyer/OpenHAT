@@ -544,10 +544,10 @@ public:
 
 inline std::ostream& operator<<(std::ostream& oStream, const Port::Error error) {
 	switch (error) {
-	case Port::Error::VALUE_OK: oStream << "VALUE_OK";
-	case Port::Error::VALUE_EXPIRED: oStream << "VALUE_EXPIRED";
-	case Port::Error::VALUE_NOT_AVAILABLE: oStream << "VALUE_NOT_AVAILABLE";
-	default: oStream << "<unknown error>";
+	case Port::Error::VALUE_OK: oStream << "VALUE_OK"; break;
+	case Port::Error::VALUE_EXPIRED: oStream << "VALUE_EXPIRED"; break;
+	case Port::Error::VALUE_NOT_AVAILABLE: oStream << "VALUE_NOT_AVAILABLE"; break;
+	default: oStream << "<unknown error>"; break;
 	}
 	return oStream;
 };

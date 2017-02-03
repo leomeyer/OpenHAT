@@ -908,7 +908,7 @@ void AbstractOpenHAT::configureAnalogPort(ConfigurationView* portConfig, opdi::A
 	}
 	if (stateConfig->hasProperty("Value")) {
 		uint32_t value = stateConfig->getInt("Value", 0);
-		port->setValue(value);
+		port->setAbsoluteValue(value);
 	}
 }
 
@@ -1849,7 +1849,7 @@ uint8_t opdi_set_analog_port_value(opdi_Port* port, int32_t value) {
 		return OPDI_PORT_ACCESS_DENIED;
 
 	try {
-		aPort->setValue(value, opdi::Port::ChangeSource::CHANGESOURCE_USER);
+		aPort->setAbsoluteValue(value, opdi::Port::ChangeSource::CHANGESOURCE_USER);
 	} catch (opdi::Port::PortError &pe) {
 		opdi_set_port_message(pe.message().c_str());
 		return OPDI_PORT_ERROR;

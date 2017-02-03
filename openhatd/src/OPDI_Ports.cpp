@@ -887,7 +887,7 @@ void AnalogPort::setResolution(uint8_t resolution, ChangeSource changeSource) {
 		this->logDebug("AnalogPort Resolution changed to: " + this->to_string((int)this->resolution) + " by: " + this->getChangeSourceText(changeSource));
 	}
 	if (this->mode != 0)
-		this->setValue(this->value);
+		this->setAbsoluteValue(this->value);
 	else
 		if (persistent && (this->opdi != nullptr))
 			this->opdi->persist(this);
@@ -905,7 +905,7 @@ void AnalogPort::setReference(uint8_t reference, ChangeSource changeSource) {
 		this->opdi->persist(this);
 }
 
-void AnalogPort::setValue(int32_t value, ChangeSource changeSource) {
+void AnalogPort::setAbsoluteValue(int32_t value, ChangeSource changeSource) {
 	// restrict value to possible range
 	int32_t newValue = this->validateValue(value);
 	if (this->error != Error::VALUE_OK)
@@ -945,7 +945,7 @@ double AnalogPort::getRelativeValue(void) {
 }
 
 void AnalogPort::setRelativeValue(double value, ChangeSource changeSource) {
-	this->setValue(static_cast<int32_t>(value * ((1 << this->resolution) - 1)), changeSource);
+	this->setAbsoluteValue(static_cast<int32_t>(value * ((1 << this->resolution) - 1)), changeSource);
 }
 
 uint8_t AnalogPort::getMode() {

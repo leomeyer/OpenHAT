@@ -1,48 +1,35 @@
-## Test Port Description
+## Assignment Port Description
 
-A Test port is a Digital port that can be used to test certain properties of ports during the operation of the program. A test is executed in regular intervals. The interval can be based on seconds, milliseconds, or frames. A test port is only active if its Line is High and its interval greater than 0.
+An Assignment port is a Digital port that can be used to assign a set of predefined or runtime-determined values to **target ports**. The assignments take place at the moment the Assignment port is switched from `Low` to `High`. After applying all assignments the line is set to `Low` again, to make the Assignment port ready for new assignments. Thus, an Assignment port will always appear to be `Low`.
 
-A test port contains a number of predefined test-case settings that use the following schema:
+An Assignment port contains a number of predefined assignment settings that use the following schema:
 
-	<targetPortID>:<property> = <expectedValue>
+	<targetPortID> = <value>
 
-When the test has reached its specified interval time all test cases are checked by resolving the specified target port and testing the property against the expected value. The comparison is done by the ports themselves and may be implementation specific.
+When doing the assignments the original source (internal or user) that changed the Assignment port is passed to the target ports.
 
-It depends on the individual ports which properties they want to expose for testing, what the required format for the expected values is and how the comparison is done. Testable properties should correspond with their configuration setting name, but this is not guaranteed. Generally, only port properties that can be changed during runtime need to be exposed for testing.
-
-A Test port can be configured to warn or terminate on test failure, and to terminate the program after executing the tests. This feature is useful for automatic testing.
+Assignments are performed in alphanumerically sorted order of target port IDs. Only one assignment is done per target port, even if multiple assignments have been specified for this port.
 
 ## Settings
 
 ### Type
-Fixed value `Test`.
+Fixed value `Assignment`.
 
-### TimeBase
-The `TimeBase` setting specifies the unit for the `Interval` setting. It supports the following values:
-
-	Seconds
-	Milliseconds
-	Frames
-
-The default `TimeBase` is `Seconds`.
-
-### Interval
-The `Interval` specifies how often the tests are run with respect to the `TimeBase`. If this value is less than 1 tests will not be run. The default value is 0 which means the tests will not be performed. Tests will start to run when the specified interval has expired after the first iteration of the doWork loop. 
-
-### WarnOnFailure
-If `WarnOnFailure` is set to `True` the test will only output a warning if a test comparison does not match. Otherwise, the program outputs an error message and terminates with error code 128 (`TEST_FAILURE`). The default is `False` which means that any test failure causes an immediate termination.
-
-### ExitAfterTest
-If `ExitAfterTest` is set to `True` the program will exit after the test has been performed for the first time. The default is `False`.
-
-### [_portID_.Cases]
-This section contains the test cases belonging to the Test port with ID `portID`. 
+### [_portID_.Assignments]
+This section contains the assignment specifications belonging to the Assignment port with ID `portID`. 
 They use the following schema:
 
-	<targetPortID>:<property> = <expectedValue>
+	<targetPortID> = <value>
 
-The `targetPortID` must be a valid ID of a port in the current configuration. `property` specifies the port property that should be tested, while `expectedValue` is a string representation of the target property.
+The `targetPortID` must be a valid ID of a port in the current configuration. `value` is a string representation of the value that is to be assigned. You can also use a [ValueResolver](../ports.md#value_resolvers). 
 
-The default comparison is for string equality. A test fails if the expected value is not equal to the actual value of the port property. For Boolean properties such as `Hidden` or `Readonly` the values `1`, `true` and `yes` (case insensitive) are interpreted as a Boolean `true`.
- 
-Port implementations may choose to interpret the expected value in any way they like. They may also choose to test attributes other than string equality. Please refer to their documentation for a list of testable properties.
+The rules for target ports are:
+
+- Digital port: Is set to `Low` if the determined value is 0 and to `High` in all other cases.
+- Analog port: The value is expected to be a floating point number between 0 and 1, inclusive. The relative value of the target port is set from this value, with 1 representing the value `2^resolution - 1`.
+- Dial port: The target port's position is set to the value which is treated as a 64 bit signed integer.
+- Select port: The target port's position is set to the value which is treated as a 16 bit unsigned integer.
+
+## Example
+
+{!testconfigs/test_assignment.ini!}

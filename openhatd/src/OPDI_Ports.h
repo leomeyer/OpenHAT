@@ -740,10 +740,6 @@ public:
 	/// reference = 1: external voltage reference
 	virtual void setReference(uint8_t reference, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT);
 
-	/// Sets the port's value.
-	/// value: an integer value ranging from 0 to 2^resolution - 1
-	virtual void setValue(int32_t value, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT);
-
 	/// Retrieves the current port state.
 	///
 	virtual void getState(uint8_t* mode, uint8_t* resolution, uint8_t* reference, int32_t* value) const;
@@ -754,7 +750,11 @@ public:
 
 	/// Sets the value from a factor between 0 and 1.
 	///
-	virtual void setRelativeValue(double value, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT);
+	void setRelativeValue(double value, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT);
+
+	/// Sets the port's absolute value.
+	/// value: an integer value ranging from 0 to 2^resolution - 1
+	void setAbsoluteValue(int32_t value, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT);
 
 	/// Returns true if the port is in an error state.
 	///

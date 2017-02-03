@@ -311,7 +311,7 @@ Poco::JSON::Object WebServerPlugin::jsonRpcSetAnalogValue(struct mg_connection* 
 	int32_t newValue = value.convert<int32_t>();
 
 	if (!port->isReadonly())
-		((opdi::AnalogPort*)port)->setValue(newValue, opdi::Port::ChangeSource::CHANGESOURCE_USER);
+		((opdi::AnalogPort*)port)->setAbsoluteValue(newValue, opdi::Port::ChangeSource::CHANGESOURCE_USER);
 
 	return this->jsonGetPortInfo(port);
 }

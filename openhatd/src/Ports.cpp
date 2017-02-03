@@ -1409,6 +1409,8 @@ FilePort::FilePort(AbstractOpenHAT* openhat, const char* id) :
 	this->valuePort = nullptr;
 	this->portType = UNKNOWN;
 
+	// output by default
+	this->setMode(OPDI_DIGITAL_MODE_OUTPUT);
 	// file IO is active by default
 	this->setLine(1);
 }
@@ -1421,7 +1423,7 @@ FilePort::~FilePort() {
 void FilePort::configure(ConfigurationView* config, ConfigurationView* parentConfig) {
 	this->openhat->configureDigitalPort(config, this);
 
-	this->filePath = openhat->getConfigString(config, this->ID(), "File", "", true);
+	this->filePath = this->openhat->resolveRelativePath(config, this->ID(), openhat->getConfigString(config, this->ID(), "File", "", true), "Config");
 
 	// read port node, create configuration view and setup the port according to the specified type
 	std::string portNode = openhat->getConfigString(config, this->ID(), "PortNode", "", true);
@@ -1524,7 +1526,8 @@ void FilePort::configure(ConfigurationView* config, ConfigurationView* parentCon
 				this->valuePort->setError(Error::VALUE_NOT_AVAILABLE);
 		}
 		else
-			this->valuePort->setError(Error::VALUE_NOT_AVAILABLE);
+			// load initial state
+			this->needsReload = true;
 	}
 }
 

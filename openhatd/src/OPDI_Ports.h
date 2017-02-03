@@ -749,12 +749,12 @@ public:
 	virtual double getRelativeValue(void);
 
 	/// Sets the value from a factor between 0 and 1.
-	///
+	/// Uses setAbsoluteValue() internally.
 	void setRelativeValue(double value, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT);
 
 	/// Sets the port's absolute value.
 	/// value: an integer value ranging from 0 to 2^resolution - 1
-	void setAbsoluteValue(int32_t value, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT);
+	virtual void setAbsoluteValue(int32_t value, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT);
 
 	/// Returns true if the port is in an error state.
 	///

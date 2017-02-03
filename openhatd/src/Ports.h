@@ -377,29 +377,8 @@ public:
 // File Port
 ///////////////////////////////////////////////////////////////////////////////
 
-/** A FilePort is a port that reads or writes its state from or to a file. It is represented by
-* a DigitalPort; as such it can be either active (line = High) or inactive (line = Low).
-* The FilePort actually consists of two ports: 1.) one DigitalPort which handles
-* the actual file monitoring; it can be enabled and disabled, and 2.) a value port with
-* a specified type that reflects the file content.
-* You have to specify a PortNode setting which provides information about the value
-* port that should reflect the file content. This node's configuration is
-* evaluated just as if it was a standard port node.
-* The port monitors the file and reads its contents when it changes. The content is
-* parsed according to the value port's type:
-*  - DigitalPort: content must be either 0 or 1
-*  - AnalogPort: content must be a decimal number (separator '.') in range [0..1]
-*  - DialPort: content must be a number in range [min..max] (it's automatically adjusted
-*    to fit the step setting)
-*  - SelectPort: content must be a positive integer or 0 specifying the select port position
-*  - StreamingPort: content is injected into the streaming port as raw bytes
-* Additionally you can specify a delay that signals how long to wait until the file is
-* being re-read. This can help avoid too many refreshes.
-* For analog and dial ports the value can be scaled using a numerator and a denominator.
-* The FilePort can also be set (by a user or an internal function), if it is not read-only.
-* If the FilePort is active (High) when such a state change occurs the state of the value port
-* is written to the specified file.
-*/
+/// This port reads and writes data from and to a specified file.
+/// <a href="../../ports/file_port">See the File port documentation.</a>
 class FilePort : public opdi::DigitalPort {
 protected:
 

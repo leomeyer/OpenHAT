@@ -100,7 +100,7 @@ public:
 	virtual void setResolution(uint8_t resolution, ChangeSource changeSource = ChangeSource::CHANGESOURCE_INT) override;
 	virtual void setReference(uint8_t reference, ChangeSource changeSource = ChangeSource::CHANGESOURCE_INT) override;
 	// value: an integer value ranging from 0 to 2^resolution - 1
-	virtual void setValue(int32_t value, ChangeSource changeSource = ChangeSource::CHANGESOURCE_INT) override;
+	virtual void setAbsoluteValue(int32_t value, ChangeSource changeSource = ChangeSource::CHANGESOURCE_INT) override;
 	virtual void getState(uint8_t* mode, uint8_t* resolution, uint8_t* reference, int32_t* value) const override;
 };
 
@@ -120,7 +120,7 @@ public:
 	virtual void setResolution(uint8_t resolution, ChangeSource changeSource = ChangeSource::CHANGESOURCE_INT) override;
 	virtual void setReference(uint8_t reference, ChangeSource changeSource = ChangeSource::CHANGESOURCE_INT) override;
 	// value: an integer value ranging from 0 to 2^resolution - 1
-	virtual void setValue(int32_t value, ChangeSource changeSource = ChangeSource::CHANGESOURCE_INT) override;
+	virtual void setAbsoluteValue(int32_t value, ChangeSource changeSource = ChangeSource::CHANGESOURCE_INT) override;
 	virtual void getState(uint8_t* mode, uint8_t* resolution, uint8_t* reference, int32_t* value) const override;
 };
 
@@ -352,8 +352,8 @@ void AnalogGertboardOutput::setReference(uint8_t reference, ChangeSource /*chang
 	throw PortError("Gertboard analog output reference cannot be changed");
 }
 
-void AnalogGertboardOutput::setValue(int32_t value, ChangeSource /*changeSource*/) {
-	opdi::AnalogPort::setValue(value);
+void AnalogGertboardOutput::setAbsoluteValue(int32_t value, ChangeSource /*changeSource*/) {
+	opdi::AnalogPort::setAbsoluteValue(value);
 
 	write_dac(this->output, this->value);
 }
@@ -407,7 +407,7 @@ void AnalogGertboardInput::setReference(uint8_t reference, ChangeSource /*change
 	throw PortError("Gertboard analog input reference cannot be changed");
 }
 
-void AnalogGertboardInput::setValue(int32_t value, ChangeSource /*changeSource*/) {
+void AnalogGertboardInput::setAbsoluteValue(int32_t value, ChangeSource /*changeSource*/) {
 	throw PortError("Gertboard analog input value cannot be set");
 }
 

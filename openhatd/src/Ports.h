@@ -623,6 +623,10 @@ public:
 	virtual void setLine(uint8_t newLine, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 };
 
+///////////////////////////////////////////////////////////////////////////////
+// InfluxDB Port
+///////////////////////////////////////////////////////////////////////////////
+
 /** An InfluxDB port is a DigitalPort that, when High, sends data to an InfluxDB instance
 *   in regular intervals. Data is sent via HTTP using the InfluxDB API documented at
 *   https://docs.influxdata.com/influxdb/v1.0/guides/writing_data/
@@ -670,6 +674,10 @@ public:
 	virtual void prepare() override;
 };
 
+///////////////////////////////////////////////////////////////////////////////
+// Test Port
+///////////////////////////////////////////////////////////////////////////////
+
 /// This port can be used to test the runtime values of other ports.
 /// <a href="../../ports/test_port">See the Test port documentation.</a>
 class TestPort : public opdi::DigitalPort {
@@ -703,6 +711,10 @@ public:
 	///
 	virtual void configure(ConfigurationView* portConfig, ConfigurationView* parentConfig);
 };
+
+///////////////////////////////////////////////////////////////////////////////
+// Assignment Port
+///////////////////////////////////////////////////////////////////////////////
 
 /// This port can be used to assign state to target ports.
 /// <a href="../../ports/assignment_port">See the Assigment port documentation.</a>

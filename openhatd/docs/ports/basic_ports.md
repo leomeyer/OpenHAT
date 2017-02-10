@@ -76,20 +76,25 @@ An optional value of either `Quiet`, `Normal`, `Verbose`, `Debug` or `Extreme`. 
 
 ![](images/digital_port.png)
 
-The Digital port is the most elementary port type. A Digital port has a **Mode** and a **Line** state. Modes can be **Input** and **Output**, and the line can be either **Low** or **High**. Mode and Line default to Input and Low.
+The Digital port is the most elementary port type. A Digital port has a **Mode** and a **Line** state. Modes can be **Input** and **Output**, and the line can be either **Low** or **High**. Mode and Line default to Input and Low. A Digital port roughly corresponds with the concept of a Boolean variable.
 
-The Digital port is modeled after a digital I/O pin of a microcontroller. The important thing here is that a Digital port's state is always known, and it is either Low or High. Basically, the Digital port models a switch. In openhatd it is used for "things that can be on or off", no matter whether the state of these things is controlled directly by a user or by internal functions, or whether the Digital port is a physical actor, an internal variable or behavioral component or reflects the state of some outside sensor (by reading its state from some driver).
+The Digital port is modeled after a digital I/O pin of a microcontroller. The important thing here is that a Digital port's state is always known, and it is either `Low` or `High`. Basically, the Digital port models a switch. In openhatd it is used for "things that can be on or off", no matter whether the state of these things is controlled directly by a user or by internal functions, or whether the Digital port is a physical actor, an internal variable or behavioral component or reflects the state of some outside sensor (by reading its state from some driver).
 
 Typical examples of Digital ports are LEDs or relays (output only), and switches or buttons (input only). However, most higher-level functions in openhatd are also modeled as Digital ports, thus giving you the ability to switch these functions on or off. For example, a Pulse port can periodically change the state of one or more Digital ports (its "outputs"). The Pulse port itself is again a Digital port, and it will only be active if its Line state is High. Thus, you can switch the Pulse port on or off using a user interface, or the Pulse port can again be controlled by any other port that accepts a Digital port as an output. In this way you can connect elementary blocks together to form complex behavior.
 
 ### Settings
 In addition to the basic port settings described above, a Digital port accepts the following settings:
 
+#### Type
+Fixed value `DigitalPort`.
+
 #### Mode
 An optional value of either `Input` or `Output`. This setting defines how the port is displayed on a GUI and whether it can be changed by the user. For internal changes this distinction is irrelevant. The default for a basic Digital port is `Input`. Some port types may define `Output` as default or restrict the ability to change this setting.
 
 #### Line
 An optional value of either `Low` or `High`. The default for a basic Digital port is `Low`. Some port types may define `High` as default or restrict the ability to change this setting. 
+
+
 
 ### Analog Port <a name="analog_port"></a>
 
@@ -100,6 +105,9 @@ The Analog port also has a **Reference** setting (internal/external), and a **Mo
 
 ### Settings
 In addition to the basic port settings described above, an Analog port accepts the following settings:
+
+#### Type
+Fixed value `AnalogPort`.
 
 #### Mode
 An optional value of either `Input` or `Output`. This setting defines how the port is displayed on a GUI and whether it can be changed by the user. For internal changes this distinction is irrelevant. The default for a basic Analog port is `Input`. Some port types may define `Output` as default or restrict the ability to change this setting.
@@ -120,10 +128,45 @@ openhatd does not do floating point arithmetics internally. You therefore cannot
 
 Dial ports can represent numeric information as well as dates and times. As usual with openhatd ports, the value of a Dial port might be set by a user, or it might be the result of an internal calculation, or it might reflect the state of some hardware or other external component (like the content of a file). The best way to initially think about a Dial port is as of a universal numeric variable.
 
+### Settings
+In addition to the basic port settings described above, a Dial port accepts the following settings:
+
+#### Type
+Fixed value `DialPort`.
+
+#### Minimum
+The smallest possible value that this Dial port can contain. The default is 0.
+
+#### Maximum
+The greatest possible value that this Dial port can contain. The default is 100.
+
+#### Step
+The interval of the positions of the Dial port. If a value is assigned it is automatically adjusted to the nearest possible position according to this setting. The default is 1.
+
+#### Position
+The positional value of the Dial port.
+
+
 ### Select Port <a name="select_port"></a>
 
 ![](images/select_port.png)
 
-The Select port represents a set of distinct **labeled options**. The currently selected option number is referred to as **Position**, starting with 0. Its most useful application is to present the user with a choice; however, the Select port can also have internal uses. The most important difference to the Digital port is that the Select port can represent things that do not necessarily have a known state. Take, for example, a radio controlled power socket. The radio control is one-way only in most cases, so there is no way to know whether the power socket is actually on or off; its state is essentially unknown. Such a device can not be modeled with a Digital port as a Digital port must have a known state. It can, however, be conveniently modeled using a Select port with three options: Unknown, Off, and On. If the user selects Off or On the command is sent to the socket via radio, but the Select port's state will not reflect the user's choice but instead remain Unknown.
+The Select port represents a set of distinct **labeled options**. The currently selected option number is referred to as **position**, starting with 0. Its most useful application is to present the user with a choice; however, the Select port can also have internal uses. The most important difference to the Digital port is that the Select port can represent things that do not necessarily have a known state. Take, for example, a radio controlled power socket. The radio control is one-way only in most cases, so there is no way to know whether the power socket is actually on or off; its state is essentially unknown. Such a device can not be modeled with a Digital port as a Digital port must have a known state. It can, however, be conveniently modeled using a Select port with three options: Unknown, Off, and On. If the user selects Off or On the command is sent to the socket via radio, but the Select port's state will not reflect the user's choice but instead remain Unknown.
 
-A Select port supports up to 65535 different labels (or states), but for practical purposes it is recommended to keep this number as low as possible.
+A Select port supports up to 65535 different labels (or positions), but for practical purposes it is recommended to keep this number as low as possible.
+
+### Settings
+
+#### Type
+Fixed value `SelectPort`.
+
+#### Position
+The positional value of the Select port, i. e. the number of its selected label, starting from 0.
+
+#### [_portID_.Labels]
+This section contains the labels of the Select port, in the format
+
+	<label_text> = <sort position>
+
+The sort positions are non-negative integer numbers. They need not be unique. The labels are sorted in ascending sequence of these numbers; it is important to keep in mind that these numbers do **not** represent the internal position numbers for the labels; these always start from 0 and are consecutively numbered whereas the sort positions are arbitrary.
+ 

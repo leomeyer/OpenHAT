@@ -249,22 +249,22 @@ public:
 	/** Reads special properties from the configuration and configures the digital port. */
 	virtual void configureDigitalPort(ConfigurationView* portConfig, opdi::DigitalPort* port, bool stateOnly = false);
 
-	virtual void setupEmulatedDigitalPort(ConfigurationView* portConfig, const std::string& port);
+	virtual void setupDigitalPort(ConfigurationView* portConfig, const std::string& port);
 
 	/** Reads special properties from the configuration and configures the analog port. */
 	virtual void configureAnalogPort(ConfigurationView* portConfig, opdi::AnalogPort* port, bool stateOnly = false);
 
-	virtual void setupEmulatedAnalogPort(ConfigurationView* portConfig, const std::string& port);
+	virtual void setupAnalogPort(ConfigurationView* portConfig, const std::string& port);
 
 	/** Reads special properties from the configuration and configures the select port. */
 	virtual void configureSelectPort(ConfigurationView* portConfig, ConfigurationView* parentConfig, opdi::SelectPort* port, bool stateOnly = false);
 
-	virtual void setupEmulatedSelectPort(ConfigurationView* portConfig, ConfigurationView* parentConfig, const std::string& port);
+	virtual void setupSelectPort(ConfigurationView* portConfig, ConfigurationView* parentConfig, const std::string& port);
 
 	/** Reads special properties from the configuration and configures the dial port. */
 	virtual void configureDialPort(ConfigurationView* portConfig, opdi::DialPort* port, bool stateOnly = false);
 
-	virtual void setupEmulatedDialPort(ConfigurationView* portConfig, const std::string& port);
+	virtual void setupDialPort(ConfigurationView* portConfig, const std::string& port);
 
 	/** Reads special properties from the configuration and configures the streaming port. */
 	virtual void configureStreamingPort(ConfigurationView* portConfig, opdi::StreamingPort* port);

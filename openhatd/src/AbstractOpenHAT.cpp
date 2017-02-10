@@ -867,8 +867,8 @@ void AbstractOpenHAT::configureDigitalPort(ConfigurationView* portConfig, opdi::
 		this->throwSettingException("Unknown Line specified; expected 'Low' or 'High'", portLine);
 }
 
-void AbstractOpenHAT::setupEmulatedDigitalPort(ConfigurationView* portConfig, const std::string& port) {
-	this->logDebug("Setting up emulated digital port: " + port);
+void AbstractOpenHAT::setupDigitalPort(ConfigurationView* portConfig, const std::string& port) {
+	this->logDebug("Setting up Digital port: " + port);
 
 	opdi::DigitalPort* digPort = new opdi::DigitalPort(port.c_str());
 	this->configureDigitalPort(portConfig, digPort);
@@ -912,8 +912,8 @@ void AbstractOpenHAT::configureAnalogPort(ConfigurationView* portConfig, opdi::A
 	}
 }
 
-void AbstractOpenHAT::setupEmulatedAnalogPort(ConfigurationView* portConfig, const std::string& port) {
-	this->logDebug("Setting up emulated analog port: " + port);
+void AbstractOpenHAT::setupAnalogPort(ConfigurationView* portConfig, const std::string& port) {
+	this->logDebug("Setting up Analog port: " + port);
 
 	opdi::AnalogPort* anaPort = new opdi::AnalogPort(port.c_str());
 	this->configureAnalogPort(portConfig, anaPort);
@@ -957,7 +957,7 @@ void AbstractOpenHAT::configureSelectPort(ConfigurationView* portConfig, Configu
 		}
 
 		if (orderedLabels.size() == 0)
-			this->throwSettingException("The select port " + std::string(port->ID()) + " requires at least one label in its config section", std::string(port->ID()) + ".Label");
+			this->throwSettingException("The Select port " + std::string(port->ID()) + " requires at least one label in its config section", std::string(port->ID()) + ".Label");
 
 		// go through items, create ordered list of char* items
 		std::vector<const char*> charLabels;
@@ -978,13 +978,13 @@ void AbstractOpenHAT::configureSelectPort(ConfigurationView* portConfig, Configu
 	if (stateConfig->getString("Position", "") != "") {
 		int16_t position = stateConfig->getInt("Position", 0);
 		if ((position < 0) || (position > port->getMaxPosition()))
-			this->throwSettingException("Wrong select port setting: Position is out of range: " + to_string(position));
+			this->throwSettingException("Wrong Select port setting: Position is out of range: " + to_string(position));
 		port->setPosition(position);
 	}
 }
 
-void AbstractOpenHAT::setupEmulatedSelectPort(ConfigurationView* portConfig, ConfigurationView* parentConfig, const std::string& port) {
-	this->logDebug("Setting up emulated select port: " + port);
+void AbstractOpenHAT::setupSelectPort(ConfigurationView* portConfig, ConfigurationView* parentConfig, const std::string& port) {
+	this->logDebug("Setting up Select port: " + port);
 
 	opdi::SelectPort* selPort = new opdi::SelectPort(port.c_str());
 	this->configureSelectPort(portConfig, parentConfig, selPort);
@@ -1052,8 +1052,8 @@ void AbstractOpenHAT::configureDialPort(ConfigurationView* portConfig, opdi::Dia
 		port->setPosition(position);
 }
 
-void AbstractOpenHAT::setupEmulatedDialPort(ConfigurationView* portConfig, const std::string& port) {
-	this->logDebug("Setting up emulated dial port: " + port);
+void AbstractOpenHAT::setupDialPort(ConfigurationView* portConfig, const std::string& port) {
+	this->logDebug("Setting up Dial port: " + port);
 
 	opdi::DialPort* dialPort = new opdi::DialPort(port.c_str());
 	this->configureDialPort(portConfig, dialPort);
@@ -1066,7 +1066,7 @@ void AbstractOpenHAT::configureStreamingPort(ConfigurationView* portConfig, opdi
 }
 
 void AbstractOpenHAT::setupSerialStreamingPort(ConfigurationView* portConfig, const std::string& port) {
-	this->logDebug("Setting up serial streaming port: " + port);
+	this->logDebug("Setting up serial Streaming port: " + port);
 
 	SerialStreamingPort* ssPort = new SerialStreamingPort(this, port.c_str());
 	ssPort->configure(portConfig);
@@ -1162,16 +1162,16 @@ void AbstractOpenHAT::setupNode(ConfigurationView* config, const std::string& no
 		this->setupInclude(nodeConfig, config, node);
 	} else
 	if (nodeType == "DigitalPort") {
-		this->setupEmulatedDigitalPort(nodeConfig, node);
+		this->setupDigitalPort(nodeConfig, node);
 	} else
 	if (nodeType == "AnalogPort") {
-		this->setupEmulatedAnalogPort(nodeConfig, node);
+		this->setupAnalogPort(nodeConfig, node);
 	} else
 	if (nodeType == "SelectPort") {
-		this->setupEmulatedSelectPort(nodeConfig, config, node);
+		this->setupSelectPort(nodeConfig, config, node);
 	} else
 	if (nodeType == "DialPort") {
-		this->setupEmulatedDialPort(nodeConfig, node);
+		this->setupDialPort(nodeConfig, node);
 	} else
 	if (nodeType == "SerialStreamingPort") {
 		this->setupSerialStreamingPort(nodeConfig, node);

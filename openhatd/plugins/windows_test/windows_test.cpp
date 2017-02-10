@@ -46,7 +46,7 @@ void WindowsTestPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, c
 	std::string portType = nodeConfig->getString("Type", "");
 
 	if (portType == "DigitalPort") {
-		// add emulated test port
+		// add test port
 		DigitalTestPort* port = new DigitalTestPort();
 		abstractOpenHAT->configureDigitalPort(nodeConfig, port);
 		abstractOpenHAT->addPort(port);

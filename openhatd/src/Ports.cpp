@@ -1,8 +1,7 @@
 #include "Ports.h"
 
 #include <bitset>
-#define _USE_MATH_DEFINES // for C++
-#include <math.h>
+#include <cmath>
 #include <numeric>
 #include <functional>
 

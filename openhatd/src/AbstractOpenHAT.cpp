@@ -1,7 +1,7 @@
 #include "AbstractOpenHAT.h"
 
 #include <vector>
-#include <time.h>
+#include <ctime>
 #ifdef __GNUG__
 #include <cxxabi.h>
 #endif

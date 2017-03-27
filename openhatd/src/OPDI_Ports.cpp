@@ -6,7 +6,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 
-#include <string.h>
 #include <cstdlib>
 #include <string>
 #include <sstream>

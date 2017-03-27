@@ -13,7 +13,7 @@
 
 #include <cstdlib>
 #include <algorithm>    // std::sort
-#include <string.h>
+#include <string>
 #include <unordered_set>
 
 #include "opdi_constants.h"

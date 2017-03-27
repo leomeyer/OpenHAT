@@ -12,8 +12,9 @@
 #include "OPDI.h"
 
 #include <cstdlib>
-#include <algorithm>    // std::sort
+#include <cstring>
 #include <string>
+#include <algorithm>    // std::sort
 #include <unordered_set>
 
 #include "opdi_constants.h"

@@ -44,6 +44,8 @@ pages:
             - Raspberry Pi:
                 - Gertboard Plugin: plugins/rpi/gertboard/gertboard_plugin.md
                 - RemoteSwitch Plugin: plugins/rpi/remoteswitch_plugin.md
+        - Appliances:
+            - Xiaomi Mi Robot Vacuum Cleaner: appliances/xiaomi_mi_robovac.md
         - Deploying openhatd: deployment.md
     - Feedback: feedback.md
     - Contributing: contributing.md

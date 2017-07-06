@@ -5,12 +5,12 @@ Home automation server hardware needs to provide lots of I/O ports and ideally c
 Tested hardware:
 
 - Raspberry Pi models B and B+ (Raspbian)
-- Raspberry Pi (Raspbian)
+- Raspberry Pi 2 (Raspbian)
 - NanoPi NEO (FriendlyARM's image based on UbuntuCore)
 
 ## Environment
 
-A home automation server like openhatd should start running at system startup. This can be done in a variety of ways, depending on OS and personal preference. An example script for Upstart on Linux is provided (for more information about Upstart see http://upstart.ubuntu.com).
+A home automation server like openhatd should start running at system startup. This can be done in a variety of ways, depending on OS and personal preference. An example script for Upstart on Linux is provided (for more information about Upstart see [http://upstart.ubuntu.com](http://upstart.ubuntu.com)).
 
 openhatd is typically started by the root account. In fact, root permissions must be provided to gain access to certain resources if required; for example, on the Raspberry Pi, to have fast access to the GPIO pins root is required as these pins are memory-mapped to a restricted system memory area. However, it it is not desirable to keep openhatd running as root, especially if you expose network access which openhatd naturally must do. openhatd allows you to specify a SwitchToUser setting which is applied after initializing (and acquiring restricted resources). The process will then continue to run with the permission of this user making your setup more secure.
 

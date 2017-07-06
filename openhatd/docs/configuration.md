@@ -95,7 +95,7 @@ The purpose of this file is to provide a Select port plus an associated Exec por
 
 The shell script's parameters are the current value of the Select port and the value of the $Command parameter at include file load time. Now this involves a bit of trickery; note the `$$Name_Select` part which will be resolved in two stages: `$Name` will be replaced at include file load time; what remains is the ID of the Select port, for example `$Switch_Select`. When the Exec port is about to execute the script it replaces this value with the current position of the referenced Select port and passes the parameter string to the script which receives this value as its first parameter, `$1`.
 
-## Relative Paths <a name="relative_paths">
+## Relative Paths <a name="relative_paths"></a>
 
 Some nodes in openhatd require the specification of filenames, for example include files or dynamic plugin libraries. Absolute paths can be used in all cases but this is rarely a good choice. However, relative paths can be ambiguous: it is not always clear what they are relative to.
 
@@ -124,20 +124,20 @@ Such a configuration string can contain an arbitrary number of `key=value` pairs
 
 The general section supports the following configuration settings:
 
-### `SlaveName`
+### SlaveName
 Required. The `SlaveName` is the name of the openhatd server instance as displayed on a GUI.
 
-### `LogVerbosity`
+### LogVerbosity
 
 The LogVerbosity specifies the logging detail and the amount of diagnostic output that openhatd will generate. It accepts one of the [log level constants](concepts.md#logVerbosity) as its value. The default is `Normal`.
 
-### `PersistentConfig`
+### PersistentConfig
 
 Specify a file name to be used to store the persistent configuration. Relative paths are assumed to be relative to the current working directory, unless the setting `RelativeTo` specifies otherwise. The file must be writable by the user executing the openhatd process. Example:
 
 	PersistentConfig = persistent-config.txt
 
-### `HeartbeatFile`
+### HeartbeatFile
  
 If this setting is specified a file is written every five seconds containing the process ID and current CPU metrics of the openhatd process. It can be used to monitor the correct operation of openhatd and is most useful with service management systems like e. g. upstart.
 
@@ -147,21 +147,21 @@ Example:
 
 	HeartbeatFile = /var/tmp/openhatd-heartbeat.txt
 
-### `TargetFPS` ("frames per second")
+### TargetFPS ("frames per second")
 
 This optional setting specifies the maximum number of doWork loop iterations openhatd should perform per second. The default is 20 which yields a resolution of 50 milliseconds; enough for most processes. Increasing this number also increases CPU load and energy use. Change this setting only if you have very good reasons to do so.
 
 The regulation mechanism is quite slow so it may take some time to reach the intended FPS with some degree of accuracy. Note that during an active OPDI connection there is no regulation taking place to increase responsiveness. This also means that during this time the process consumes 100% CPU time.
 
-###  `MessageTimeout`
+###  `MessageTimeout
 
 This setting (in milliseconds) specifies the timeout for OPDI messages until the connection is assumed to be lost. The default is 10000 (10 seconds). Normally a connected master will send at least a ping message every five seconds to keep the connection alive. The maximum value for this setting is 65535.
 
-### `IdleTimeout`
+### IdleTimeout
 
 This setting (in milliseconds) specifies the time a connected OPDI master may be idle until the slave disconnects. The default is 180000 (180 seconds). The idle timeout is reset by user interactions only. Automatic refreshes do not cause the timer to be reset.
 
-### `DeviceInfo`
+### DeviceInfo
 
 The device info is a [configuration string](#configurationStringFormat) that is sent to a GUI when connecting. How this string is interpreted depends on the GUI. Example:
 
@@ -169,13 +169,13 @@ The device info is a [configuration string](#configurationStringFormat) that is 
 
 This device info string tells a GUI that the port group to start out with is the DialPorts group.
 
-### `AllowHidden`
+### AllowHidden
 
 Ports can be hidden from GUIs if they are used for internal purposes only. If you want to find out more about the operation of hidden ports during a test you can globally disable port hiding by setting this value to false. You do not need to change the `Hidden` settings of all ports individually:
 
 	AllowHidden = false
 
-### `SwitchToUser`
+### SwitchToUser
 
 Operating systems with some decent sense of security will require root privileges to access certain protected resources, like memory-mapped GPIO, certain TCP port ranges and such. It is therefore necessary to at least start openhatd as root. After the preparation phase (and after all necessary resources have been allocated) it is unsafe to keep running as root user, though. To provide some protection against remote exploits you can specify the name of a user with lower privileges that openhatd will switch to before entering the running phase.
 
@@ -183,7 +183,7 @@ It is highly recommended to use this setting for production systems. On Linux sy
 
 	SwitchToUser = openhat 
 
-### `Encryption`
+### Encryption
 
 OPDI-based connections can optionally use an encryption method. This is especially useful if authentication is required to avoid transferring user name and password as clear text. Currently the only supported encryption method is AES with a 16 character key. Configure it like this:
 
@@ -195,7 +195,7 @@ OPDI-based connections can optionally use an encryption method. This is especial
 	Type = AES
 	Key = 0123456789012345
 
-### `Authentication`
+### Authentication
 
 OPDI-based connections can optionally require credentials (user name and password). They can be configured as follows:
 
@@ -214,7 +214,7 @@ Note that the OPDI protocol specifies a hard-coded interval of one minute after 
 
 This section is used to define OPDI connection settings. You need to at least specify the transport method.
 
-### `Transport`
+### Transport
 
 Required. Currently, only `TCP` is supported.
 
@@ -241,38 +241,37 @@ The convention for naming ports is upper camel case, for example:
 but not:
 
 	1LittlePort
-	EnergyCostIn$
+	energy_cost_in_$
 	Fly^High
 
 It is also recommended to keep port IDs as short as possible to avoid running into the hard-coded OPDI limits.
 
 The following settings apply to all ports. Individual port implementations, however, may choose to deal with these settings differently, or not respect them at all. Consult their documentation for more details.
 
-
-### `Hidden`
+### Hidden
 
 Setting `Hidden = true` will hide the port from GUIs unless the setting `General.AllowHidden` is set to `false`.
 Use it for internal ports that you don't want the user to see.
 
-### `Readonly`
+### Readonly
 
 Setting `Readonly = true` will prevent a port's value to be changed by the user. It is still possible for the value to be changed by internal functions, though.
 
-### `Persistent`
+### Persistent
 
 If the setting `General.PersistentConfig` is defined to be the name of a valid writable file stting `Persistent = true` enables a port to write its state to this file whenever it is changed. When reading the initial configuration the port will also take its state from this file rather than the configuration file.
 
 How ports persist their state depends on their implementations. Port states are also persisted on shutdown before the openhatd process exits.
 
-### `Label`
+### Label
 
 This setting defines the port's label on a GUI. It defaults to the port ID (which is the port's node name) if it is not specified.
 
-### `DirCaps`
+### DirCaps
 
 The "directional capabilities" of a port. May be one of `Input`, `Output` or `Bidi`. When a port is bidirectional its direction can be changed from the GUI. Is hardly used in openhatd because port directions are usually fixed within an automation model.
 
-### `RefreshMode`
+### RefreshMode
 
 The `RefreshMode` decides whether and when GUIs should be updated when values change. Refresh messages are sent to connected GUIs on a per-port basis. The GUIs then query the current state of the affected port.
 
@@ -280,15 +279,15 @@ The refresh mode can be `Off`, `Auto`, or `Periodic`. If it is off, no refresh m
 
 To avoid overloading GUIs with too many refresh messages they are sent once a second at maximum.
  
-### `RefreshTime`
+### RefreshTime
 
 If the `RefreshMode` setting is `Periodic`, this required setting specifies the refresh interval in milliseconds.
 
-### `Unit` 
+### Unit
 
 The unit specification tells GUIs how the port can be displayed. See [Unit Specifications](concepts.md#unitSpecifications) for more details.
 
-### `Tags` <a name="tags"></a>
+### Tags <a name="tags"></a>
 
 Port tags are a list of tag names separated by space. Tags can be used to select sets of ports using [port list specifications](ports.md#port_lists). Other than that, tags have no internal purpose, and they are not communicated to GUIs.
 

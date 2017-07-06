@@ -16,7 +16,7 @@ Basically, ports are of five different types:
 
 ![](images/digital_port.png)
 
-The Digital port is the most elementary port type. A Digital port has a **Mode** and a **Line** state. Modes can be **Input** and **Output**, and the line can be either **Low** or **High**. Mode and Line default to Input and Low.
+The Digital port is the most elementary port type. A Digital port has a **Mode** and a **Line** state. Modes can be **Input** and **Output**, and the line can be either **Low** or **High**. Mode and Line default to Input and Low. A Digital port in its most simple form models a boolean variable with states **true** and **false**.
 
 [More information about Digital ports](ports/basic_ports.md#digital_port)
 
@@ -41,7 +41,7 @@ The Dial port is the most versatile and flexible port. It represents a 64 bit si
 
 ![](images/select_port.png)
 
-The Select port represents a set of distinct **labeled options**. The currently selected option number is referred to as **Position**, starting with 0. Its most useful application is to present the user with a choice; however, the Select port can also have internal uses. The most important difference to the Digital port is that the Select port can represent things that do not necessarily have a known state. Take, for example, a radio controlled power socket. The radio control is one-way only in most cases, so there is no way to know whether the power socket is actually on or off; its state is essentially unknown. Such a device can not be modeled with a Digital port as a Digital port must have a known state. It can, however, be conveniently modeled using a Select port with three options: Unknown, Off, and On. If the user selects Off or On the command is sent to the socket via radio, but the Select port's state will not reflect the user's choice but instead remain Unknown.
+The Select port represents a set of distinct **labeled options**. The currently selected option number is referred to as **Position**, starting with 0. Its most useful application is to present the user with a choice; however, the Select port can also have internal uses. The most important difference to the Digital port is that the Select port can represent things that do not necessarily have a known state. Take, for example, a radio controlled power socket. The radio control is one-way only in most cases, so there is no way to know whether the power socket is actually on or off; its state is essentially unknown. Such a device can not be modeled with a Digital port as a Digital port is defined to always have a known state. It can, however, be conveniently modeled using a Select port with three options: Unknown, Off, and On. If the user selects Off or On the command is sent to the socket via radio, but the Select port's state will not reflect the user's choice but instead remain Unknown.
 
 A Select port supports up to 65535 different labels (or states), but for practical purposes it is recommended to keep this number as low as possible.
 
@@ -61,9 +61,9 @@ openhatd will listen to operating system signals to determine when it is about t
 
 ## Time in openhatd <a name="time"></a>
 
-openhatd is not a real time system. For operations that must be regularly timed (such as periodic refreshes of port state, timer actions, pulses etc.) the most finely grained unit is the millisecond. Some settings do have to be specified in milliseconds, others in seconds (depending on what makes more sense). However, there is no guarantee that a specified duration in openhatd is exact, but it is guaranteed not to be shorter.
+openhatd is **not** a real time system. For operations that must be regularly timed (such as periodic refreshes of port state, timer actions, pulses etc.) the most finely grained unit is the millisecond. Some settings do have to be specified in milliseconds, others in seconds (depending on what makes more sense). However, there is no guarantee that a specified duration in openhatd is exact, but it is guaranteed not to be shorter than specified.
 
-Measuring time is platform dependent. On Windows the time resolution may be reduced to 10-16 milliseconds. On Linux the granularity is usually better.
+Measuring time is platform- and OS-dependent. On Windows the time resolution may be reduced to 10-16 milliseconds. On Linux the granularity is usually better.
 
 Depending on the number of ports and how they are configured an iteration of the doWork loop requires a certain amount of time to process. The length of the doWork iterations determines the response delay in which ports can act; for example, if you specify a Pulse port with a duration of 100 milliseconds while a doWork iteration already requires 200 milliseconds to run, the Pulse port will not be able to keep up its 100 milliseconds duration. Instead, it will run with a lower time resolution which means that the pulses will be longer than specified.
 

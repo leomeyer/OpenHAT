@@ -50,6 +50,8 @@ Port::Port(const char* id, const char* type) {
 	this->lastRefreshTime = 0;
 	this->orderID = -1;
 	this->persistent = false;
+	this->workDelay = 0;
+	this->lastWorkTime = 0;
 	this->error = Error::VALUE_OK;
 	this->logVerbosity = LogVerbosity::UNKNOWN;
 
@@ -169,6 +171,14 @@ void Port::setPersistent(bool persistent) {
 
 bool Port::isPersistent(void) const {
 	return this->persistent;
+}
+
+void Port::setWorkDelay(uint16_t workDelay) {
+	this->workDelay = workDelay;
+}
+
+uint16_t Port::getWorkDelay(void) const {
+	return this->workDelay;
 }
 
 void Port::setLabel(const char* label) {
@@ -455,6 +465,8 @@ void Port::testValue(const std::string & property, const std::string & expectedV
 		return this->compareProperty(property, expectedValue, this->to_string(this->periodicRefreshTime));
 	if (property == "Persistent")
 		return this->compareProperty(property, expectedValue, this->persistent);
+	if (property == "WorkDelay")
+		return this->compareProperty(property, expectedValue, this->to_string(this->workDelay));
 	if (property == "OrderID")
 		return this->compareProperty(property, expectedValue, this->to_string(this->orderID));
 	if (property == "Tags")

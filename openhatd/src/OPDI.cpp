@@ -326,9 +326,13 @@ uint8_t OPDI::waiting(uint8_t canSend) {
 	auto it = this->ports.begin();
 	auto ite = this->ports.end();
 	while (it != ite) {
-		uint8_t result = (*it)->doWork(canSend);
-		if (result != OPDI_STATUS_OK)
-			return result;
+		// if the port specifies a workDelay, check whether it has been reached
+		if (((*it)->workDelay == 0) || (opdi_get_time_ms() - (*it)->lastWorkTime > (*it)->workDelay)) {
+			(*it)->lastWorkTime = opdi_get_time_ms();
+			uint8_t result = (*it)->doWork(canSend);
+			if (result != OPDI_STATUS_OK)
+				return result;
+		}
 		++it;
 	}
 	return OPDI_STATUS_OK;

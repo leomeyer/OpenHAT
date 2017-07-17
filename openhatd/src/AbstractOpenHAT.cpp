@@ -768,6 +768,8 @@ void AbstractOpenHAT::configurePort(ConfigurationView* portConfig, opdi::Port* p
 	// ports can be persistent
 	port->setPersistent(portConfig->getBool("Persistent", port->isPersistent()));
 
+	port->setWorkDelay(portConfig->getUInt("WorkDelay", 0));
+
 	std::string portLabel = this->getConfigString(portConfig, port->ID(), "Label", port->getLabel(), false);
 	port->setLabel(portLabel.c_str());
 

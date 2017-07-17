@@ -153,6 +153,16 @@ protected:
 	/// 
 	bool persistent;
 
+	/// If this value is set to be greater than 0 it specifies the minimum delay between two
+	/// calls of the doWork method in milliseconds. This gives configurations the chance for
+	/// performance improvements with ports that do a large amount of work that does not
+	/// require to run at each iteration of the doWork loop.
+	uint16_t workDelay;
+
+	/// The last time the doWork method was called on this port. Is set by the OPDI class and
+	/// used to implement the workDelay mechanism.
+	uint64_t lastWorkTime;
+
 	/// Utility function for string conversion. Can be called directly for most data types
 	/// except char which requires a conversion to int first, such as to_string((int)aChar).
 	template <class T> std::string to_string(const T& t) const;
@@ -416,6 +426,15 @@ public:
 	/// Returns the persistent flag of the port.
 	///
 	bool isPersistent(void) const;
+
+	/// Sets the workDelay value of this port.
+	/// If this value is greater than 0 it delays the interval between two invocations
+	/// of the doWork method by the specified number of milliseconds.
+	void setWorkDelay(uint16_t workDelay);
+
+	/// Returns the workDelay value of this port.
+	///
+	uint16_t getWorkDelay(void) const;
 
 	/// Sets the label of the port.
 	///

@@ -68,7 +68,7 @@ An optional integer value used to scale up incoming values. The default is 1.
 ### MinDelta
 The optional minimum difference of the new and the last value that is to be accepted (if applicable). For counters that can only increase this value should be set to 0. This means that a decreasing value will not be accepted but increase the internal error counter. The default is a very low negative number that causes all values to be accepted.
 
-### MinDelta
+### MaxDelta
 The optional maximum difference of the new and the last value that is to be accepted (if applicable). For meters  (power or electricity etc.) this value should be set to the maximum meter reading. This means that an implausible value will not be accepted but increase the internal error counter. The default is a very high positive number that causes all values to be accepted.
 
 ### AllowedErrors

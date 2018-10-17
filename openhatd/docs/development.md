@@ -36,11 +36,11 @@ You have to copy the content of the `opdi_core/code/c/libraries/POCO_patches` fo
 ### Building on Linux
 On Linux, you need to install the prerequisites for the documentation first (see below: Building the documentation).
 
-To build openhatd, go to the folder `src/openhatd/openhatd` and issue
+To build openhatd, go to the folder `openhatd/src` and issue
 
 	$ make
 
-First, plugins will be built. This will also create a current release tarball. To run a number of tests, issue
+First, plugins will be built, then the main program. This will also create a current release tarball. To run a number of tests, issue
 
 	$ make tests
 
@@ -53,7 +53,7 @@ To setup the armhf cross-compiling environment (assuming a 64 bit machine), go t
 	git clone https://github.com/raspberrypi/tools.git --depth=1
 	export PATH=$(pwd)/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin:$PATH
 
-From the OpenHAT directory, do:
+From the directory `opdi_core/code/c/libraries/POCO`, do:
 
 	./build_poco_rpi.sh
 
@@ -68,7 +68,7 @@ Building openhatd for 32 bit Linux required additional packages:
 
 	sudo apt-get install gcc-4.9-multilib g++-4.9-multilib linux-libc-dev:i386 lib32stdc++6
 
-From the OpenHAT directory, do:
+From the directory `opdi_core/code/c/libraries/POCO`, do:
 
 	./build_poco_i386.sh
 
@@ -79,7 +79,7 @@ To build openhatd for i386, go to `openhatd/src` and issue:
 	make -f makefile-i386
 
 ### Building on Windows
-Open the Visual Studio solution file `src/openhatd/openhatd.sln`. Build the solution. To run the program from within Visual Studio, go to the openhatd project's properties and enter `-c hello-world.ini` as command line parameter for debugging. Press F5 (debug) or Ctrl+F5 to run the program.
+Open the Visual Studio solution file `openhatd/openhatd.sln`. Build the solution. To run the program from within Visual Studio, go to the openhatd project's properties and enter `-c hello-world.ini` as command line parameter for debugging. Press F5 (debug) or Ctrl+F5 to run the program.
 
 ## Building the documentation
 Building the documentation requires Python, the Python package installer `pip` and Doxygen with the `graphviz `package.

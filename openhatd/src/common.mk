@@ -153,7 +153,9 @@ docs:
 	sed "s/__VERSION__/$(VERSION)/g;s/__TIMESTAMP__/$(TIMESTAMP)/g" < ../Doxyfile.orig > ../Doxyfile
 	mv -f ../mkdocs.yml ../mkdocs.yml.orig
 	sed "s/__VERSION__/$(VERSION)/g;s/__TIMESTAMP__/$(TIMESTAMP)/g" < ../mkdocs.yml.orig > ../mkdocs.yml
-	cd .. && doxygen Doxyfile && mkdocs build
+	cd ..
+	doxygen Doxyfile
+	mkdocs build
 	rm -f ../Doxyfile
 	mv -f ../Doxyfile.orig ../Doxyfile
 	rm -f ../mkdocs.yml

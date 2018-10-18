@@ -7,7 +7,7 @@ site_dir: openhatd-docs-0.1.0
 theme: readthedocs
 markdown_extensions:
     - markdown_include.include
-nav:
+pages:
     - Introduction to openhatd: index.md
     - Download and installation: download.md
     - Documentation:

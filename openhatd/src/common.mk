@@ -149,19 +149,21 @@ plugins:
 	$(MAKE) -C ../plugins -f $(MAKEFILE)
 
 docs:
+ifeq (,$(wildcard openhatd-docs-$(VERSION).tar.gz))
+	echo Documentation already exists, skipping build
+else
 	mv -f ../Doxyfile ../Doxyfile.orig
 	sed "s/__VERSION__/$(VERSION)/g;s/__TIMESTAMP__/$(TIMESTAMP)/g" < ../Doxyfile.orig > ../Doxyfile
 	mv -f ../mkdocs.yml ../mkdocs.yml.orig
 	sed "s/__VERSION__/$(VERSION)/g;s/__TIMESTAMP__/$(TIMESTAMP)/g" < ../mkdocs.yml.orig > ../mkdocs.yml
-	cd ..
-	doxygen Doxyfile
-	mkdocs build
+	cd .. && doxygen Doxyfile && mkdocs build
 	rm -f ../Doxyfile
 	mv -f ../Doxyfile.orig ../Doxyfile
 	rm -f ../mkdocs.yml
 	mv -f ../mkdocs.yml.orig ../mkdocs.yml
 	tar czf openhatd-docs-$(VERSION).tar.gz ../openhatd-docs-$(VERSION)
 	md5sum openhatd-docs-$(VERSION).tar.gz > openhatd-docs-$(VERSION).tar.gz.md5
+endif
 
 release: docs all
 	@echo Preparing tar folder...

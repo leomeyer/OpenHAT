@@ -603,6 +603,7 @@ void WebServerPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::
 
 	const char* errorString[256];
 	struct mg_bind_opts opts;
+	opts.iface = nullptr;
 	opts.user_data = nullptr;
 	opts.flags = 0;
 	opts.error_string = errorString;

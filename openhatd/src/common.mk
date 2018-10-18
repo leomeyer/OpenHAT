@@ -149,7 +149,7 @@ plugins:
 	$(MAKE) -C ../plugins -f $(MAKEFILE)
 
 docs:
-ifeq (,$(wildcard ./openhatd-docs-$(VERSION).tar.gz))
+ifneq (,$(wildcard ./openhatd-docs-$(VERSION).tar.gz))
 	@echo Documentation already exists, skipping build.
 else
 	mv -f ../Doxyfile ../Doxyfile.orig
@@ -165,7 +165,7 @@ else
 	md5sum openhatd-docs-$(VERSION).tar.gz > openhatd-docs-$(VERSION).tar.gz.md5
 endif
 
-release: docs all
+release: docs plugins $(TARGET)
 	@echo Preparing tar folder...
 	mkdir -p $(TARFOLDER)
 	mkdir -p $(TARFOLDER)/bin

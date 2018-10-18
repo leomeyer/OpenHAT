@@ -9,9 +9,9 @@ Different operating systems provide different advantages when developing or comp
 - Linux: Good toolchains, but debugger support is somewhat basic. Good for tests, static analysis, and cross-compiling, or trying different compilers. Linux specific development, obviously, must be done here.
 - Raspberry Pi: Suitable for production use, but less for development. OK for developing specific plugins which compile reasonably well on the Pi.
 
-openhatd uses continuous integration platforms [Travis CI](https://travis-ci.org) for Linux releases and [AppVeyor](https://appveyor.com) for Windows releases. Windows and Raspberry Pi binaries are standalone, statically linked. Linux binaries cannot be statically linked due to problems with glibc; therefore, they are dynamically linked and releases contain necessary libraries.
+Windows and Raspberry Pi binaries are standalone, statically linked. Linux binaries cannot be statically linked due to problems with glibc; therefore, they are dynamically linked and release builds contain the necessary libraries.
 
-When pushing commits or merging pull requests continuous integration will automatically build the project, run tests, build documentation and upload everything to the openhat.org server.
+openhatd uses continuous integration platforms [Travis CI](https://travis-ci.org) for Linux releases and [AppVeyor](https://appveyor.com) for Windows releases. When pushing commits or merging pull requests continuous integration will automatically build the project, run tests, build documentation and upload everything to the openhat.org server.
 
 Releases do not contain debug information. For debugging on Windows, set the configuration to "Debug". On Linux, the environment variable `DEBUG` must be set to 1 when invoking `make`, such as
 
@@ -29,14 +29,14 @@ To manually download the submodules use:
 
 	$ git submodule update --init --recursive
 
-The submodule `opdi_core` in turn includes the submodule `POCO` which you have to build first. For instructions please see the file [opdi\_core/code/c/libraries/POCO\_patches/readme.txt](https://github.com/leomeyer/opdi_core/blob/master/code/c/libraries/POCO_patches/readme.txt).
+The submodule `opdi_core` in turn includes the submodule `POCO` which you have to build first. For instructions please see the file [`opdi\_core/code/c/libraries/POCO\_patches/readme.txt`](https://github.com/leomeyer/opdi_core/blob/master/code/c/libraries/POCO_patches/readme.txt).
 
-You have to copy the content of the `opdi_core/code/c/libraries/POCO_patches` folder over to the `opdi_core/code/c/libraries/POCO` folder.  
+You have to copy the content of the `opdi_core/code/c/libraries/POCO_patches` folder over to the `opdi_core/code/c/libraries/POCO` folder before using one of the provided scripts (`build_poco*.sh`) to build the libraries.  
 
 ### Building on Linux
 On Linux, you need to install the prerequisites for the documentation first (see below: Building the documentation).
 
-To build openhatd, go to the folder `openhatd/src` and issue
+To build openhatd, go to the folder `openhatd` and issue
 
 	$ make
 
@@ -66,7 +66,7 @@ To build openhatd for armhf, go to `openhatd/src` and issue:
 #### i386
 Building openhatd for 32 bit Linux required additional packages:
 
-	sudo apt-get install gcc-4.9-multilib g++-4.9-multilib linux-libc-dev:i386 lib32stdc++6
+	sudo apt-get install gcc-multilib g++-multilib linux-libc-dev:i386
 
 From the directory `opdi_core/code/c/libraries/POCO`, do:
 
@@ -88,8 +88,9 @@ On Linux:
 
 	$ sudo apt-get install python python-pip doxygen graphviz
 
-Additionally required Python modules are `mkdocs` and `markdown_include`:
+Additionally required Python modules are `setuptools`, `mkdocs` and `markdown_include`:
 
+	$ sudo pip install setuptools 
 	$ sudo pip install mkdocs 
 	$ sudo pip install markdown_include
 

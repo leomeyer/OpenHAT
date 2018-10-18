@@ -4,6 +4,7 @@
 [submodule "opdi_core"]
 	path = opdi_core
 	url = https://github.com/leomeyer/opdi_core.git
+	branch = master
 	ignore = dirty
 [submodule "libraries/Mongoose"]
 	path = libraries/Mongoose

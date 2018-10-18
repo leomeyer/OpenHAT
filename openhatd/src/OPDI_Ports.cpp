@@ -1271,4 +1271,150 @@ StreamingPort::StreamingPort(const char* id) :
 StreamingPort::~StreamingPort() {
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// ValueResolver
+///////////////////////////////////////////////////////////////////////////////
+
+template<typename T> ValueResolver<T>::ValueResolver(OPDI* opdi) {
+	this->opdi = opdi;
+	this->fixedValue = 0;
+	this->isFixed = false;
+	this->useScaleValue = false;
+	this->scaleValue = 0;
+	this->useErrorDefault = false;
+	this->errorDefault = 0;
+}
+
+template<typename T> ValueResolver<T>::ValueResolver(OPDI* opdi, T initialValue) : ValueResolver(opdi) {
+	this->isFixed = true;
+	this->fixedValue = initialValue;
+}
+
+template<typename T> void ValueResolver<T>::initialize(Port* origin, const std::string& paramName, const std::string& value, bool allowErrorDefault) {
+	this->origin = origin;
+	this->useScaleValue = false;
+	this->useErrorDefault = false;
+	this->port = nullptr;
+
+	this->opdi->logDebug(origin->ID() + ": Parsing ValueResolver expression of parameter '" + paramName + "': " + value);
+	// try to convert the value to a double
+	double d;
+	if (Poco::NumberParser::tryParseFloat(value, d)) {
+		this->fixedValue = (T)d;
+		this->isFixed = true;
+		this->opdi->logDebug(origin->ID() + ": ValueResolver expression resolved to fixed value: " + this->opdi->to_string(value));
+	}
+	else {
+		this->isFixed = false;
+		Poco::RegularExpression::MatchVec matches;
+		std::string portName;
+		std::string scaleStr;
+		std::string defaultStr;
+		// try to match full syntax
+		Poco::RegularExpression reFull("(.*)\\((.*)\\)\\/(.*)");
+		if (reFull.match(value, 0, matches) == 4) {
+			if (!allowErrorDefault)
+				throw Poco::ApplicationException(origin->ID() + ": Parameter " + paramName + ": Specifying an error default value is not allowed: " + value);
+			portName = value.substr(matches[1].offset, matches[1].length);
+			scaleStr = value.substr(matches[2].offset, matches[2].length);
+			defaultStr = value.substr(matches[3].offset, matches[3].length);
+		}
+		else {
+			// try to match default value syntax
+			Poco::RegularExpression reDefault("(.*)\\/(.*)");
+			if (reDefault.match(value, 0, matches) == 3) {
+				if (!allowErrorDefault)
+					throw Poco::ApplicationException(origin->ID() + ": Parameter " + paramName + ": Specifying an error default value is not allowed: " + value);
+				portName = value.substr(matches[1].offset, matches[1].length);
+				defaultStr = value.substr(matches[2].offset, matches[2].length);
+			}
+			else {
+				// try to match scale value syntax
+				Poco::RegularExpression reScale("(.*)\\((.*)\\)");
+				if (reScale.match(value, 0, matches) == 3) {
+					portName = value.substr(matches[1].offset, matches[1].length);
+					scaleStr = value.substr(matches[2].offset, matches[2].length);
+				}
+				else {
+					// could not match a pattern - use value as port name
+					portName = value;
+				}
+			}
+		}
+		// parse values if specified
+		if (scaleStr != "") {
+			if (Poco::NumberParser::tryParseFloat(scaleStr, this->scaleValue)) {
+				this->useScaleValue = true;
+			}
+			else
+				throw Poco::ApplicationException(origin->ID() + ": Parameter " + paramName + ": Invalid scale value specified; must be numeric: " + scaleStr);
+		}
+		if (defaultStr != "") {
+			double e;
+			if (Poco::NumberParser::tryParseFloat(defaultStr, e)) {
+				this->errorDefault = (T)e;
+				this->useErrorDefault = true;
+			}
+			else
+				throw Poco::ApplicationException(origin->ID() + ": Parameter " + paramName + ": Invalid error default value specified; must be numeric: " + defaultStr);
+		}
+
+		this->portID = portName;
+
+		this->opdi->logDebug(origin->ID() + ": ValueResolver expression resolved to port ID: " + this->portID
+			+ (this->useScaleValue ? ", scale by " + this->opdi->to_string(this->scaleValue) : "")
+			+ (this->useErrorDefault ? ", error default is " + this->opdi->to_string(this->errorDefault) : ""));
+	}
+}
+
+template<typename T> bool ValueResolver<T>::validate(T min, T max) const {
+	// no fixed value? assume it's valid
+	if (!this->isFixed)
+		return true;
+
+	return ((this->fixedValue >= min) && (this->fixedValue <= max));
+}
+
+template<typename T> T ValueResolver<T>::value() const {
+	if (isFixed)
+		return fixedValue;
+	else {
+		// port not yet resolved?
+		if (this->port == nullptr) {
+			if (this->portID == "")
+				throw Poco::ApplicationException(this->origin->ID() + ": Parameter " + paramName + ": ValueResolver not initialized (programming error)");
+			// try to resolve the port
+			this->port = this->opdi->findPort(this->origin->ID(), this->paramName, this->portID, true);
+		}
+		// resolve port value to a double
+		double result = 0;
+
+		try {
+			result = this->opdi->getPortValue(this->port);
+		}
+		catch (Poco::Exception &pe) {
+			this->opdi->logExtreme(this->origin->ID() + ": Unable to get the value of the port " + port->ID() + ": " + pe.message());
+			if (this->useErrorDefault) {
+				return this->errorDefault;
+			}
+			else
+				// propagate exception
+				throw Poco::ApplicationException(this->origin->ID() + ": Unable to get the value of the port " + port->ID() + ": " + pe.message());
+		}
+
+		// scale?
+		if (this->useScaleValue) {
+			result *= this->scaleValue;
+		}
+
+		return (T)result;
+	}
+}
+
+// ensure that ValueResolvers are present at link time
+template class ValueResolver<int>;
+template class ValueResolver<long>;
+template class ValueResolver<long long>;    // necessary for 32 bit build
+template class ValueResolver<double>;
+
 }		// namespace opdi

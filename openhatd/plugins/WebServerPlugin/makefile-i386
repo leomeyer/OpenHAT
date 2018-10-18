@@ -42,7 +42,7 @@ POCOINCPATH = $(OPDI_CORE_PATH)/code/c/libraries/POCO/Util/include $(OPDI_CORE_P
 POCOLIBPATH = $(OPDI_CORE_PATH)/code/c/libraries/POCO/lib/Linux/i386
 
 # POCO libraries, statically linked (32 bit cross compile bug!)
-POCOLIBS = $(POCOLIBPATH)/libPocoUtil.a $(POCOLIBPATH)/libPocoNet.a $(POCOLIBPATH)/libPocoXML.a $(POCOLIBPATH)/libPocoFoundation.a $(POCOLIBPATH)/libPocoJSON.a
+POCOLIBS = $(POCOLIBPATH)/libPocoUtil.a $(POCOLIBPATH)/libPocoNet.a $(POCOLIBPATH)/libPocoXML.a $(POCOLIBPATH)/libPocoJSON.a $(POCOLIBPATH)/libPocoFoundation.a
 
 # POCO libraries
 # POCO libraries for this plugin must be linked dynamically.

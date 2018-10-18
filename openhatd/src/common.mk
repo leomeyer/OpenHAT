@@ -211,4 +211,4 @@ clean:
 	rm -f $(TARGET)
 	rm -rf $(TARFOLDER)
 	rm -f $(TARFOLDER).tar.gz*
-
+	rm -f openhatd-docs-*

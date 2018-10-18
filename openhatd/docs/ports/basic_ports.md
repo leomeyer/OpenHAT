@@ -78,7 +78,7 @@ An optional value of either `Quiet`, `Normal`, `Verbose`, `Debug` or `Extreme`. 
 
 ## Digital Port <a name="digital_port"></a>
 
-![](images/digital_port.png)
+![](../images/digital_port.png)
 
 The Digital port is the most elementary port type. A Digital port has a **Mode** and a **Line** state. Modes can be **Input** and **Output**, and the line can be either **Low** or **High**. Mode and Line default to Input and Low. A Digital port roughly corresponds with the concept of a Boolean variable.
 
@@ -102,7 +102,7 @@ An optional value of either `Low` or `High`. The default for a basic Digital por
 
 ### Analog Port <a name="analog_port"></a>
 
-![](images/analog_port.png)
+![](../images/analog_port.png)
 
 The Analog port is modeled after the the properties of an A/D or D/A port of a microcontroller. Its value ranges from 0 to 2^n - 1, with n being a value between 8 and 12 inclusively.
 The Analog port also has a **Reference** setting (internal/external), and a **Mode** (input/output). The Analog port is less useful in an openhatd automation context because it is modeled so close to the metal. In most cases it is better to use a Dial port instead.
@@ -124,7 +124,7 @@ The initial value of the Analog port. This value must be within the range 0..(2^
 
 ### Dial Port <a name="dial_port"></a>
 
-![](images/dial_port.png)
+![](../images/dial_port.png)
 
 The Dial port is the most versatile and flexible port. It represents a 64 bit signed integer value referred to as **Position**. There's a **Minimum**, **Maximum** and a **Step** setting which limit the possible values of a Dial port to a meaningful range; for example, to represent an ambient temperature in degrees Celsius you could limit the range to -50..50. The defaults are 0, 100 and 1 for Minimum, Maximum and Step.
 
@@ -153,7 +153,7 @@ The positional value of the Dial port.
 
 ### Select Port <a name="select_port"></a>
 
-![](images/select_port.png)
+![](../images/select_port.png)
 
 The Select port represents a set of distinct **labeled options**. The currently selected option number is referred to as **position**, starting with 0. Its most useful application is to present the user with a choice; however, the Select port can also have internal uses. The most important difference to the Digital port is that the Select port can represent things that do not necessarily have a known state. Take, for example, a radio controlled power socket. The radio control is one-way only in most cases, so there is no way to know whether the power socket is actually on or off; its state is essentially unknown. Such a device can not be modeled with a Digital port as a Digital port must have a known state. It can, however, be conveniently modeled using a Select port with three options: Unknown, Off, and On. If the user selects Off or On the command is sent to the socket via radio, but the Select port's state will not reflect the user's choice but instead remain Unknown.
 

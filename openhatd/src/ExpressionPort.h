@@ -11,7 +11,11 @@
 #include "AbstractOpenHAT.h"
 
 // expression evaluation library
+// avoid excessive g++ 7 (and newer) compile warnings
+#pragma GCC diagnostic push 
+#pragma GCC diagnostic ignored "-Wimplicit-fallthrough="
 #include <exprtk.hpp>
+#pragma GCC diagnostic pop
 
 namespace openhat {
 

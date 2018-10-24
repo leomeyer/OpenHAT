@@ -10,8 +10,8 @@ install:
 - cp -r opdi_core/code/c/libraries/POCO_patches/* opdi_core/code/c/libraries/POCO/
 - pushd opdi_core/code/c/libraries/POCO
 #- cat build/config/RaspberryPi
-#- ./build_poco_rpi.sh
-- cat build/config/Linux_i386
+- ./build_poco_rpi.sh
+#- cat build/config/Linux_i386
 - ./build_poco_i386.sh
 - ./build_poco.sh
 - popd

@@ -41,7 +41,7 @@ POCOLIBPATH = $(OPDI_CORE_PATH)/code/c/libraries/POCO/lib/Linux/ARM
 
 # POCO libraries
 #POCOLIBS = -lPocoUtil -lPocoNet -lPocoFoundation 
-POCOLIBS = $(POCOLIBPATH)/libPocoUtil.a $(POCOLIBPATH)/libPocoNet.a $(POCOLIBPATH)/libPocoFoundation.a $(POCOLIBPATH)/libPocoJSON.a
+POCOLIBS = $(POCOLIBPATH)/libPocoUtil.a $(POCOLIBPATH)/libPocoNet.a $(POCOLIBPATH)/libPocoXML.a $(POCOLIBPATH)/libPocoJSON.a $(POCOLIBPATH)/libPocoFoundation.a
 
 # Additional libraries
 LIBS = -lpthread -lrt

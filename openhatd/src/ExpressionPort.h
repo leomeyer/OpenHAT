@@ -12,10 +12,20 @@
 
 // expression evaluation library
 // avoid excessive g++ 7 (and newer) compile warnings
+#ifdef __GNUC__
+#if __GNUC__ >= 7
 #pragma GCC diagnostic push 
 #pragma GCC diagnostic ignored "-Wimplicit-fallthrough="
+#endif
+#endif
+
 #include <exprtk.hpp>
+
+#ifdef __GNUC__
+#if __GNUC__ >= 7
 #pragma GCC diagnostic pop
+#endif
+#endif
 
 namespace openhat {
 

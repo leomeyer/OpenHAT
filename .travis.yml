@@ -8,9 +8,7 @@ install:
 - git clone https://github.com/raspberrypi/tools.git --depth=1
 - export PATH=$(pwd)/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin:$PATH
 - cp -r opdi_core/code/c/libraries/POCO_patches/* opdi_core/code/c/libraries/POCO/
-- echo "POCO version: `cat opdi_core/code/c/libraries/POCO/VERSION`"
 - pushd opdi_core/code/c/libraries/POCO
-- echo -n "POCO version: "
 - cat VERSION
 #- cat build/config/RaspberryPi
 - ./build_poco_rpi.sh

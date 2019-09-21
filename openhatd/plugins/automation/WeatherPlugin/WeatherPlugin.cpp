@@ -261,7 +261,7 @@ public:
 	virtual void setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, openhat::ConfigurationView* nodeConfig, openhat::ConfigurationView* parentConfig, const std::string& driverPath) override;
 };
 
-void WeatherPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, openhat::ConfigurationView* nodeConfig, openhat::ConfigurationView* /*parentConfig*/, const std::string& /*driverPath*/) {
+void WeatherPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, openhat::ConfigurationView* nodeConfig, openhat::ConfigurationView* parentConfig, const std::string& /*driverPath*/) {
 	this->openhat = openhat;
 	this->nodeID = node;
 	this->timeoutSeconds = 10;
@@ -299,7 +299,7 @@ void WeatherPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::st
 	// enumerate keys of the plugin's nodes (in specified order)
 	this->openhat->logVerbose(node + ": Enumerating Weather nodes: " + node + ".Nodes", this->logVerbosity);
 
-	Poco::AutoPtr<openhat::ConfigurationView> nodes = this->openhat->createConfigView(nodeConfig, node + ".Nodes");
+	Poco::AutoPtr<openhat::ConfigurationView> nodes = this->openhat->createConfigView(parentConfig, node + ".Nodes");
 
 	// get ordered list of ports
 	openhat::ConfigurationView::Keys portKeys;

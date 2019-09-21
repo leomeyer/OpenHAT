@@ -14,7 +14,7 @@
 	url = https://github.com/ArashPartow/exprtk.git
 [submodule "libraries/rpi/wiringPi"]
 	path = libraries/rpi/wiringPi
-	url = git://git.drogon.net/wiringPi
+	url = https://github.com/WiringPi/WiringPi
 [submodule "libraries/rpi/gertboard"]
 	path = libraries/rpi/gertboard
 	url = https://github.com/ChrisCummins/gertboard_sw.git

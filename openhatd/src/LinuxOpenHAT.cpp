@@ -21,6 +21,7 @@
 
 #include "Poco/Exception.h"
 #include "Poco/NumberParser.h"
+#include "Poco/File.h"
 
 #include "opdi_platformfuncs.h"
 #include "opdi_configspecs.h"
@@ -240,7 +241,8 @@ void LinuxOpenHAT::switchToUser(const std::string& newUser) {
 	
 	// if there is a persistent file, it needs to be chown'ed to the new user
 	if (!this->persistentConfigFile.empty()) {
-		if (chown(this->persistentConfigFile.c_str(), uid, -1) == -1)
+		Poco::File file(this->persistentConfigFile);
+		if (file.exists() && chown(this->persistentConfigFile.c_str(), uid, -1) == -1)
 			throw_system_error("Unable to change persistent file owner to new user", newUser.c_str());
 	}
 

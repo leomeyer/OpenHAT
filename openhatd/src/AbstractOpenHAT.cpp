@@ -652,7 +652,7 @@ std::string AbstractOpenHAT::resolveRelativePath(ConfigurationView* config, cons
 		Poco::Path absPath(filePath.absolute());
 		// absolute path specified?
 		if (filePath.toString() == absPath.toString()) {
-			this->logWarning("Path specified as relative to CWD, but absolute path given: '" + path + "'");
+//			this->logWarning("Path specified as relative to CWD, but absolute path given: '" + path + "'");
 			return absPath.toString();
 		}
 		return path;

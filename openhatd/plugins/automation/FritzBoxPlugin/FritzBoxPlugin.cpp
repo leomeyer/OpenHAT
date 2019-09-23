@@ -488,7 +488,9 @@ std::string FritzBoxPlugin::httpGet(const std::string& url) {
 		} else
 			this->openhat->logDebug(this->nodeID + ": HTTP GET successful: " + uri.toString(), this->logVerbosity);
 
-		return ss.str().erase(ss.str().find_last_not_of("\n") + 1);
+		std::string result = ss.str().erase(ss.str().find_last_not_of("\n") + 1);
+		this->openhat->logExtreme(this->nodeID + ": HTTP result: " + result, this->logVerbosity);
+		return result;
 	} catch (Poco::Exception &e) {
 		this->errorOccurred(this->nodeID + ": Error during HTTP GET for " + uri.toString() + ": " + this->openhat->getExceptionMessage(e));
 	}
@@ -701,6 +703,7 @@ void FritzBoxPlugin::getSwitchPower(FritzPort* port) {
 
 	// query the FritzBox
 	std::string result = httpGet("/webservices/homeautoswitch.lua?ain=" + powerPort->ain + "&switchcmd=getswitchpower&sid=" + this->sid);
+	
 	// problem?
 	if (result.empty()) {
 		powerPort->setError(opdi::Port::Error::VALUE_NOT_AVAILABLE);

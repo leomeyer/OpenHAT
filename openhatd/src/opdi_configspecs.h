@@ -25,7 +25,7 @@ extern "C" {
 
 // Defines the maximum message length this config can receive.
 // Consumes this amount of bytes in RAM.
-#define OPDI_MESSAGE_BUFFER_SIZE		32786
+#define OPDI_MESSAGE_BUFFER_SIZE		65535
 
 // Defines the maximum message string length this config can receive.
 // Consumes this amount of bytes in RAM.
@@ -38,7 +38,7 @@ extern "C" {
 #define OPDI_MAX_MESSAGE_PARTS	16
 
 // maximum possible ports on this device
-#define OPDI_MAX_DEVICE_PORTS	256
+#define OPDI_MAX_DEVICE_PORTS	4096
 
 // define to conserve RAM and ROM
 //#define OPDI_NO_DIGITAL_PORTS
@@ -80,12 +80,12 @@ extern "C" {
 #define OPDI_HAS_MESSAGE_HANDLED
 
 // keep these numbers as low as possible to conserve memory
-#define OPDI_MAX_PORTIDLENGTH		32
-#define OPDI_MAX_PORTNAMELENGTH		32
-#define OPDI_MAX_SLAVENAMELENGTH	32
+#define OPDI_MAX_PORTIDLENGTH		64
+#define OPDI_MAX_PORTNAMELENGTH		64
+#define OPDI_MAX_SLAVENAMELENGTH	64
 #define OPDI_MAX_ENCODINGNAMELENGTH	32
 
-#define OPDI_MAX_PORT_INFO_MESSAGE	256
+#define OPDI_MAX_PORT_INFO_MESSAGE	1024
 
 // To be able to use the ExpressionPort define this macro. The ../../../libraries/ExprTk folder must contain the
 // file exprtk.hpp.

@@ -1091,7 +1091,7 @@ void SceneSelectPort::prepare() {
 
 	// check files
 	auto fi = this->fileList.begin();
-	auto fie = this->fileList.begin();
+	auto fie = this->fileList.end();
 	while (fi != fie) {
 		std::string sceneFile = *fi;
 

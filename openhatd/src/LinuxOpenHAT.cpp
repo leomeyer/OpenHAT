@@ -97,7 +97,7 @@ static uint8_t io_receive(void* info, uint8_t* byte, uint16_t timeout, uint8_t c
 			// connection closed?
 			if (result == 0)
 				// dirty disconnect
-				return OPDI_NETWORK_ERROR;
+				return OPDI_DISCONNECTED;
 			else
 				// a byte has been received
 //				printf("%i", c);
@@ -411,7 +411,7 @@ int LinuxOpenHAT::setupTCP(const std::string& /*interface_*/, int port) {
 
 				close(newsockfd);
 
-				if ((err != OPDI_STATUS_OK) && (err != OPDI_DISCONNECTED))
+				if ((err != OPDI_STATUS_OK) && (err != OPDI_DISCONNECTED) && (err != OPDI_NETWORK_ERROR))
 					return err;
 			
 				// shutdown requested?

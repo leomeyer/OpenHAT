@@ -1360,15 +1360,14 @@ uint8_t AbstractOpenHAT::waiting(uint8_t canSend) {
 		result = OPDI::waiting(canSend);
 	} catch (Poco::Exception &pe) {
 		this->logError(std::string("Unhandled exception while housekeeping: ") + this->getExceptionMessage(pe));
-		result = OPDI_DEVICE_ERROR;
+		result = OPDI_STATUS_OK;	// not critical
 	} catch (std::exception &e) {
 		this->logError(std::string("Unhandled exception while housekeeping: ") + e.what());
-		result = OPDI_DEVICE_ERROR;
+		result = OPDI_DEVICE_ERROR;	// critical, exit
 	} catch (...) {
 		this->logError(std::string("Unknown error while housekeeping"));
-		result = OPDI_DEVICE_ERROR;
+		result = OPDI_DEVICE_ERROR;	// critical, exit
 	}
-	// TODO decide: ignore errors or abort?
 
 	if (result != OPDI_STATUS_OK)
 		return result;

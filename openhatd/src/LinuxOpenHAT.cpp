@@ -21,6 +21,7 @@
 
 #include "Poco/Exception.h"
 #include "Poco/NumberParser.h"
+#include "Poco/File.h"
 
 #include "opdi_platformfuncs.h"
 #include "opdi_configspecs.h"
@@ -96,7 +97,7 @@ static uint8_t io_receive(void* info, uint8_t* byte, uint16_t timeout, uint8_t c
 			// connection closed?
 			if (result == 0)
 				// dirty disconnect
-				return OPDI_NETWORK_ERROR;
+				return OPDI_DISCONNECTED;
 			else
 				// a byte has been received
 //				printf("%i", c);
@@ -240,7 +241,8 @@ void LinuxOpenHAT::switchToUser(const std::string& newUser) {
 	
 	// if there is a persistent file, it needs to be chown'ed to the new user
 	if (!this->persistentConfigFile.empty()) {
-		if (chown(this->persistentConfigFile.c_str(), uid, -1) == -1)
+		Poco::File file(this->persistentConfigFile);
+		if (file.exists() && chown(this->persistentConfigFile.c_str(), uid, -1) == -1)
 			throw_system_error("Unable to change persistent file owner to new user", newUser.c_str());
 	}
 
@@ -409,7 +411,7 @@ int LinuxOpenHAT::setupTCP(const std::string& /*interface_*/, int port) {
 
 				close(newsockfd);
 
-				if ((err != OPDI_STATUS_OK) && (err != OPDI_DISCONNECTED))
+				if ((err != OPDI_STATUS_OK) && (err != OPDI_DISCONNECTED) && (err != OPDI_NETWORK_ERROR))
 					return err;
 			
 				// shutdown requested?

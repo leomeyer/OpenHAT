@@ -1427,7 +1427,7 @@ void FilePort::configure(ConfigurationView* config, ConfigurationView* parentCon
 	// read port node, create configuration view and setup the port according to the specified type
 	std::string portNode = openhat->getConfigString(config, this->ID(), "PortNode", "", true);
 	Poco::AutoPtr<ConfigurationView> nodeConfig = this->openhat->createConfigView(parentConfig, portNode);
-	std::string portType = openhat->getConfigString(nodeConfig, this->ID(), "Type", "", true);
+	std::string portType = openhat->getConfigString(nodeConfig, portNode, "Type", "", true);
 	if (portType == "DigitalPort") {
 		this->portType = DIGITAL_PORT;
 		this->valuePort = new opdi::DigitalPort(portNode.c_str(), OPDI_PORTDIRCAP_INPUT, 0);

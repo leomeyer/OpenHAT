@@ -13,8 +13,8 @@ install:
 - pushd opdi_core/code/c/libraries/POCO
 - cat VERSION
 - ./build_poco_rpi.sh
-- ./build_poco_i386.sh
-- ./build_poco.sh
+#- ./build_poco_i386.sh
+#- ./build_poco.sh
 - popd
 - sudo pip install mkdocs
 - sudo pip install markdown-include
@@ -45,9 +45,10 @@ script:
 - export CC=g++
 - export PATH=/opt/cross-pi-gcc/bin:$PATH
 - make -C openhatd/src/ -f makefile-rpicc release
-- make -C openhatd/src/ -f makefile-i386 release CC=$CC
-- make -C openhatd/src/ release CC=$CC
-- make -C openhatd/src/ tests && sshpass -e scp -P $RELEASE_UPLOAD_PORT -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no /home/travis/build/leomeyer/OpenHAT/openhatd/src/*.tar.gz* $RELEASE_UPLOAD_USER@$RELEASE_UPLOAD_HOST:~
+#- make -C openhatd/src/ -f makefile-i386 release CC=$CC
+#- make -C openhatd/src/ release CC=$CC
+#- make -C openhatd/src/ tests && 
+- sshpass -e scp -P $RELEASE_UPLOAD_PORT -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no /home/travis/build/leomeyer/OpenHAT/openhatd/src/*.tar.gz* $RELEASE_UPLOAD_USER@$RELEASE_UPLOAD_HOST:~
 
 notifications:
   email:

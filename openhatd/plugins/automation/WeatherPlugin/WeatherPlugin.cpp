@@ -174,7 +174,7 @@ uint8_t WeatherGaugePort::doWork(uint8_t canSend) {
 	double result = 0;
 	try {
 		result = Poco::NumberParser::parseFloat(value);
-	} catch (Poco::Exception e) {
+	} catch (Poco::Exception& e) {
 		this->logDebug("WeatherGaugePort for element " + this->dataElement + ": Warning: Unable to parse weather data: " + value);
 		// set error, base method handles refresh
 		this->setError(Error::VALUE_NOT_AVAILABLE);

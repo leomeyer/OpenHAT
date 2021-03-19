@@ -8,13 +8,11 @@ language: cpp
 install:
 - wget https://github.com/Pro/raspi-toolchain/releases/latest/download/raspi-toolchain.tar.gz
 - sudo tar xfz raspi-toolchain.tar.gz --strip-components=1 -C /opt
-- export /opt/cross-pi-gcc/bin:$PATH
+- export PATH=/opt/cross-pi-gcc/bin:$PATH
 - cp -r opdi_core/code/c/libraries/POCO_patches/* opdi_core/code/c/libraries/POCO/
 - pushd opdi_core/code/c/libraries/POCO
 - cat VERSION
-#- cat build/config/RaspberryPi
 - ./build_poco_rpi.sh
-#- cat build/config/Linux_i386
 - ./build_poco_i386.sh
 - ./build_poco.sh
 - popd

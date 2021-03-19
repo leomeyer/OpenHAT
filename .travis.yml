@@ -29,6 +29,7 @@ addons:
     - gcc-multilib
     - g++-multilib
     - linux-libc-dev:i386
+    - libssl-dev:i386
     - sshpass
     - python-pip
     - doxygen
@@ -46,7 +47,7 @@ script:
 - make -C openhatd/src/ -f makefile-rpicc release
 - make -C openhatd/src/ -f makefile-i386 release CC=$CC
 - make -C openhatd/src/ release CC=$CC
-- make -C openhatd/src/ tests && sshpass -e scp -P $RELEASE_UPLOAD_PORT -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no /home/travis/build/openhat-org/OpenHAT/openhatd/src/*.tar.gz* $RELEASE_UPLOAD_USER@$RELEASE_UPLOAD_HOST:~
+- make -C openhatd/src/ tests && sshpass -e scp -P $RELEASE_UPLOAD_PORT -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no /home/travis/build/leomeyer/OpenHAT/openhatd/src/*.tar.gz* $RELEASE_UPLOAD_USER@$RELEASE_UPLOAD_HOST:~
 
 notifications:
   email:

@@ -61,7 +61,7 @@ public:
 
 	/// Configures the port.
 	///
-	virtual void configure(ConfigurationView* config);
+	virtual void configure(ConfigurationView::Ptr config);
 
 	/// This method ensures that the Line of a Logic port cannot be set directly.
 	///
@@ -107,7 +107,7 @@ public:
 
 	/// Configures the port.
 	///
-	virtual void configure(ConfigurationView* config);
+	virtual void configure(ConfigurationView::Ptr config);
 
 	/// Prepares the port for operation.
 	///
@@ -142,7 +142,7 @@ public:
 
 	/// Configures the port.
 	///
-	virtual void configure(ConfigurationView* config);
+	virtual void configure(ConfigurationView::Ptr config);
 
 	/// Sets the specified Select port to the defined position if line is 1.
 	///
@@ -178,7 +178,7 @@ public:
 
 	/// Configures the port.
 	///
-	virtual void configure(ConfigurationView* config);
+	virtual void configure(ConfigurationView::Ptr config);
 
 	/// Prepares the port for operation.
 	///
@@ -220,7 +220,7 @@ public:
 
 	/// Configures the port.
 	///
-	virtual void configure(ConfigurationView* config);
+	virtual void configure(ConfigurationView::Ptr config);
 
 	virtual int write(char* bytes, size_t length) override;
 
@@ -265,7 +265,7 @@ public:
 
 	virtual ~LoggerPort();
 
-	virtual void configure(ConfigurationView* config);
+	virtual void configure(ConfigurationView::Ptr config);
 
 	virtual void prepare() override;
 
@@ -334,7 +334,7 @@ protected:
 public:
 	FaderPort(AbstractOpenHAT* openhat, const char* id);
 
-	virtual void configure(ConfigurationView* config);
+	virtual void configure(ConfigurationView::Ptr config);
 
 	virtual void setLine(uint8_t line, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 
@@ -366,7 +366,7 @@ protected:
 public:
 	SceneSelectPort(AbstractOpenHAT* openhat, const char* id);
 
-	virtual void configure(ConfigurationView* config, ConfigurationView* parentConfig);
+	virtual void configure(ConfigurationView::Ptr config, ConfigurationView::Ptr parentConfig);
 
 	virtual void setPosition(uint16_t position, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 
@@ -433,7 +433,7 @@ public:
 
 	virtual ~FilePort();
 
-	virtual void configure(ConfigurationView* config, ConfigurationView* parentConfig);
+	virtual void configure(ConfigurationView::Ptr config, ConfigurationView::Ptr parentConfig);
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -504,7 +504,7 @@ protected:
 public:
 	AggregatorPort(AbstractOpenHAT* openhat, const char* id);
 
-	virtual void configure(ConfigurationView* portConfig, ConfigurationView* parentConfig);
+	virtual void configure(ConfigurationView::Ptr portConfig, ConfigurationView::Ptr parentConfig);
 
 	/// Resolves port IDs.
 	///
@@ -553,7 +553,7 @@ public:
 
 	/// Configures the port from the specified configuration view.
 	///
-	virtual void configure(ConfigurationView* nodeConfig);
+	virtual void configure(ConfigurationView::Ptr nodeConfig);
 
 	/// Prepares the port for operation.
 	///
@@ -616,7 +616,7 @@ protected:
 public:
 	TriggerPort(AbstractOpenHAT* openhat, const char* id);
 
-	virtual void configure(ConfigurationView* portConfig);
+	virtual void configure(ConfigurationView::Ptr portConfig);
 
 	virtual void prepare() override;
 
@@ -669,7 +669,7 @@ protected:
 public:
 	InfluxDBPort(AbstractOpenHAT* openhat, const char* id);
 
-	virtual void configure(ConfigurationView* portConfig);
+	virtual void configure(ConfigurationView::Ptr portConfig);
 
 	virtual void prepare() override;
 };
@@ -709,7 +709,7 @@ public:
 
 	/// Configures the port.
 	///
-	virtual void configure(ConfigurationView* portConfig, ConfigurationView* parentConfig);
+	virtual void configure(ConfigurationView::Ptr portConfig, ConfigurationView::Ptr parentConfig);
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -731,7 +731,7 @@ public:
 
 	/// Configures the port.
 	///
-	virtual void configure(ConfigurationView* portConfig, ConfigurationView* parentConfig);
+	virtual void configure(ConfigurationView::Ptr portConfig, ConfigurationView::Ptr parentConfig);
 
 	/// This method assigns the specified values to the target ports if the line is changed to High.
 	/// The changeSource is propagated to the target ports so as it looks as if the changeSource

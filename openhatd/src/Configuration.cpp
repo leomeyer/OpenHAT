@@ -61,7 +61,7 @@ OpenHATConfigurationFile::OpenHATConfigurationFile(const std::string& path, std:
 
 // ConfigurationView
 
-ConfigurationView::ConfigurationView(AbstractOpenHAT* openhat, Poco::AutoPtr<Poco::Util::AbstractConfiguration> config, const std::string& sourceFile, const std::string& section, bool checkUnused)
+ConfigurationView::ConfigurationView(AbstractOpenHAT* openhat, Poco::Util::AbstractConfiguration::Ptr config, const std::string& sourceFile, const std::string& section, bool checkUnused)
 	: sourceFile(sourceFile), section(section) {
 	this->openhat = openhat;
 	this->checkUnused = checkUnused;

@@ -1,0 +1,866 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configurationDescriptor version="100">
+  <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
+    <logicalFolder name="HeaderFiles"
+                   displayName="Header Files"
+                   projectFiles="true">
+      <logicalFolder name="common" displayName="common" projectFiles="true">
+        <logicalFolder name="master" displayName="master" projectFiles="true">
+          <itemPath>../opdi_core/code/c/common/master/opdi_AbstractProtocol.h</itemPath>
+          <itemPath>../opdi_core/code/c/common/master/opdi_BasicDeviceCapabilities.h</itemPath>
+          <itemPath>../opdi_core/code/c/common/master/opdi_BasicProtocol.h</itemPath>
+          <itemPath>../opdi_core/code/c/common/master/opdi_DigitalPort.h</itemPath>
+          <itemPath>../opdi_core/code/c/common/master/opdi_IBasicProtocol.h</itemPath>
+          <itemPath>../opdi_core/code/c/common/master/opdi_IDevice.h</itemPath>
+          <itemPath>../opdi_core/code/c/common/master/opdi_IODevice.h</itemPath>
+          <itemPath>../opdi_core/code/c/common/master/opdi_MessageQueueDevice.h</itemPath>
+          <itemPath>../opdi_core/code/c/common/master/opdi_OPDIMessage.h</itemPath>
+          <itemPath>../opdi_core/code/c/common/master/opdi_OPDIPort.h</itemPath>
+          <itemPath>../opdi_core/code/c/common/master/opdi_PortFactory.h</itemPath>
+          <itemPath>../opdi_core/code/c/common/master/opdi_ProtocolFactory.h</itemPath>
+          <itemPath>../opdi_core/code/c/common/master/opdi_SelectPort.h</itemPath>
+          <itemPath>../opdi_core/code/c/common/master/opdi_SerialDevice.h</itemPath>
+          <itemPath>../opdi_core/code/c/common/master/opdi_StringTools.h</itemPath>
+          <itemPath>../opdi_core/code/c/common/master/opdi_TCPIPDevice.h</itemPath>
+          <itemPath>../opdi_core/code/c/common/master/opdi_main_io.h</itemPath>
+        </logicalFolder>
+        <itemPath>../opdi_core/code/c/common/opdi_config.h</itemPath>
+        <itemPath>../opdi_core/code/c/common/opdi_constants.h</itemPath>
+        <itemPath>../opdi_core/code/c/common/opdi_message.h</itemPath>
+        <itemPath>../opdi_core/code/c/common/opdi_port.h</itemPath>
+        <itemPath>../opdi_core/code/c/common/opdi_protocol.h</itemPath>
+        <itemPath>../opdi_core/code/c/common/opdi_protocol_constants.h</itemPath>
+        <itemPath>../opdi_core/code/c/common/opdi_rijndael.h</itemPath>
+        <itemPath>../opdi_core/code/c/common/opdi_slave_protocol.h</itemPath>
+        <itemPath>../opdi_core/code/c/common/opdi_strings.h</itemPath>
+      </logicalFolder>
+      <logicalFolder name="src" displayName="src" projectFiles="true">
+        <itemPath>src/AbstractOpenHAT.h</itemPath>
+        <itemPath>src/Configuration.h</itemPath>
+        <itemPath>src/ExecPort.h</itemPath>
+        <itemPath>src/ExpressionPort.h</itemPath>
+        <itemPath>src/LinuxOpenHAT.h</itemPath>
+        <itemPath>src/OPDI.h</itemPath>
+        <itemPath>src/OPDI_Ports.h</itemPath>
+        <itemPath>src/Ports.h</itemPath>
+        <itemPath>src/SunRiseSet.h</itemPath>
+        <itemPath>src/TimerPort.h</itemPath>
+        <itemPath>src/WindowsOpenHAT.h</itemPath>
+        <itemPath>src/opdi_configspecs.h</itemPath>
+        <itemPath>src/stdafx.h</itemPath>
+        <itemPath>src/targetver.h</itemPath>
+      </logicalFolder>
+    </logicalFolder>
+    <logicalFolder name="ResourceFiles"
+                   displayName="Resource Files"
+                   projectFiles="true">
+    </logicalFolder>
+    <logicalFolder name="SourceFiles"
+                   displayName="Source Files"
+                   projectFiles="true">
+      <logicalFolder name="common" displayName="common" projectFiles="true">
+        <logicalFolder name="master" displayName="master" projectFiles="true">
+          <itemPath>../opdi_core/code/c/common/master/opdi_AbstractProtocol.cpp</itemPath>
+          <itemPath>../opdi_core/code/c/common/master/opdi_BasicDeviceCapabilities.cpp</itemPath>
+          <itemPath>../opdi_core/code/c/common/master/opdi_BasicProtocol.cpp</itemPath>
+          <itemPath>../opdi_core/code/c/common/master/opdi_DigitalPort.cpp</itemPath>
+          <itemPath>../opdi_core/code/c/common/master/opdi_IODevice.cpp</itemPath>
+          <itemPath>../opdi_core/code/c/common/master/opdi_MessageQueueDevice.cpp</itemPath>
+          <itemPath>../opdi_core/code/c/common/master/opdi_OPDIMessage.cpp</itemPath>
+          <itemPath>../opdi_core/code/c/common/master/opdi_OPDIPort.cpp</itemPath>
+          <itemPath>../opdi_core/code/c/common/master/opdi_PortFactory.cpp</itemPath>
+          <itemPath>../opdi_core/code/c/common/master/opdi_ProtocolFactory.cpp</itemPath>
+          <itemPath>../opdi_core/code/c/common/master/opdi_SelectPort.cpp</itemPath>
+          <itemPath>../opdi_core/code/c/common/master/opdi_StringTools.cpp</itemPath>
+          <itemPath>../opdi_core/code/c/common/master/opdi_main_io.cpp</itemPath>
+        </logicalFolder>
+        <itemPath>../opdi_core/code/c/common/opdi_aes.cpp</itemPath>
+        <itemPath>../opdi_core/code/c/common/opdi_message.c</itemPath>
+        <itemPath>../opdi_core/code/c/common/opdi_port.c</itemPath>
+        <itemPath>../opdi_core/code/c/common/opdi_protocol.c</itemPath>
+        <itemPath>../opdi_core/code/c/common/opdi_rijndael.cpp</itemPath>
+        <itemPath>../opdi_core/code/c/common/opdi_slave_protocol.c</itemPath>
+        <itemPath>../opdi_core/code/c/common/opdi_strings.c</itemPath>
+      </logicalFolder>
+      <logicalFolder name="linux" displayName="linux" projectFiles="true">
+        <itemPath>../opdi_core/code/c/platforms/linux/opdi_platformfuncs.c</itemPath>
+      </logicalFolder>
+      <logicalFolder name="src" displayName="src" projectFiles="true">
+        <logicalFolder name="linux" displayName="linux" projectFiles="true">
+          <itemPath>../opdi_core/code/c/libraries/libctb/src/linux/serport.cpp</itemPath>
+          <itemPath>../opdi_core/code/c/libraries/libctb/src/linux/timer.cpp</itemPath>
+        </logicalFolder>
+        <itemPath>src/AbstractOpenHAT.cpp</itemPath>
+        <itemPath>src/Configuration.cpp</itemPath>
+        <itemPath>src/ExecPort.cpp</itemPath>
+        <itemPath>src/ExpressionPort.cpp</itemPath>
+        <itemPath>src/LinuxOpenHAT.cpp</itemPath>
+        <itemPath>src/OPDI.cpp</itemPath>
+        <itemPath>src/OPDI_Ports.cpp</itemPath>
+        <itemPath>src/Ports.cpp</itemPath>
+        <itemPath>src/SunRiseSet.cpp</itemPath>
+        <itemPath>src/TimerPort.cpp</itemPath>
+        <itemPath>../opdi_core/code/c/libraries/libctb/src/fifo.cpp</itemPath>
+        <itemPath>../opdi_core/code/c/libraries/libctb/src/getopt.cpp</itemPath>
+        <itemPath>../opdi_core/code/c/libraries/libctb/src/iobase.cpp</itemPath>
+        <itemPath>../opdi_core/code/c/libraries/libctb/src/kbhit.cpp</itemPath>
+        <itemPath>src/openhat_linux.cpp</itemPath>
+        <itemPath>../opdi_core/code/c/libraries/libctb/src/portscan.cpp</itemPath>
+        <itemPath>../opdi_core/code/c/libraries/libctb/src/serportx.cpp</itemPath>
+      </logicalFolder>
+    </logicalFolder>
+    <logicalFolder name="TestFiles"
+                   displayName="Test Files"
+                   projectFiles="false"
+                   kind="TEST_LOGICAL_FOLDER">
+    </logicalFolder>
+    <logicalFolder name="ExternalFiles"
+                   displayName="Important Files"
+                   projectFiles="false"
+                   kind="IMPORTANT_FILES_FOLDER">
+      <itemPath>openhatd-Makefile.mk</itemPath>
+      <itemPath>testconfigs</itemPath>
+    </logicalFolder>
+  </logicalFolder>
+  <sourceRootList>
+    <Elem>src</Elem>
+    <Elem>../opdi_core/code/c/common</Elem>
+    <Elem>../opdi_core/code/c/platforms/linux</Elem>
+    <Elem>../opdi_core/code/c/libraries/libctb/src</Elem>
+  </sourceRootList>
+  <projectmakefile>openhatd-Makefile.mk</projectmakefile>
+  <confs>
+    <conf name="Debug" type="1">
+      <toolsSet>
+        <compilerSet>default</compilerSet>
+        <dependencyChecking>true</dependencyChecking>
+        <rebuildPropChanged>false</rebuildPropChanged>
+      </toolsSet>
+      <compileType>
+        <cTool>
+          <incDir>
+            <pElem>../opdi_core/code/c/common</pElem>
+            <pElem>../opdi_core/code/c/common/master</pElem>
+            <pElem>../opdi_core/code/c/platforms/linux</pElem>
+            <pElem>../opdi_core/code/c/platforms</pElem>
+            <pElem>src</pElem>
+          </incDir>
+        </cTool>
+        <ccTool>
+          <incDir>
+            <pElem>../opdi_core/code/c/common</pElem>
+            <pElem>../opdi_core/code/c/common/master</pElem>
+            <pElem>../opdi_core/code/c/libraries/POCO/Util/include</pElem>
+            <pElem>../opdi_core/code/c/libraries/POCO/Foundation/include</pElem>
+            <pElem>../opdi_core/code/c/libraries/POCO/Net/include</pElem>
+            <pElem>../opdi_core/code/c/libraries/POCO/JSON/include</pElem>
+            <pElem>../opdi_core/code/c/libraries/POCO/XML/include</pElem>
+            <pElem>../opdi_core/code/c/platforms</pElem>
+            <pElem>../opdi_core/code/c/platforms/linux</pElem>
+            <pElem>src</pElem>
+            <pElem>../opdi_core/code/c/libraries/libctb/include</pElem>
+            <pElem>../libraries/exprtk</pElem>
+          </incDir>
+        </ccTool>
+        <linkerTool>
+          <linkerAddLib>
+            <pElem>../opdi_core/code/c/libraries/POCO/lib/Linux/x86_64</pElem>
+          </linkerAddLib>
+          <commandLine>-lPocoUtild -lPocoNetd -lPocoFoundationd -lPocoXMLd -lPocoJSONd -lpthread -ldl -lrt</commandLine>
+        </linkerTool>
+      </compileType>
+      <item path="../opdi_core/code/c/common/master/opdi_AbstractProtocol.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_AbstractProtocol.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_BasicDeviceCapabilities.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_BasicDeviceCapabilities.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_BasicProtocol.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_BasicProtocol.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_DigitalPort.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_DigitalPort.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_IBasicProtocol.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_IDevice.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_IODevice.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_IODevice.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_MessageQueueDevice.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_MessageQueueDevice.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_OPDIMessage.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_OPDIMessage.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_OPDIPort.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_OPDIPort.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_PortFactory.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_PortFactory.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_ProtocolFactory.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_ProtocolFactory.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_SelectPort.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_SelectPort.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_SerialDevice.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_StringTools.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_StringTools.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_TCPIPDevice.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_main_io.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_main_io.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/opdi_aes.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/opdi_config.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/opdi_constants.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/opdi_message.c"
+            ex="false"
+            tool="0"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/opdi_message.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/opdi_port.c"
+            ex="false"
+            tool="0"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/opdi_port.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/opdi_protocol.c"
+            ex="false"
+            tool="0"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/opdi_protocol.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/opdi_protocol_constants.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/opdi_rijndael.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/opdi_rijndael.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/opdi_slave_protocol.c"
+            ex="false"
+            tool="0"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/opdi_slave_protocol.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/opdi_strings.c"
+            ex="false"
+            tool="0"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/opdi_strings.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/libraries/libctb/src/fifo.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/libraries/libctb/src/getopt.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/libraries/libctb/src/iobase.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/libraries/libctb/src/kbhit.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/libraries/libctb/src/linux/serport.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/libraries/libctb/src/linux/timer.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/libraries/libctb/src/portscan.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/libraries/libctb/src/serportx.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/platforms/linux/opdi_platformfuncs.c"
+            ex="false"
+            tool="0"
+            flavor2="0">
+      </item>
+      <item path="src/AbstractOpenHAT.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/AbstractOpenHAT.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/Configuration.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/Configuration.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/ExecPort.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/ExecPort.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/ExpressionPort.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/ExpressionPort.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/LinuxOpenHAT.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/LinuxOpenHAT.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/OPDI.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/OPDI.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/OPDI_Ports.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/OPDI_Ports.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/Ports.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/Ports.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/SunRiseSet.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/SunRiseSet.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/TimerPort.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/TimerPort.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/WindowsOpenHAT.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/opdi_configspecs.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/openhat_linux.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/stdafx.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/targetver.h" ex="false" tool="3" flavor2="0">
+      </item>
+    </conf>
+    <conf name="Release" type="1">
+      <toolsSet>
+        <compilerSet>default</compilerSet>
+        <dependencyChecking>true</dependencyChecking>
+        <rebuildPropChanged>false</rebuildPropChanged>
+      </toolsSet>
+      <compileType>
+        <cTool>
+          <developmentMode>5</developmentMode>
+          <incDir>
+            <pElem>../opdi_core/code/c/common</pElem>
+            <pElem>../opdi_core/code/c/common/master</pElem>
+            <pElem>../opdi_core/code/c/platforms/linux</pElem>
+            <pElem>../opdi_core/code/c/platforms</pElem>
+            <pElem>src</pElem>
+          </incDir>
+        </cTool>
+        <ccTool>
+          <developmentMode>5</developmentMode>
+          <incDir>
+            <pElem>../opdi_core/code/c/common</pElem>
+            <pElem>../opdi_core/code/c/common/master</pElem>
+            <pElem>../opdi_core/code/c/libraries/POCO/Util/include</pElem>
+            <pElem>../opdi_core/code/c/libraries/POCO/Foundation/include</pElem>
+            <pElem>../opdi_core/code/c/libraries/POCO/Net/include</pElem>
+            <pElem>../opdi_core/code/c/libraries/POCO/JSON/include</pElem>
+            <pElem>../opdi_core/code/c/libraries/POCO/XML/include</pElem>
+            <pElem>../opdi_core/code/c/platforms</pElem>
+            <pElem>../opdi_core/code/c/platforms/linux</pElem>
+            <pElem>src</pElem>
+            <pElem>../opdi_core/code/c/libraries/libctb/include</pElem>
+            <pElem>../libraries/exprtk</pElem>
+          </incDir>
+        </ccTool>
+        <fortranCompilerTool>
+          <developmentMode>5</developmentMode>
+        </fortranCompilerTool>
+        <asmTool>
+          <developmentMode>5</developmentMode>
+        </asmTool>
+      </compileType>
+      <item path="../opdi_core/code/c/common/master/opdi_AbstractProtocol.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_AbstractProtocol.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_BasicDeviceCapabilities.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_BasicDeviceCapabilities.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_BasicProtocol.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_BasicProtocol.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_DigitalPort.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_DigitalPort.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_IBasicProtocol.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_IDevice.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_IODevice.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_IODevice.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_MessageQueueDevice.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_MessageQueueDevice.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_OPDIMessage.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_OPDIMessage.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_OPDIPort.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_OPDIPort.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_PortFactory.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_PortFactory.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_ProtocolFactory.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_ProtocolFactory.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_SelectPort.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_SelectPort.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_SerialDevice.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_StringTools.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_StringTools.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_TCPIPDevice.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_main_io.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/master/opdi_main_io.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/opdi_aes.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/opdi_config.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/opdi_constants.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/opdi_message.c"
+            ex="false"
+            tool="0"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/opdi_message.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/opdi_port.c"
+            ex="false"
+            tool="0"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/opdi_port.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/opdi_protocol.c"
+            ex="false"
+            tool="0"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/opdi_protocol.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/opdi_protocol_constants.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/opdi_rijndael.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/opdi_rijndael.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/opdi_slave_protocol.c"
+            ex="false"
+            tool="0"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/opdi_slave_protocol.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/opdi_strings.c"
+            ex="false"
+            tool="0"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/common/opdi_strings.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/libraries/libctb/src/fifo.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/libraries/libctb/src/getopt.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/libraries/libctb/src/iobase.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/libraries/libctb/src/kbhit.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/libraries/libctb/src/linux/serport.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/libraries/libctb/src/linux/timer.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/libraries/libctb/src/portscan.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/libraries/libctb/src/serportx.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="../opdi_core/code/c/platforms/linux/opdi_platformfuncs.c"
+            ex="false"
+            tool="0"
+            flavor2="0">
+      </item>
+      <item path="src/AbstractOpenHAT.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/AbstractOpenHAT.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/Configuration.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/Configuration.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/ExecPort.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/ExecPort.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/ExpressionPort.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/ExpressionPort.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/LinuxOpenHAT.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/LinuxOpenHAT.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/OPDI.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/OPDI.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/OPDI_Ports.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/OPDI_Ports.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/Ports.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/Ports.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/SunRiseSet.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/SunRiseSet.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/TimerPort.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/TimerPort.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/WindowsOpenHAT.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/opdi_configspecs.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/openhat_linux.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/stdafx.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/targetver.h" ex="false" tool="3" flavor2="0">
+      </item>
+    </conf>
+  </confs>
+</configurationDescriptor>

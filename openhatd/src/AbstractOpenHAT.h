@@ -34,7 +34,7 @@ struct IOpenHATPlugin {
 	/// nodeConfig is the configuration view that was created for the plugin section.
 	/// parentConfig is the parent configuration view of the plugin section.
 	/// driverPath is the actual resolved dynamic library path that has been used to load the plugin.
-	virtual void setupPlugin(openhat::AbstractOpenHAT* openHAT, const std::string& nodeName, openhat::ConfigurationView* nodeConfig, openhat::ConfigurationView* parentConfig, const std::string& driverPath) = 0;
+	virtual void setupPlugin(openhat::AbstractOpenHAT* openHAT, const std::string& nodeName, openhat::ConfigurationView::Ptr nodeConfig, openhat::ConfigurationView::Ptr parentConfig, const std::string& driverPath) = 0;
 
 	// virtual destructor (called when the plugin is deleted)
 	virtual ~IOpenHATPlugin() {}
@@ -131,7 +131,7 @@ protected:
 
 	virtual uint8_t idleTimeoutReached(void) override;
 
-	virtual ConfigurationView* readConfiguration(const std::string& fileName, const std::map<std::string, std::string>& parameters);
+	virtual ConfigurationView::Ptr readConfiguration(const std::string& fileName, const std::map<std::string, std::string>& parameters);
 
 	/** Outputs a log message with a timestamp. */
 	virtual void log(const std::string& text);
@@ -149,7 +149,7 @@ public:
 
 	// configuration file for port state persistence
 	std::string persistentConfigFile;
-	Poco::Util::PropertyFileConfiguration* persistentConfig;
+	Poco::AutoPtr<Poco::Util::PropertyFileConfiguration> persistentConfig;
 
 	opdi::LogVerbosity connectionLogVerbosity;
 
@@ -188,7 +188,7 @@ public:
 	virtual std::string getResultCodeText(uint8_t code);
 
 	/** Returns the key's value from the configuration or the default value, if it is missing. If missing and isRequired is true, throws an exception. */
-	virtual std::string getConfigString(Poco::Util::AbstractConfiguration* config, const std::string &section, const std::string &key, const std::string &defaultValue, const bool isRequired);
+	virtual std::string getConfigString(Poco::Util::AbstractConfiguration::Ptr config, const std::string &section, const std::string &key, const std::string &defaultValue, const bool isRequired);
 
 	/** Outputs the specified text to an implementation-dependent output with an appended line break. */
 	virtual void println(const char* text) = 0;
@@ -210,15 +210,15 @@ public:
 	 *  Use this mechanism to avoid resource conflicts. */
 	virtual void lockResource(const std::string& resourceID, const std::string& lockerID);
 
-	virtual opdi::LogVerbosity getConfigLogVerbosity(ConfigurationView* config, opdi::LogVerbosity defaultVerbosity);
+	virtual opdi::LogVerbosity getConfigLogVerbosity(ConfigurationView::Ptr config, opdi::LogVerbosity defaultVerbosity);
 
 	/** Creates a configuration view with the specified view name. */
-	virtual Poco::AutoPtr<ConfigurationView> createConfigView(Poco::Util::AbstractConfiguration* baseConfig, const std::string& viewName);
+	virtual ConfigurationView::Ptr createConfigView(Poco::Util::AbstractConfiguration::Ptr baseConfig, const std::string& viewName);
 
 	/** Returns the configuration that should be used for querying a port's state. This is the baseConfig if no
 	 *  persistent configuration has been specified, or a layered configuration otherwise.
 	 *	This configuration must be freed after use. The view name is optional. */
-	virtual Poco::Util::AbstractConfiguration* getConfigForState(ConfigurationView* baseConfig, const std::string& viewName);
+	virtual Poco::Util::AbstractConfiguration::Ptr getConfigForState(ConfigurationView::Ptr baseConfig, const std::string& viewName);
 
 	/** Called by the destructor of ConfigurationView, do not throw exceptions in this method! */
 	virtual void unusedConfigKeysDetected(const std::string& sourceFile, const std::string& viewName, const std::vector<std::string>& unusedKeys);
@@ -227,64 +227,64 @@ public:
 	virtual void throwSettingException(const std::string& message, const std::string& detail = "");
 
 	/** Returns the name of the user to switch to, if specified in SwitchToUser */
-	std::string setupGeneralConfiguration(ConfigurationView* config);
+	std::string setupGeneralConfiguration(ConfigurationView::Ptr config);
 
-	virtual void configureEncryption(ConfigurationView* config);
+	virtual void configureEncryption(ConfigurationView::Ptr config);
 
-	virtual void configureAuthentication(ConfigurationView* config);
+	virtual void configureAuthentication(ConfigurationView::Ptr config);
 
 	/** Reads common properties from the configuration and configures the port group. */
-	virtual void configureGroup(ConfigurationView* groupConfig, opdi::PortGroup* group, int defaultFlags);
+	virtual void configureGroup(ConfigurationView::Ptr groupConfig, opdi::PortGroup* group, int defaultFlags);
 
-	virtual void setupGroup(ConfigurationView* groupConfig, const std::string& group);
+	virtual void setupGroup(ConfigurationView::Ptr groupConfig, const std::string& group);
 
-	virtual std::string resolveRelativePath(ConfigurationView* config, const std::string& source, const std::string& path, 
+	virtual std::string resolveRelativePath(ConfigurationView::Ptr config, const std::string& source, const std::string& path, 
 		const std::string& defaultValue, const std::string& manualPath = "", const std::string& settingName = "RelativeTo");
 
-	virtual void setupInclude(ConfigurationView* groupConfig, ConfigurationView* parentConfig, const std::string& node);
+	virtual void setupInclude(ConfigurationView::Ptr groupConfig, ConfigurationView::Ptr parentConfig, const std::string& node);
 
 	/** Reads common properties from the configuration and configures the port. */
-	virtual void configurePort(ConfigurationView* portConfig, opdi::Port* port, int defaultFlags);
+	virtual void configurePort(ConfigurationView::Ptr portConfig, opdi::Port* port, int defaultFlags);
 
 	/** Reads special properties from the configuration and configures the digital port. */
-	virtual void configureDigitalPort(ConfigurationView* portConfig, opdi::DigitalPort* port, bool stateOnly = false);
+	virtual void configureDigitalPort(ConfigurationView::Ptr portConfig, opdi::DigitalPort* port, bool stateOnly = false);
 
-	virtual void setupDigitalPort(ConfigurationView* portConfig, const std::string& port);
+	virtual void setupDigitalPort(ConfigurationView::Ptr portConfig, const std::string& port);
 
 	/** Reads special properties from the configuration and configures the analog port. */
-	virtual void configureAnalogPort(ConfigurationView* portConfig, opdi::AnalogPort* port, bool stateOnly = false);
+	virtual void configureAnalogPort(ConfigurationView::Ptr portConfig, opdi::AnalogPort* port, bool stateOnly = false);
 
-	virtual void setupAnalogPort(ConfigurationView* portConfig, const std::string& port);
+	virtual void setupAnalogPort(ConfigurationView::Ptr portConfig, const std::string& port);
 
 	/** Reads special properties from the configuration and configures the select port. */
-	virtual void configureSelectPort(ConfigurationView* portConfig, ConfigurationView* parentConfig, opdi::SelectPort* port, bool stateOnly = false);
+	virtual void configureSelectPort(ConfigurationView::Ptr portConfig, ConfigurationView::Ptr parentConfig, opdi::SelectPort* port, bool stateOnly = false);
 
-	virtual void setupSelectPort(ConfigurationView* portConfig, ConfigurationView* parentConfig, const std::string& port);
+	virtual void setupSelectPort(ConfigurationView::Ptr portConfig, ConfigurationView::Ptr parentConfig, const std::string& port);
 
 	/** Reads special properties from the configuration and configures the dial port. */
-	virtual void configureDialPort(ConfigurationView* portConfig, opdi::DialPort* port, bool stateOnly = false);
+	virtual void configureDialPort(ConfigurationView::Ptr portConfig, opdi::DialPort* port, bool stateOnly = false);
 
-	virtual void setupDialPort(ConfigurationView* portConfig, const std::string& port);
+	virtual void setupDialPort(ConfigurationView::Ptr portConfig, const std::string& port);
 
 	/** Reads special properties from the configuration and configures the streaming port. */
-	virtual void configureStreamingPort(ConfigurationView* portConfig, opdi::StreamingPort* port);
+	virtual void configureStreamingPort(ConfigurationView::Ptr portConfig, opdi::StreamingPort* port);
 
-	virtual void setupSerialStreamingPort(ConfigurationView* portConfig, const std::string& port);
-
-	template <typename PortType> 
-	void setupPort(ConfigurationView* portConfig, const std::string& port);
+	virtual void setupSerialStreamingPort(ConfigurationView::Ptr portConfig, const std::string& port);
 
 	template <typename PortType> 
-	void setupPortEx(ConfigurationView* portConfig, ConfigurationView* parentConfig, const std::string& port);
+	void setupPort(ConfigurationView::Ptr portConfig, const std::string& port);
+
+	template <typename PortType> 
+	void setupPortEx(ConfigurationView::Ptr portConfig, ConfigurationView::Ptr parentConfig, const std::string& port);
 
 	/** Configures the specified node. */
-	virtual void setupNode(ConfigurationView* config, const std::string& node);
+	virtual void setupNode(ConfigurationView::Ptr config, const std::string& node);
 
 	/** Starts enumerating the nodes of the Root section and configures the nodes. */
-	virtual void setupRoot(ConfigurationView* config);
+	virtual void setupRoot(ConfigurationView::Ptr config);
 
 	/** Sets up the connection from "Connection" section of the specified configuration. */
-	virtual int setupConnection(ConfigurationView* configuration, bool testMode);
+	virtual int setupConnection(ConfigurationView::Ptr configuration, bool testMode);
 
 	/** Sets up a TCP listener and listens for incoming requests. This method does not return unless the program should exit. */
 	virtual int setupTCP(const std::string& interface_, int port) = 0;

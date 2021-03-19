@@ -34,7 +34,7 @@ SRC += $(CPPPATH)/OPDI_Ports.cpp
 SRC += $(PPATH)/opdi_platformfuncs.c
 
 # POCO include path
-POCOINCPATH = $(OPDI_CORE_PATH)/code/c/libraries/POCO/Util/include $(OPDI_CORE_PATH)/code/c/libraries/POCO/Foundation/include $(OPDI_CORE_PATH)/code/c/libraries/POCO/Net/include
+POCOINCPATH = $(OPDI_CORE_PATH)/code/c/libraries/POCO/Util/include $(OPDI_CORE_PATH)/code/c/libraries/POCO/Foundation/include $(OPDI_CORE_PATH)/code/c/libraries/POCO/Net/include  $(OPDI_CORE_PATH)/code/c/libraries/POCO/JSON/include
 
 # POCO library path
 POCOLIBPATH = $(OPDI_CORE_PATH)/code/c/libraries/POCO/lib/Linux/x86_64

@@ -124,7 +124,7 @@ public:
 
 	virtual ~ExpressionPort();
 
-	virtual void configure(ConfigurationView* config);
+	virtual void configure(ConfigurationView::Ptr config);
 
 	virtual void setLine(uint8_t line, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 

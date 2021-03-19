@@ -20,3 +20,5 @@
 *.log
 *.iobj
 *.ipdb
+/openhatd/build/
+/openhatd/dist/

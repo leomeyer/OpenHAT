@@ -4,6 +4,7 @@
 #include <cmath>
 #include <numeric>
 #include <functional>
+#include <climits>
 
 #include "Poco/String.h"
 #include "Poco/Timezone.h"
@@ -41,7 +42,7 @@ LogicPort::LogicPort(AbstractOpenHAT* openhat, const char* id) : opdi::DigitalPo
 	this->line = -1;
 }
 
-void LogicPort::configure(ConfigurationView* config) {
+void LogicPort::configure(ConfigurationView::Ptr config) {
 	this->openhat->configureDigitalPort(config, this, false);
 	this->logVerbosity = this->openhat->getConfigLogVerbosity(config, opdi::LogVerbosity::UNKNOWN);
 
@@ -227,7 +228,7 @@ PulsePort::PulsePort(AbstractOpenHAT* openhat, const char* id) : opdi::DigitalPo
 	this->disabledState = -1;
 }
 
-void PulsePort::configure(ConfigurationView* config) {
+void PulsePort::configure(ConfigurationView::Ptr config) {
 	this->openhat->configureDigitalPort(config, this, false);
 	this->logVerbosity = this->openhat->getConfigLogVerbosity(config, opdi::LogVerbosity::UNKNOWN);
 
@@ -302,7 +303,7 @@ uint8_t PulsePort::doWork(uint8_t canSend)  {
 			error = true;
 		}
 	}
-	catch (Poco::Exception e) {
+	catch (Poco::Exception &e) {
 		this->logExtreme("Error resolving period value: " + this->openhat->getExceptionMessage(e));
 		error = true;
 	}
@@ -318,7 +319,7 @@ uint8_t PulsePort::doWork(uint8_t canSend)  {
 			error = true;
 		}
 	}
-	catch (Poco::Exception e) {
+	catch (Poco::Exception &e) {
 		this->logExtreme("Error resolving duty cycle value: " + this->openhat->getExceptionMessage(e));
 		error = true;
 	}
@@ -409,7 +410,7 @@ SelectorPort::SelectorPort(AbstractOpenHAT* openhat, const char* id) : opdi::Dig
 	this->errorState = -1;		// undefined
 }
 
-void SelectorPort::configure(ConfigurationView* config) {
+void SelectorPort::configure(ConfigurationView::Ptr config) {
 	this->openhat->configureDigitalPort(config, this, false);
 	this->logVerbosity = this->openhat->getConfigLogVerbosity(config, opdi::LogVerbosity::UNKNOWN);
 
@@ -522,7 +523,7 @@ ErrorDetectorPort::ErrorDetectorPort(AbstractOpenHAT* openhat, const char* id) :
 	this->line = -1;
 }
 
-void ErrorDetectorPort::configure(ConfigurationView* config) {
+void ErrorDetectorPort::configure(ConfigurationView::Ptr config) {
 	this->openhat->configureDigitalPort(config, this);	
 	this->logVerbosity = this->openhat->getConfigLogVerbosity(config, opdi::LogVerbosity::UNKNOWN);
 
@@ -601,7 +602,7 @@ uint8_t SerialStreamingPort::doWork(uint8_t canSend)  {
 	return OPDI_STATUS_OK;
 }
 
-void SerialStreamingPort::configure(ConfigurationView* config) {
+void SerialStreamingPort::configure(ConfigurationView::Ptr config) {
 	this->openhat->configureStreamingPort(config, this);
 	this->logVerbosity = this->openhat->getConfigLogVerbosity(config, opdi::LogVerbosity::UNKNOWN);
 
@@ -757,7 +758,7 @@ uint8_t LoggerPort::doWork(uint8_t canSend)  {
 	return OPDI_STATUS_OK;
 }
 
-void LoggerPort::configure(ConfigurationView* config) {
+void LoggerPort::configure(ConfigurationView::Ptr config) {
 	this->openhat->configureStreamingPort(config, this);
 	this->logVerbosity = this->openhat->getConfigLogVerbosity(config, opdi::LogVerbosity::UNKNOWN);
 
@@ -817,7 +818,7 @@ FaderPort::FaderPort(AbstractOpenHAT* openhat, const char* id) : opdi::DigitalPo
 	opdi::DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
 }
 
-void FaderPort::configure(ConfigurationView* config) {
+void FaderPort::configure(ConfigurationView::Ptr config) {
 	this->logVerbosity = this->openhat->getConfigLogVerbosity(config, opdi::LogVerbosity::UNKNOWN);
 
 	std::string modeStr = openhat->getConfigString(config, this->ID(), "FadeMode", "", true);
@@ -1030,7 +1031,7 @@ SceneSelectPort::SceneSelectPort(AbstractOpenHAT* openhat, const char* id) : opd
 	this->positionSet = false;
 }
 
-void SceneSelectPort::configure(ConfigurationView* config, ConfigurationView* parentConfig) {
+void SceneSelectPort::configure(ConfigurationView::Ptr config, ConfigurationView::Ptr parentConfig) {
 	this->logVerbosity = this->openhat->getConfigLogVerbosity(config, opdi::LogVerbosity::UNKNOWN);
 
 	// remember configuration file path (scene files are always relative to the configuration file)
@@ -1139,11 +1140,11 @@ uint8_t SceneSelectPort::doWork(uint8_t canSend)  {
 		}
 
 		// open the config file
-		ConfigurationView config(this->openhat, new OpenHATConfigurationFile(sceneFile, parameters), "", "", false);
+		ConfigurationView::Ptr config = new ConfigurationView(this->openhat, new OpenHATConfigurationFile(sceneFile, parameters), "", "", false);
 
 		// go through sections of the scene file
 		ConfigurationView::Keys sectionKeys;
-		config.keys("", sectionKeys);
+		config->keys("", sectionKeys);
 
 		if (sectionKeys.size() == 0)
 			this->logWarning("Scene file " + sceneFile + " does not contain any scene information, is this intended?");
@@ -1159,7 +1160,7 @@ uint8_t SceneSelectPort::doWork(uint8_t canSend)  {
 				this->logDebug("Applying settings to port: " + *it);
 
 				// configure port according to settings 
-				Poco::AutoPtr<ConfigurationView> portConfig = this->openhat->createConfigView(&config, *it);
+				Poco::AutoPtr<ConfigurationView> portConfig = this->openhat->createConfigView(config, *it);
 
 				// configure only state - not the general setup
 				try {
@@ -1170,7 +1171,7 @@ uint8_t SceneSelectPort::doWork(uint8_t canSend)  {
 						this->openhat->configureAnalogPort(portConfig, (opdi::AnalogPort*)port, true);
 					} else
 					if (port->getType()[0] == OPDI_PORTTYPE_SELECT[0]) {
-						this->openhat->configureSelectPort(portConfig, &config, (opdi::SelectPort*)port, true);
+						this->openhat->configureSelectPort(portConfig, config, (opdi::SelectPort*)port, true);
 					} else
 					if (port->getType()[0] == OPDI_PORTTYPE_DIAL[0]) {
 						this->openhat->configureDialPort(portConfig, (opdi::DialPort*)port, true);
@@ -1419,10 +1420,12 @@ FilePort::~FilePort() {
 		delete this->directoryWatcher;
 }
 
-void FilePort::configure(ConfigurationView* config, ConfigurationView* parentConfig) {
+void FilePort::configure(ConfigurationView::Ptr config, ConfigurationView::Ptr parentConfig) {
 	this->openhat->configureDigitalPort(config, this);
 
 	this->filePath = this->openhat->resolveRelativePath(config, this->ID(), openhat->getConfigString(config, this->ID(), "File", "", true), "Config");
+
+  this->openhat->println("FilePort: filePath = " + this->filePath);
 
 	// read port node, create configuration view and setup the port according to the specified type
 	std::string portNode = openhat->getConfigString(config, this->ID(), "PortNode", "", true);
@@ -1829,7 +1832,7 @@ AggregatorPort::AggregatorPort(AbstractOpenHAT* openhat, const char* id) :
 	this->firstRun = true;
 }
 
-void AggregatorPort::configure(ConfigurationView* config, ConfigurationView* parentConfig) {
+void AggregatorPort::configure(ConfigurationView::Ptr config, ConfigurationView::Ptr parentConfig) {
 	this->openhat->configureDigitalPort(config, this);
 
 	this->sourcePortID = this->openhat->getConfigString(config, this->ID(), "SourcePort", "", true);
@@ -1990,7 +1993,7 @@ CounterPort::CounterPort(AbstractOpenHAT* openhat, const char* id) : opdi::DialP
 	this->lastCountTime = 0;
 }
 
-void CounterPort::configure(ConfigurationView* nodeConfig) {
+void CounterPort::configure(ConfigurationView::Ptr nodeConfig) {
 	this->openhat->configureDialPort(nodeConfig, this);
 
 	std::string timeBaseStr = nodeConfig->getString("TimeBase", "");
@@ -2160,7 +2163,7 @@ TriggerPort::TriggerPort(AbstractOpenHAT* openhat, const char* id) : opdi::Digit
 	this->counterPort = nullptr;
 }
 
-void TriggerPort::configure(ConfigurationView* config) {
+void TriggerPort::configure(ConfigurationView::Ptr config) {
 	this->openhat->configurePort(config, this, 0);
 	this->logVerbosity = this->openhat->getConfigLogVerbosity(config, opdi::LogVerbosity::UNKNOWN);
 
@@ -2461,7 +2464,7 @@ void InfluxDBPort::run() {
 	}
 }
 
-void InfluxDBPort::configure(ConfigurationView * portConfig) {
+void InfluxDBPort::configure(ConfigurationView::Ptr portConfig) {
 	this->openhat->configureDigitalPort(portConfig, this);
 
 	this->host = openhat->getConfigString(portConfig, this->ID(), "Host", "", true);
@@ -2612,7 +2615,7 @@ TestPort::TestPort(AbstractOpenHAT* openhat, const char *id) : opdi::DigitalPort
 	this->hidden = true;
 }
 
-void TestPort::configure(ConfigurationView* portConfig, ConfigurationView* parentConfig) {
+void TestPort::configure(ConfigurationView::Ptr portConfig, ConfigurationView::Ptr parentConfig) {
 	this->openhat->configureDigitalPort(portConfig, this);
 
 	std::string timeBaseStr = portConfig->getString("TimeBase", "");
@@ -2677,7 +2680,7 @@ AssignmentPort::AssignmentPort(AbstractOpenHAT* openhat, const char* id) : opdi:
 	this->setMode(OPDI_DIGITAL_MODE_OUTPUT);
 }
 
-void AssignmentPort::configure(ConfigurationView* portConfig, ConfigurationView* parentConfig) {
+void AssignmentPort::configure(ConfigurationView::Ptr portConfig, ConfigurationView::Ptr parentConfig) {
 	this->openhat->configureDigitalPort(portConfig, this);
 
 	// enumerate assignments

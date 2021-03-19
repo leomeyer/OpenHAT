@@ -77,7 +77,7 @@ public:
 
 	virtual std::string getDataElement(void);
 
-	virtual void configure(openhat::ConfigurationView* nodeConfig, opdi::LogVerbosity defaultLogVerbosity, int defaultExpiry);
+	virtual void configure(openhat::ConfigurationView::Ptr nodeConfig, opdi::LogVerbosity defaultLogVerbosity, int defaultExpiry);
 
 	virtual void extract(const std::string& rawValue);
 
@@ -103,7 +103,7 @@ std::string WeatherGaugePort::getDataElement(void){
 	return this->dataElement;
 }
 
-void WeatherGaugePort::configure(openhat::ConfigurationView* nodeConfig, opdi::LogVerbosity defaultLogVerbosity, int defaultExpiry) {
+void WeatherGaugePort::configure(openhat::ConfigurationView::Ptr nodeConfig, opdi::LogVerbosity defaultLogVerbosity, int defaultExpiry) {
 	this->openhat->configureDialPort(nodeConfig, this);
 	this->logVerbosity = this->openhat->getConfigLogVerbosity(nodeConfig, defaultLogVerbosity);
 
@@ -258,10 +258,10 @@ public:
 	// weather data collection thread method
 	virtual void run(void);
 
-	virtual void setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, openhat::ConfigurationView* nodeConfig, openhat::ConfigurationView* parentConfig, const std::string& driverPath) override;
+	virtual void setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, openhat::ConfigurationView::Ptr nodeConfig, openhat::ConfigurationView::Ptr parentConfig, const std::string& driverPath) override;
 };
 
-void WeatherPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, openhat::ConfigurationView* nodeConfig, openhat::ConfigurationView* parentConfig, const std::string& /*driverPath*/) {
+void WeatherPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, openhat::ConfigurationView::Ptr nodeConfig, openhat::ConfigurationView::Ptr parentConfig, const std::string& /*driverPath*/) {
 	this->openhat = openhat;
 	this->nodeID = node;
 	this->timeoutSeconds = 10;

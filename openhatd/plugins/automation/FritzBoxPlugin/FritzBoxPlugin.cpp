@@ -136,7 +136,7 @@ public:
 
 	virtual void run(void);
 
-	virtual void setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const std::string& node, openhat::ConfigurationView* nodeConfig, openhat::ConfigurationView* parentConfig, const std::string& driverPath) override;
+	virtual void setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const std::string& node, openhat::ConfigurationView::Ptr nodeConfig, openhat::ConfigurationView::Ptr parentConfig, const std::string& driverPath) override;
 };
 
 ////////////////////////////////////////////////////////////////////////
@@ -743,7 +743,7 @@ void FritzBoxPlugin::getTemperature(FritzPort* port) {
 	tempPort->setTemperature(temp);
 }
 
-void FritzBoxPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const std::string& node, openhat::ConfigurationView* nodeConfig, openhat::ConfigurationView* parentConfig, const std::string& /*driverPath*/) {
+void FritzBoxPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const std::string& node, openhat::ConfigurationView::Ptr nodeConfig, openhat::ConfigurationView::Ptr parentConfig, const std::string& /*driverPath*/) {
 	this->openhat = abstractOpenHAT;
 	this->nodeID = node;
 	this->sid = INVALID_SID;			// default; means not connected

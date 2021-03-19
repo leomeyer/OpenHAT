@@ -89,7 +89,7 @@ public:
 
 	virtual ~ExecPort();
 
-	virtual void configure(ConfigurationView* config);
+	virtual void configure(ConfigurationView::Ptr config);
 
 	virtual void prepare() override;
 

@@ -208,7 +208,7 @@ TimerPort::TimerPort(AbstractOpenHAT* openhat, const char* id) : DigitalPort(id,
 TimerPort::~TimerPort() {
 }
 
-void TimerPort::configure(ConfigurationView* config, ConfigurationView* parentConfig) {
+void TimerPort::configure(ConfigurationView::Ptr config, ConfigurationView::Ptr parentConfig) {
 	this->openhat->configureDigitalPort(config, this);
 	this->logVerbosity = this->openhat->getConfigLogVerbosity(config, opdi::LogVerbosity::UNKNOWN);
 

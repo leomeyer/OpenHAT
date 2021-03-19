@@ -215,7 +215,7 @@ namespace openhat {
 
 		virtual ~TimerPort();
 
-		virtual void configure(ConfigurationView* config, ConfigurationView* parentConfig);
+		virtual void configure(ConfigurationView::Ptr config, ConfigurationView::Ptr parentConfig);
 
 		virtual void setLine(uint8_t line, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 

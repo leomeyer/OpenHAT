@@ -34,6 +34,7 @@ void signal_handler_term(int) {
 }
 
 void signal_handler_abrt(int signum) {
+/*    
 	const int BACKTRACE_LEVELS = 10;
 	void* array[BACKTRACE_LEVELS];
 	size_t size;
@@ -47,6 +48,7 @@ void signal_handler_abrt(int signum) {
 	// generate core file
 	signal(signum, SIG_DFL);
 	kill(getpid(), signum);
+ */
 }
 
 int main(int argc, char* argv[], char* envp[])

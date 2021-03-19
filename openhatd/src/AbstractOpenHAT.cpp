@@ -224,23 +224,25 @@ std::string AbstractOpenHAT::getResultCodeText(uint8_t code) {
 	return it->second;
 }
 
-ConfigurationView* AbstractOpenHAT::readConfiguration(const std::string& filename, const std::map<std::string, std::string>& parameters) {
+ConfigurationView::Ptr AbstractOpenHAT::readConfiguration(const std::string& filename, const std::map<std::string, std::string>& parameters) {
 	// will throw an exception if something goes wrong
 	OpenHATConfigurationFile* fileConfig = new OpenHATConfigurationFile(filename, parameters);
 	// remember config file location
 	Poco::Path filePath(filename);
 	fileConfig->setString(OPENHAT_CONFIG_FILE_SETTING, filePath.absolute().toString());
 
-	ConfigurationView* result = new ConfigurationView(this, fileConfig, filename, "", false);
+	ConfigurationView::Ptr result = new ConfigurationView(this, fileConfig, filename, "", false);
 	return result;
 }
 
-std::string AbstractOpenHAT::getConfigString(Poco::Util::AbstractConfiguration* config, const std::string &section, const std::string &key, const std::string &defaultValue, const bool isRequired) {
+std::string AbstractOpenHAT::getConfigString(Poco::Util::AbstractConfiguration::Ptr config, const std::string &section, const std::string &key, const std::string &defaultValue, const bool isRequired) {
 	if (isRequired) {
 		if (!config->hasProperty(key)) {
 			this->throwSettingException("Expected configuration parameter not found in section '" + section + "'", key);
 		}
 	}
+  if (this->logVerbosity == opdi::LogVerbosity::EXTREME)
+    this->log("getConfigString: " + section + "." + key + ", value: " + config->getString(key, defaultValue));
 	return config->getString(key, defaultValue);
 }
 
@@ -443,7 +445,7 @@ void AbstractOpenHAT::lockResource(const std::string& resourceID, const std::str
 	this->lockedResources[resourceID] = lockerID;
 }
 
-opdi::LogVerbosity AbstractOpenHAT::getConfigLogVerbosity(ConfigurationView* config, opdi::LogVerbosity defaultVerbosity) {
+opdi::LogVerbosity AbstractOpenHAT::getConfigLogVerbosity(ConfigurationView::Ptr config, opdi::LogVerbosity defaultVerbosity) {
 	std::string logVerbosityStr = config->getString("LogVerbosity", "");
 
 	if ((logVerbosityStr != "")) {
@@ -467,17 +469,17 @@ opdi::LogVerbosity AbstractOpenHAT::getConfigLogVerbosity(ConfigurationView* con
 	return defaultVerbosity;
 }
 
-Poco::AutoPtr<ConfigurationView> AbstractOpenHAT::createConfigView(Poco::Util::AbstractConfiguration* baseConfig, const std::string& viewName) {
+ConfigurationView::Ptr AbstractOpenHAT::createConfigView(Poco::Util::AbstractConfiguration::Ptr baseConfig, const std::string& viewName) {
 	// get configuration file setting from the file
 	std::string sourceFile = baseConfig->getString(OPENHAT_CONFIG_FILE_SETTING, "");
 	return new ConfigurationView(this, baseConfig->createView(viewName), sourceFile, viewName);
 }
 
-Poco::Util::AbstractConfiguration* AbstractOpenHAT::getConfigForState(ConfigurationView* baseConfig, const std::string& viewName) {
+Poco::Util::AbstractConfiguration::Ptr AbstractOpenHAT::getConfigForState(ConfigurationView::Ptr baseConfig, const std::string& viewName) {
 	// replace configuration with a layered configuration that uses the persistent
 	// configuration with higher priority
 	// thus, port states will be pulled from the persistent configuration if they are present
-	Poco::Util::LayeredConfiguration* newConfig = new Poco::Util::LayeredConfiguration();
+	Poco::Util::LayeredConfiguration::Ptr newConfig = new Poco::Util::LayeredConfiguration();
 	// persistent configuration specified?
 	if (this->persistentConfig != nullptr) {
 		// persistent config has high priority
@@ -510,7 +512,7 @@ void AbstractOpenHAT::throwSettingException(const std::string & message, const s
 	throw SettingException(message, detail);
 }
 
-std::string AbstractOpenHAT::setupGeneralConfiguration(ConfigurationView* config) {
+std::string AbstractOpenHAT::setupGeneralConfiguration(ConfigurationView::Ptr config) {
 	this->logVerbose("Setting up general configuration");
 	// enumerate section "Root"
 	Poco::AutoPtr<ConfigurationView> general = this->createConfigView(config, "General");
@@ -575,7 +577,7 @@ std::string AbstractOpenHAT::setupGeneralConfiguration(ConfigurationView* config
 	return general->getString("SwitchToUser", "");
 }
 
-void AbstractOpenHAT::configureEncryption(ConfigurationView* config) {
+void AbstractOpenHAT::configureEncryption(ConfigurationView::Ptr config) {
 	this->logVerbose("Configuring encryption");
 
 	std::string type = config->getString("Type", "");
@@ -590,7 +592,7 @@ void AbstractOpenHAT::configureEncryption(ConfigurationView* config) {
 		this->throwSettingException("Encryption type not supported, expected 'AES': " + type);
 }
 
-void AbstractOpenHAT::configureAuthentication(ConfigurationView* config) {
+void AbstractOpenHAT::configureAuthentication(ConfigurationView::Ptr config) {
 	this->logVerbose("Configuring authentication");
 
 	std::string type = config->getString("Type", "");
@@ -609,7 +611,7 @@ void AbstractOpenHAT::configureAuthentication(ConfigurationView* config) {
 }
 
 /** Reads common properties from the configuration and configures the port group. */
-void AbstractOpenHAT::configureGroup(ConfigurationView* groupConfig, opdi::PortGroup* group, int defaultFlags) {
+void AbstractOpenHAT::configureGroup(ConfigurationView::Ptr groupConfig, opdi::PortGroup* group, int defaultFlags) {
 	// the default label is the port ID
 	std::string portLabel = this->getConfigString(groupConfig, group->getID(), "Label", group->getID(), false);
 	group->setLabel(portLabel.c_str());
@@ -634,7 +636,7 @@ void AbstractOpenHAT::configureGroup(ConfigurationView* groupConfig, opdi::PortG
 	}
 }
 
-void AbstractOpenHAT::setupGroup(ConfigurationView* groupConfig, const std::string& group) {
+void AbstractOpenHAT::setupGroup(ConfigurationView::Ptr groupConfig, const std::string& group) {
 	this->logDebug("Setting up group: " + group);
 
 	opdi::PortGroup* portGroup = new opdi::PortGroup(group.c_str());
@@ -643,7 +645,7 @@ void AbstractOpenHAT::setupGroup(ConfigurationView* groupConfig, const std::stri
 	this->addPortGroup(portGroup);
 }
 
-std::string AbstractOpenHAT::resolveRelativePath(ConfigurationView* config, const std::string& source, const std::string& path, const std::string& defaultValue, const std::string& manualPath, const std::string& settingName) {
+std::string AbstractOpenHAT::resolveRelativePath(ConfigurationView::Ptr config, const std::string& source, const std::string& path, const std::string& defaultValue, const std::string& manualPath, const std::string& settingName) {
 	// determine path type
 	std::string relativeTo = this->getConfigString(config, source, settingName, defaultValue, false);
 
@@ -704,7 +706,7 @@ std::string AbstractOpenHAT::resolveRelativePath(ConfigurationView* config, cons
 	return "";
 }
 
-void AbstractOpenHAT::setupInclude(ConfigurationView* config, ConfigurationView* parentConfig, const std::string& node) {
+void AbstractOpenHAT::setupInclude(ConfigurationView::Ptr config, ConfigurationView::Ptr parentConfig, const std::string& node) {
 	this->logVerbose("Setting up include: " + node);
 
 	// filename must be present; include files are by default relative to the current configuration file
@@ -744,7 +746,7 @@ void AbstractOpenHAT::setupInclude(ConfigurationView* config, ConfigurationView*
 			++it;
 		}
 	}
-	ConfigurationView* includeConfig = this->readConfiguration(filename, parameters);
+	ConfigurationView::Ptr includeConfig = this->readConfiguration(filename, parameters);
 
 	// setup the root node of the included configuration
 	this->setupRoot(includeConfig);
@@ -757,7 +759,7 @@ void AbstractOpenHAT::setupInclude(ConfigurationView* config, ConfigurationView*
 	}
 }
 
-void AbstractOpenHAT::configurePort(ConfigurationView* portConfig, opdi::Port* port, int defaultFlags) {
+void AbstractOpenHAT::configurePort(ConfigurationView::Ptr portConfig, opdi::Port* port, int defaultFlags) {
 	// ports can be hidden if allowed
 	if (this->allowHiddenPorts)
 		port->setHidden(portConfig->getBool("Hidden", port->isHidden()));
@@ -840,7 +842,7 @@ void AbstractOpenHAT::configurePort(ConfigurationView* portConfig, opdi::Port* p
 	port->setLogVerbosity(this->getConfigLogVerbosity(portConfig, this->logVerbosity));
 }
 
-void AbstractOpenHAT::configureDigitalPort(ConfigurationView* portConfig, opdi::DigitalPort* port, bool stateOnly) {
+void AbstractOpenHAT::configureDigitalPort(ConfigurationView::Ptr portConfig, opdi::DigitalPort* port, bool stateOnly) {
 	if (!stateOnly)
 		this->configurePort(portConfig, port, 0);
 
@@ -869,7 +871,7 @@ void AbstractOpenHAT::configureDigitalPort(ConfigurationView* portConfig, opdi::
 		this->throwSettingException("Unknown Line specified; expected 'Low' or 'High'", portLine);
 }
 
-void AbstractOpenHAT::setupDigitalPort(ConfigurationView* portConfig, const std::string& port) {
+void AbstractOpenHAT::setupDigitalPort(ConfigurationView::Ptr portConfig, const std::string& port) {
 	this->logDebug("Setting up Digital port: " + port);
 
 	opdi::DigitalPort* digPort = new opdi::DigitalPort(port.c_str());
@@ -878,7 +880,7 @@ void AbstractOpenHAT::setupDigitalPort(ConfigurationView* portConfig, const std:
 	this->addPort(digPort);
 }
 
-void AbstractOpenHAT::configureAnalogPort(ConfigurationView* portConfig, opdi::AnalogPort* port, bool stateOnly) {
+void AbstractOpenHAT::configureAnalogPort(ConfigurationView::Ptr portConfig, opdi::AnalogPort* port, bool stateOnly) {
 	if (!stateOnly)
 		this->configurePort(portConfig, port,
 			// default flags: assume everything is supported
@@ -914,7 +916,7 @@ void AbstractOpenHAT::configureAnalogPort(ConfigurationView* portConfig, opdi::A
 	}
 }
 
-void AbstractOpenHAT::setupAnalogPort(ConfigurationView* portConfig, const std::string& port) {
+void AbstractOpenHAT::setupAnalogPort(ConfigurationView::Ptr portConfig, const std::string& port) {
 	this->logDebug("Setting up Analog port: " + port);
 
 	opdi::AnalogPort* anaPort = new opdi::AnalogPort(port.c_str());
@@ -923,7 +925,7 @@ void AbstractOpenHAT::setupAnalogPort(ConfigurationView* portConfig, const std::
 	this->addPort(anaPort);
 }
 
-void AbstractOpenHAT::configureSelectPort(ConfigurationView* portConfig, ConfigurationView* parentConfig, opdi::SelectPort* port, bool stateOnly) {
+void AbstractOpenHAT::configureSelectPort(ConfigurationView::Ptr portConfig, ConfigurationView::Ptr parentConfig, opdi::SelectPort* port, bool stateOnly) {
 	if (!stateOnly) {
 		this->configurePort(portConfig, port, 0);
 
@@ -985,7 +987,7 @@ void AbstractOpenHAT::configureSelectPort(ConfigurationView* portConfig, Configu
 	}
 }
 
-void AbstractOpenHAT::setupSelectPort(ConfigurationView* portConfig, ConfigurationView* parentConfig, const std::string& port) {
+void AbstractOpenHAT::setupSelectPort(ConfigurationView::Ptr portConfig, ConfigurationView::Ptr parentConfig, const std::string& port) {
 	this->logDebug("Setting up Select port: " + port);
 
 	opdi::SelectPort* selPort = new opdi::SelectPort(port.c_str());
@@ -994,7 +996,7 @@ void AbstractOpenHAT::setupSelectPort(ConfigurationView* portConfig, Configurati
 	this->addPort(selPort);
 }
 
-void AbstractOpenHAT::configureDialPort(ConfigurationView* portConfig, opdi::DialPort* port, bool stateOnly) {
+void AbstractOpenHAT::configureDialPort(ConfigurationView::Ptr portConfig, opdi::DialPort* port, bool stateOnly) {
 	if (!stateOnly) {
 		this->configurePort(portConfig, port, 0);
 
@@ -1054,7 +1056,7 @@ void AbstractOpenHAT::configureDialPort(ConfigurationView* portConfig, opdi::Dia
 		port->setPosition(position);
 }
 
-void AbstractOpenHAT::setupDialPort(ConfigurationView* portConfig, const std::string& port) {
+void AbstractOpenHAT::setupDialPort(ConfigurationView::Ptr portConfig, const std::string& port) {
 	this->logDebug("Setting up Dial port: " + port);
 
 	opdi::DialPort* dialPort = new opdi::DialPort(port.c_str());
@@ -1063,11 +1065,11 @@ void AbstractOpenHAT::setupDialPort(ConfigurationView* portConfig, const std::st
 	this->addPort(dialPort);
 }
 
-void AbstractOpenHAT::configureStreamingPort(ConfigurationView* portConfig, opdi::StreamingPort* port) {
+void AbstractOpenHAT::configureStreamingPort(ConfigurationView::Ptr portConfig, opdi::StreamingPort* port) {
 	this->configurePort(portConfig, port, 0);
 }
 
-void AbstractOpenHAT::setupSerialStreamingPort(ConfigurationView* portConfig, const std::string& port) {
+void AbstractOpenHAT::setupSerialStreamingPort(ConfigurationView::Ptr portConfig, const std::string& port) {
 	this->logDebug("Setting up serial Streaming port: " + port);
 
 	SerialStreamingPort* ssPort = new SerialStreamingPort(this, port.c_str());
@@ -1078,7 +1080,7 @@ void AbstractOpenHAT::setupSerialStreamingPort(ConfigurationView* portConfig, co
 
 
 template <typename PortType>
-void AbstractOpenHAT::setupPort(ConfigurationView* portConfig, const std::string& portID) {
+void AbstractOpenHAT::setupPort(ConfigurationView::Ptr portConfig, const std::string& portID) {
 #ifdef __GNUG__
 	int status;
 	char* realname;
@@ -1097,7 +1099,7 @@ void AbstractOpenHAT::setupPort(ConfigurationView* portConfig, const std::string
 }
 
 template <typename PortType>
-void AbstractOpenHAT::setupPortEx(ConfigurationView* portConfig, ConfigurationView* parentConfig, const std::string& portID) {
+void AbstractOpenHAT::setupPortEx(ConfigurationView::Ptr portConfig, ConfigurationView::Ptr parentConfig, const std::string& portID) {
 #ifdef __GNUG__
 	int status;
 	char* realname;
@@ -1115,7 +1117,7 @@ void AbstractOpenHAT::setupPortEx(ConfigurationView* portConfig, ConfigurationVi
 	this->addPort(port);
 }
 
-void AbstractOpenHAT::setupNode(ConfigurationView* config, const std::string& node) {
+void AbstractOpenHAT::setupNode(ConfigurationView::Ptr config, const std::string& node) {
 	this->logVerbose("Setting up node: " + node);
 
 	// emit warnings if node IDs deviate from best practices
@@ -1236,7 +1238,7 @@ void AbstractOpenHAT::setupNode(ConfigurationView* config, const std::string& no
 		this->throwSettingException("Invalid configuration: Unknown node type: " + nodeType);
 }
 
-void AbstractOpenHAT::setupRoot(ConfigurationView* config) {
+void AbstractOpenHAT::setupRoot(ConfigurationView::Ptr config) {
 	// enumerate section "Root"
 	Poco::AutoPtr<ConfigurationView> nodes = this->createConfigView(config, "Root");
 	this->logVerbose("Setting up root nodes");
@@ -1287,7 +1289,7 @@ void AbstractOpenHAT::setupRoot(ConfigurationView* config) {
 	// TODO check group hierarchy
 }
 
-int AbstractOpenHAT::setupConnection(ConfigurationView* configuration, bool testMode) {
+int AbstractOpenHAT::setupConnection(ConfigurationView::Ptr configuration, bool testMode) {
 	this->logVerbose(std::string("Setting up connection for slave: ") + this->slaveName);
 	Poco::AutoPtr<ConfigurationView> config = this->createConfigView(configuration, "Connection");
 
@@ -1733,11 +1735,11 @@ uint8_t opdi_get_digital_port_state(opdi_Port* port, char mode[], char line[]) {
 		dPort->getState(&dMode, &dLine);
 		mode[0] = '0' + dMode;
 		line[0] = '0' + dLine;
-	} catch (opdi::Port::ValueUnavailableException) {
+	} catch (opdi::Port::ValueUnavailableException&) {
 		// TODO localize message
 		opdi_set_port_message("Value unavailable");
 		return OPDI_PORT_ERROR;
-	} catch (opdi::Port::ValueExpiredException) {
+	} catch (opdi::Port::ValueExpiredException&) {
 		// TODO localize message
 		opdi_set_port_message("Value expired");
 		return OPDI_PORT_ERROR;
@@ -1819,11 +1821,11 @@ uint8_t opdi_get_analog_port_state(opdi_Port* port, char mode[], char res[], cha
 
 	try {
 		aPort->getState(&aMode, &aRes, &aRef, value);
-	} catch (opdi::Port::ValueUnavailableException) {
+	} catch (opdi::Port::ValueUnavailableException&) {
 		// TODO localize message
 		opdi_set_port_message("Value unavailable");
 		return OPDI_PORT_ERROR;
-	} catch (opdi::Port::ValueExpiredException) {
+	} catch (opdi::Port::ValueExpiredException&) {
 		// TODO localize message
 		opdi_set_port_message("Value expired");
 		return OPDI_PORT_ERROR;
@@ -1948,11 +1950,11 @@ uint8_t opdi_get_select_port_state(opdi_Port* port, uint16_t* position) {
 
 	try {
 		sPort->getState(position);
-	} catch (opdi::Port::ValueUnavailableException) {
+	} catch (opdi::Port::ValueUnavailableException&) {
 		// TODO localize message
 		opdi_set_port_message("Value unavailable");
 		return OPDI_PORT_ERROR;
-	} catch (opdi::Port::ValueExpiredException) {
+	} catch (opdi::Port::ValueExpiredException&) {
 		// TODO localize message
 		opdi_set_port_message("Value expired");
 		return OPDI_PORT_ERROR;
@@ -1997,11 +1999,11 @@ uint8_t opdi_get_dial_port_state(opdi_Port* port, int64_t* position) {
 
 	try {
 		dPort->getState(position);
-	} catch (opdi::Port::ValueUnavailableException) {
+	} catch (opdi::Port::ValueUnavailableException&) {
 		// TODO localize message
 		opdi_set_port_message("Value unavailable");
 		return OPDI_PORT_ERROR;
-	} catch (opdi::Port::ValueExpiredException) {
+	} catch (opdi::Port::ValueExpiredException&) {
 		// TODO localize message
 		opdi_set_port_message("Value expired");
 		return OPDI_PORT_ERROR;

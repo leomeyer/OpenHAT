@@ -27,7 +27,7 @@ ExpressionPort::ExpressionPort(AbstractOpenHAT* openhat, const char* id) : opdi:
 ExpressionPort::~ExpressionPort() {
 }
 
-void ExpressionPort::configure(ConfigurationView* config) {
+void ExpressionPort::configure(ConfigurationView::Ptr config) {
 	this->openhat->configurePort(config, this, 0);
 	this->logVerbosity = this->openhat->getConfigLogVerbosity(config, opdi::LogVerbosity::UNKNOWN);
 

@@ -26,7 +26,7 @@ protected:
 	RCSwitch rcSwitch;
 
 public:
-	virtual void setupPlugin(AbstractOpenHAT* openhat, std::string node, Poco::Util::AbstractConfiguration* nodeConfig, openhat::ConfigurationView* parentConfig, const std::string& driverPath);
+	virtual void setupPlugin(AbstractOpenHAT* openhat, std::string node, Poco::Util::AbstractConfiguration::Ptr nodeConfig, openhat::ConfigurationView::Ptr parentConfig, const std::string& driverPath);
 
 	virtual void masterConnected(void) override;
 	virtual void masterDisconnected(void) override;
@@ -89,7 +89,7 @@ void RemoteSwitchPort::getState(uint16_t* position) {
 // RemoteSwitchPlugin
 ///////////////////////////////////////////////////////////////////////////////
 
-void RemoteSwitchPlugin::setupPlugin(AbstractOpenHAT* openhat, std::string node, Poco::Util::AbstractConfiguration* nodeConfig, openhat::ConfigurationView* parentConfig, const std::string& driverPath) {
+void RemoteSwitchPlugin::setupPlugin(AbstractOpenHAT* openhat, std::string node, Poco::Util::AbstractConfiguration::Ptr nodeConfig, openhat::ConfigurationView::Ptr parentConfig, const std::string& driverPath) {
 	this->openhat = openhat;
 	this->nodeID = node;
 

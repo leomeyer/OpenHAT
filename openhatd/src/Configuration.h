@@ -31,7 +31,9 @@ class AbstractOpenHAT;
 class ConfigurationView : public Poco::Util::LayeredConfiguration {
 
 public:
-	ConfigurationView(AbstractOpenHAT* openhat, Poco::AutoPtr<Poco::Util::AbstractConfiguration> config, const std::string& sourceFile, const std::string& section, bool checkUnused = true);
+        using Ptr = Poco::AutoPtr<ConfigurationView>;
+    
+	ConfigurationView(AbstractOpenHAT* openhat, Poco::Util::AbstractConfiguration::Ptr config, const std::string& sourceFile, const std::string& section, bool checkUnused = true);
 
 	~ConfigurationView();
 
@@ -46,7 +48,7 @@ public:
 protected:
 	AbstractOpenHAT* openhat;
 	bool checkUnused;
-	mutable Poco::AutoPtr<Poco::Util::AbstractConfiguration> innerConfig;
+	mutable Poco::Util::AbstractConfiguration::Ptr innerConfig;
 	mutable std::unordered_set<std::string> usedKeys;
 
 	bool getRaw(const std::string& key, std::string& value) const;

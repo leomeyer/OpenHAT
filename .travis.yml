@@ -1,3 +1,4 @@
+dist: bionic
 sudo: required
 
 arch: i686
@@ -5,8 +6,9 @@ arch: i686
 language: cpp
 
 install:
-- git clone https://github.com/raspberrypi/tools.git --depth=1
-- export PATH=$(pwd)/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin:$PATH
+- wget https://github.com/Pro/raspi-toolchain/releases/latest/download/raspi-toolchain.tar.gz
+- sudo tar xfz raspi-toolchain.tar.gz --strip-components=1 -C /opt
+- export /opt/cross-pi-gcc/bin:$PATH
 - cp -r opdi_core/code/c/libraries/POCO_patches/* opdi_core/code/c/libraries/POCO/
 - pushd opdi_core/code/c/libraries/POCO
 - cat VERSION
@@ -42,8 +44,8 @@ script:
 - sshpass -e scp -P $RELEASE_UPLOAD_PORT -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no OpenHAT-docs.tar.gz* $RELEASE_UPLOAD_USER@$RELEASE_UPLOAD_HOST:~/.documentation
 - export CXX=g++
 - export CC=g++
-- export PATH=$(pwd)/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin:$PATH
-#- make -C openhatd/src/ -f makefile-rpicc release
+- export PATH=/opt/cross-pi-gcc/bin:$PATH
+- make -C openhatd/src/ -f makefile-rpicc release
 - make -C openhatd/src/ -f makefile-i386 release CC=$CC
 - make -C openhatd/src/ release CC=$CC
 - make -C openhatd/src/ tests && sshpass -e scp -P $RELEASE_UPLOAD_PORT -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no /home/travis/build/openhat-org/OpenHAT/openhatd/src/*.tar.gz* $RELEASE_UPLOAD_USER@$RELEASE_UPLOAD_HOST:~

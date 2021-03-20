@@ -55,12 +55,16 @@ protected:
 //	opdi::PortGroup *first_portGroup;
 //	opdi::PortGroup *last_portGroup;
 
+        typedef std::tuple<uint8_t, opdi::Port*> PortSchedule;
+        typedef std::vector<PortSchedule> PortSchedules;
+        PortSchedules portSchedules;
+
 	uint32_t idle_timeout_ms;
 	uint64_t last_activity;
 
 	// internal shutdown function; to be called when messages can be sent to the master
 	// May return OPDI_STATUS_OK to cancel the shutdown. Any other value stops message processing.
-	uint8_t shutdownInternal(void);
+	virtual uint8_t shutdownInternal(void);
 
 	LogVerbosity logVerbosity;
 
@@ -153,15 +157,14 @@ public:
 	 */
 	virtual uint8_t start(void);
 
-	/** This function is called while the OPDI slave is connected and waiting for messages.
-	 * It is called about once every millisecond.
+	/** This function calls the ports' doWork() methods to do the actual work.
 	 * You can override it to perform your own housekeeping in case you need to.
 	 * If canSend is 1, the slave may send asynchronous messages to the master.
 	 * Returning any other value than OPDI_STATUS_OK causes the message processing to exit.
 	 * This will usually signal a device error to the master or cause the master to time out.
 	 * Make sure to call the base method before you do your own work.
 	 */
-	virtual uint8_t waiting(uint8_t canSend);
+	virtual uint8_t doWork(uint8_t canSend, uint8_t* sleepTimeMs);
 
 	/** This function returns 1 if a master is currently connected and 0 otherwise.
 	 */

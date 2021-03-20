@@ -65,13 +65,22 @@ static uint8_t io_receive(void* info, uint8_t* byte, uint16_t timeout, uint8_t c
 
 	while (1) {
 		// call work function
-		uint8_t waitResult = Opdi->waiting(canSend);
-		if (waitResult != OPDI_STATUS_OK)
-			return waitResult;
+        uint8_t sleepTimeMs;
+		uint8_t workResult = Opdi->doWork(canSend, &sleepTimeMs);
+		if (workResult != OPDI_STATUS_OK)
+			return workResult;
 
 		if (connection_mode == MODE_TCP) {
 
 			int newsockfd = (long)info;
+            // set receive timeout in milliseconds
+            struct timeval aTimeout;
+            aTimeout.tv_sec = 0;
+            aTimeout.tv_usec = (sleepTimeMs > 0 ? sleepTimeMs : 1) * 1000;  // at least 1 ms
+            if (setsockopt(newsockfd, SOL_SOCKET, SO_RCVTIMEO, (char*)&aTimeout, sizeof(aTimeout)) < 0) {
+                linuxOpenHAT->logError("Error setting socket receive timeout");
+                return OPDI_DEVICE_ERROR;
+            }
 
 			// try to read data
 			result = read(newsockfd, &c, 1);
@@ -270,11 +279,11 @@ int LinuxOpenHAT::HandleTCPConnection(int csock) {
 
 	// set timeouts on socket
 	if (setsockopt (csock, SOL_SOCKET, SO_RCVTIMEO, (char*)&aTimeout, sizeof(aTimeout)) < 0) {
-		this->log("setsockopt failed");
+		this->logError("setsockopt failed");
 		return OPDI_DEVICE_ERROR;
 	}
 	if (setsockopt (csock, SOL_SOCKET, SO_SNDTIMEO, (char*)&aTimeout, sizeof(aTimeout)) < 0) {
-		this->log("setsockopt failed");
+		this->logError("setsockopt failed");
 		return OPDI_DEVICE_ERROR;
 	}
 
@@ -283,14 +292,14 @@ int LinuxOpenHAT::HandleTCPConnection(int csock) {
 	sLinger.l_onoff = 1;
 	sLinger.l_linger = 1;
 	if (setsockopt (csock, SOL_SOCKET, SO_LINGER, (char*)&sLinger, sizeof(sLinger)) < 0) {
-		this->log("setsockopt failed");
+		this->logError("setsockopt failed");
 		return OPDI_DEVICE_ERROR;
 	}
 
 	// set TCP_NODELAY
 	int flag = 1;
 	if (setsockopt(csock, IPPROTO_TCP, TCP_NODELAY, (char*) &flag, sizeof(int)) < 0) {
-		this->log("setsockopt failed");
+		this->logError("setsockopt failed");
 		return OPDI_DEVICE_ERROR;
 	}
 
@@ -353,9 +362,6 @@ int LinuxOpenHAT::setupTCP(const std::string& /*interface_*/, int port) {
 	// listen for an incoming connection
 	listen(sockfd, 1);
 
-	int sleepRemainderBase = 1000;
-	int sleepRemainderAdjustCount = 0;
-
 	while (true) {
 		this->logNormal(std::string("Listening for a connection on TCP port ") + this->to_string(port));
 
@@ -365,38 +371,15 @@ int LinuxOpenHAT::setupTCP(const std::string& /*interface_*/, int port) {
 			newsockfd = accept(sockfd, (struct sockaddr*)&cli_addr, &clilen);
 			if (newsockfd < 0) {
 				if ((errno == EWOULDBLOCK) || (errno == EAGAIN)) {
-					// measure processing time
-					struct timeval tv;
-					gettimeofday(&tv, NULL);
-					int64_t proctime = 1000000LL * tv.tv_sec + tv.tv_usec;
-
-					// not yet connected; process housekeeping about once a millisecond
-					uint8_t waitResult = this->waiting(false);
-					if (waitResult != OPDI_STATUS_OK)
-						return waitResult;
-
-					gettimeofday(&tv, NULL);
-					int64_t elapsed = 1000000LL * tv.tv_sec + tv.tv_usec - proctime;
-
-					// sleep for remainder of the millisecond
-					//  usleep has some overhead that might be different on different systems
-					// calculate sleep remainder base to approximate the specified target fps
-					if (sleepRemainderAdjustCount > 100) {
-						sleepRemainderAdjustCount = 0;
-						if (this->framesPerSecond > 0) {
-							if (this->framesPerSecond > this->targetFramesPerSecond)
-								sleepRemainderBase++;
-							else if (this->framesPerSecond < this->targetFramesPerSecond)
-								sleepRemainderBase--;
-						}
-					} else
-						sleepRemainderAdjustCount++;
-
-					if (elapsed < sleepRemainderBase) {
-						this->logExtreme(std::string("Sleeping for ") + this->to_string(sleepRemainderBase - elapsed) + " microseconds");
-						usleep(sleepRemainderBase - elapsed);
-					}
-				} else
+					// not yet connected; process ports
+                    uint8_t sleepTimeMs;
+					uint8_t workResult = this->doWork(false, &sleepTimeMs);
+					if (workResult != OPDI_STATUS_OK)
+						return workResult;
+                    
+                    // sleep at least one ms
+                    usleep((sleepTimeMs > 0 ? sleepTimeMs : 1) * 1000);
+                } else
 					this->logNormal(std::string("Error accepting connection: ") + this->to_string(errno));
 			} else {
 
@@ -404,15 +387,13 @@ int LinuxOpenHAT::setupTCP(const std::string& /*interface_*/, int port) {
 
 				int err = HandleTCPConnection(newsockfd);
 
-//				shutdown(newsockfd, SHUT_WR);
-
-				// TODO maybe there's a better way to ensure that data is sent?
-//				usleep(500);
-
 				close(newsockfd);
 
-				if ((err != OPDI_STATUS_OK) && (err != OPDI_DISCONNECTED) && (err != OPDI_NETWORK_ERROR))
-					return err;
+                if (err == OPDI_TIMEOUT) {
+                    this->logNormal("Connection timed out");
+                } else
+                    if ((err != OPDI_STATUS_OK) && (err != OPDI_DISCONNECTED) && (err != OPDI_NETWORK_ERROR))
+                        return err;
 			
 				// shutdown requested?
 				if (this->shutdownRequested)

@@ -110,16 +110,18 @@ protected:
 	typedef std::map<std::string, std::string> LockedResources;
 	LockedResources lockedResources;
 
-	typedef std::list<Poco::SharedPtr<IOpenHATPlugin>> PluginList;
+	typedef std::vector<IOpenHATPlugin*> PluginList;
 	PluginList pluginList;
+        
+        uint8_t defaultPortPriority;
 
 	// internal status monitoring variables
 	static const int maxSecondStats = 1100;
 	uint64_t* monSecondStats;				// doWork performance statistics buffer
 	int monSecondPos;						// current position in buffer
-	Poco::Stopwatch idleStopwatch;			// measures time until waiting() is called again
+	Poco::Stopwatch idleStopwatch;			// measures time until doWork() is called again
 	uint64_t totalMicroseconds;				// total time (doWork + idle)
-	int waitingCallsPerSecond;				// number of calls to waiting()
+	int doWorkCallsPerSecond;				// number of calls to doWork()
 	uint64_t currentFrame;					// number of the current doWork iteration ("frame")
 	double framesPerSecond;					// average number of doWork iterations processed per second
 	int targetFramesPerSecond;				// target number of doWork iterations per second
@@ -139,6 +141,8 @@ protected:
 	virtual void logErr(const std::string& message);
 
 	virtual void logWarn(const std::string& message);
+        
+        virtual uint8_t shutdownInternal(void) override;
 public:
 	std::string appName;
 	
@@ -154,8 +158,6 @@ public:
 	opdi::LogVerbosity connectionLogVerbosity;
 
 	AbstractOpenHAT(void);
-
-	virtual ~AbstractOpenHAT(void);
 
 	inline bool isPrepared() { return this->prepared; };
 
@@ -295,7 +297,8 @@ public:
 	/** Returns a pointer to the plugin object instance specified by the given driver. */
 	virtual IOpenHATPlugin* getPlugin(const std::string& driver) = 0;
 
-	virtual uint8_t waiting(uint8_t canSend) override;
+        /** Processes the ports' doWork methods. */
+	virtual uint8_t doWork(uint8_t canSend, uint8_t* sleepTimeMs) override;
 
 	/* Authenticate comparing the login data with the configuration login data. */
 	virtual uint8_t setPassword(const std::string& password) override;

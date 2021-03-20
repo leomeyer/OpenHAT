@@ -16,6 +16,8 @@
 #include <string>
 #include <algorithm>    // std::sort
 #include <unordered_set>
+#include <random>
+#include <bits/stdc++.h> 
 
 #include "opdi_constants.h"
 #include "opdi_protocol.h"
@@ -51,7 +53,7 @@ uint8_t OPDI::shutdownInternal(void) {
 
 OPDI::OPDI(void) {
 	this->shutdownRequested = false;
-	this->shutdownExitCode = OPDI_STATUS_OK;
+	this->shutdownExitCode = 0;
 }
 
 uint8_t OPDI::setup(const char* slaveName, int idleTimeout) {
@@ -314,27 +316,55 @@ uint8_t OPDI::start() {
 	return result;
 }
 
-uint8_t OPDI::waiting(uint8_t canSend) {
+uint8_t OPDI::doWork(uint8_t canSend, uint8_t* sleepTimeMs) {
+    *sleepTimeMs = 0;
 	if (this->shutdownRequested) {
+        this->shutdownRequested = false;
 		return this->shutdownInternal();
 	}
 
 	// remember canSend flag
 	this->canSend = canSend;
 
-	// call ports' doWork function
-	auto it = this->ports.begin();
-	auto ite = this->ports.end();
-	while (it != ite) {
-		// if the port specifies a workDelay, check whether it has been reached
-		if (((*it)->workDelay == 0) || (opdi_get_time_ms() - (*it)->lastWorkTime > (*it)->workDelay)) {
-			(*it)->lastWorkTime = opdi_get_time_ms();
-			uint8_t result = (*it)->doWork(canSend);
-			if (result != OPDI_STATUS_OK)
-				return result;
-		}
-		++it;
-	}
+    // first call?
+    if (this->portSchedules.size() == 0) {
+        std::random_device rd; // obtain a random number from hardware
+        std::mt19937 gen(rd()); // seed the generator
+        
+        // build port schedule table
+        auto end = this->ports.end();
+        for (auto it = this->ports.begin(); it != end; ++it) {
+            // determine random priority to distribute load
+            std::uniform_int_distribution<> distr(0, (*it)->getPriority()); // define the range
+            uint8_t rndPriority = distr(gen);
+            PortSchedule ps(rndPriority, *it);
+            this->portSchedules.push_back(ps);
+        }
+        
+        // sort by first element
+        sort(this->portSchedules.begin(), this->portSchedules.end());
+    }
+    
+    // go through port schedules, execute those that have current priority 0
+    for (auto& sched: this->portSchedules) {
+        // needs to be executed?
+        if (std::get<0>(sched) == 0) {
+            uint8_t result = std::get<1>(sched)->doWork(canSend);
+            if (result != OPDI_STATUS_OK)
+                return result;
+            // update priority after processing
+            std::get<0>(sched) = std::get<1>(sched)->getPriority();
+        } else
+            // decrease waiting time
+            std::get<0>(sched) -= 1;
+    }
+   
+    // sort schedules
+    sort(this->portSchedules.begin(), this->portSchedules.end());
+    
+    // return suggested sleep time: time until the first port is to be executed
+    *sleepTimeMs = std::get<0>(this->portSchedules[0]);
+
 	return OPDI_STATUS_OK;
 }
 
@@ -425,7 +455,7 @@ void OPDI::shutdown(int exitCode) {
 }
 
 void OPDI::persist(opdi::Port*  /*port*/) {
-	throw Poco::NotImplementedException("This implementation does not support port state persistance");
+	throw Poco::NotImplementedException("This implementation does not support port state persistence");
 }
 
 void OPDI::findPortIDs(const std::string & spec, std::vector<std::string>& results) {

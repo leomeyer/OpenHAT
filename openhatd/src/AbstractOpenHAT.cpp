@@ -73,10 +73,11 @@ AbstractOpenHAT::AbstractOpenHAT(void) {
 	this->monSecondStats = (uint64_t*)malloc(this->maxSecondStats * sizeof(uint64_t));
 	this->totalMicroseconds = 0;
 	this->targetFramesPerSecond = 20;
-	this->waitingCallsPerSecond = 0;
+	this->doWorkCallsPerSecond = 0;
 	this->framesPerSecond = 0;
 	this->allowHiddenPorts = true;
 	this->suppressUnusedParameterMessages = false;
+    this->defaultPortPriority = opdi::DEFAULT_PORT_PRIORITY;
 
 	// opdi result codes
 	resultCodeTexts[0] = "STATUS_OK";
@@ -118,9 +119,6 @@ AbstractOpenHAT::AbstractOpenHAT(void) {
 	// openhatd-specific code texts
 	resultCodeTexts[OPENHATD_INTERRUPTED] = "INTERRUPTED";
 	resultCodeTexts[OPENHATD_TEST_FAILED] = "TEST_FAILED";
-}
-
-AbstractOpenHAT::~AbstractOpenHAT(void) {
 }
 
 uint8_t AbstractOpenHAT::idleTimeoutReached(void) {
@@ -433,6 +431,10 @@ int AbstractOpenHAT::startup(const std::vector<std::string>& args, const std::ma
 	return result;
 }
 
+uint8_t AbstractOpenHAT::shutdownInternal(void) {
+    this->pluginList.clear();
+}
+
 void AbstractOpenHAT::lockResource(const std::string& resourceID, const std::string& lockerID) {
 	this->logDebug("Trying to lock resource '" + resourceID + "' for " + lockerID);
 	// try to locate the resource ID
@@ -555,6 +557,11 @@ std::string AbstractOpenHAT::setupGeneralConfiguration(ConfigurationView::Ptr co
 	this->deviceInfo = general->getString("DeviceInfo", "");
 
 	this->allowHiddenPorts = general->getBool("AllowHidden", true);
+        
+    uint portPriority = general->getUInt("PortPriority", opdi::DEFAULT_PORT_PRIORITY);
+    if (portPriority > 255)
+        throw Poco::InvalidArgumentException("PortPriority must not exceed 255", to_string(portPriority));
+    this->defaultPortPriority = portPriority;
 
 	// encryption defined?
 	std::string encryptionNode = general->getString("Encryption", "");
@@ -770,7 +777,10 @@ void AbstractOpenHAT::configurePort(ConfigurationView::Ptr portConfig, opdi::Por
 	// ports can be persistent
 	port->setPersistent(portConfig->getBool("Persistent", port->isPersistent()));
 
-	port->setWorkDelay(portConfig->getUInt("WorkDelay", 0));
+    uint portPriority = portConfig->getUInt("Priority", this->defaultPortPriority);
+    if (portPriority > 255)
+        throw Poco::InvalidArgumentException("Priority must not exceed 255", to_string(portPriority));
+	port->setPriority(portPriority);
 
 	std::string portLabel = this->getConfigString(portConfig, port->ID(), "Label", port->getLabel(), false);
 	port->setLabel(portLabel.c_str());
@@ -1344,14 +1354,14 @@ void AbstractOpenHAT::warnIfPluginMoreRecent(const std::string& driver) {
 	}
 }
 
-uint8_t AbstractOpenHAT::waiting(uint8_t canSend) {
+uint8_t AbstractOpenHAT::doWork(uint8_t canSend, uint8_t* sleepTimeMs) {
 	uint8_t result;
 
 	this->currentFrame++;
 
 	// add up microseconds of idle time
 	this->totalMicroseconds += this->idleStopwatch.elapsed();
-	this->waitingCallsPerSecond++;
+	this->doWorkCallsPerSecond++;
 
 	// start local stopwatch
 	Poco::Stopwatch stopwatch;
@@ -1359,7 +1369,7 @@ uint8_t AbstractOpenHAT::waiting(uint8_t canSend) {
 
 	// exception-safe processing
 	try {
-		result = OPDI::waiting(canSend);
+		result = OPDI::doWork(canSend, sleepTimeMs);
 	} catch (Poco::Exception &pe) {
 		this->logError(std::string("Unhandled exception while housekeeping: ") + this->getExceptionMessage(pe));
 		result = OPDI_STATUS_OK;	// not critical
@@ -1393,8 +1403,8 @@ uint8_t AbstractOpenHAT::waiting(uint8_t canSend) {
 				maxProcTime = this->monSecondStats[i];
 		}
 		this->monSecondPos = 0;
-		this->framesPerSecond = this->waitingCallsPerSecond * 1000000.0 / this->totalMicroseconds;
-		double procAverageUsPerCall = (double)sumProcTime / this->waitingCallsPerSecond;	// microseconds
+		this->framesPerSecond = this->doWorkCallsPerSecond * 1000000.0 / this->totalMicroseconds;
+		double procAverageUsPerCall = (double)sumProcTime / this->doWorkCallsPerSecond;	// microseconds
 		double load = sumProcTime * 1.0 / this->totalMicroseconds * 100.0;
 
 		// ignore first calculation results
@@ -1411,7 +1421,7 @@ uint8_t AbstractOpenHAT::waiting(uint8_t canSend) {
 
 		// reset counters
 		this->totalMicroseconds = 0;
-		this->waitingCallsPerSecond = 0;
+		this->doWorkCallsPerSecond = 0;
 
 		// write status file if specified
 		if (this->heartbeatFile != "") {
@@ -1423,7 +1433,7 @@ uint8_t AbstractOpenHAT::waiting(uint8_t canSend) {
 		}
 	}
 
-	// restart idle stopwatch to measure time until waiting() is called again
+	// restart idle stopwatch to measure time until doWork() is called again
 	this->idleStopwatch.restart();
 
 	return result;

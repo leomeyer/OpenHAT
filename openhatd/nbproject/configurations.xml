@@ -138,6 +138,7 @@
       </toolsSet>
       <compileType>
         <cTool>
+          <developmentMode>0</developmentMode>
           <incDir>
             <pElem>../opdi_core/code/c/common</pElem>
             <pElem>../opdi_core/code/c/common/master</pElem>
@@ -145,6 +146,7 @@
             <pElem>../opdi_core/code/c/platforms</pElem>
             <pElem>src</pElem>
           </incDir>
+          <warningLevel>2</warningLevel>
         </cTool>
         <ccTool>
           <incDir>
@@ -503,7 +505,7 @@
       </toolsSet>
       <compileType>
         <cTool>
-          <developmentMode>5</developmentMode>
+          <developmentMode>0</developmentMode>
           <incDir>
             <pElem>../opdi_core/code/c/common</pElem>
             <pElem>../opdi_core/code/c/common/master</pElem>
@@ -511,6 +513,7 @@
             <pElem>../opdi_core/code/c/platforms</pElem>
             <pElem>src</pElem>
           </incDir>
+          <warningLevel>2</warningLevel>
         </cTool>
         <ccTool>
           <developmentMode>5</developmentMode>

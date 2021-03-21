@@ -16,7 +16,7 @@ install:
 - cmake --build build/
 - popd
 - pushd libraries/paho.mqtt.cpp
-- cmake -Bbuild -H. -DPAHO_BUILD_STATIC=ON -DPAHO_BUILD_SHARED=OFF -DCMAKE_CXX_COMPILER=arm-linux-gnueabihf-g++
+- cmake -Bbuild -H. -DPAHO_BUILD_STATIC=ON -DPAHO_BUILD_SHARED=OFF -DCMAKE_PREFIX_PATH=../paho.mqtt.c/build/src -DCMAKE_CXX_COMPILER=arm-linux-gnueabihf-g++
 - cmake --build build/
 - popd
 # setup and build POCO

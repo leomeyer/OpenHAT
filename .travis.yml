@@ -6,23 +6,26 @@ arch: i686
 language: cpp
 
 install:
+# install cross compiler
 - wget https://github.com/Pro/raspi-toolchain/releases/latest/download/raspi-toolchain.tar.gz
 - sudo tar xfz raspi-toolchain.tar.gz --strip-components=1 -C /opt
 - export PATH=/opt/cross-pi-gcc/bin:$PATH
+# build Paco MQTT libraries
+- pushd libraries/paho.mqtt.c
+- cmake -Bbuild -H. -DPAHO_BUILD_STATIC=ON -DPAHO_BUILD_SHARED=OFF -DCMAKE_C_COMPILER=arm-linux-gnueabihf-gcc
+- cmake --build build/
+- popd
+- pushd libraries/paho.mqtt.cpp
+- cmake -Bbuild -H. -DPAHO_BUILD_STATIC=ON -DPAHO_BUILD_SHARED=OFF -DCMAKE_CXX_COMPILER=arm-linux-gnueabihf-g++
+- cmake --build build/
+- popd
+# setup and build POCO
 - cp -r opdi_core/code/c/libraries/POCO_patches/* opdi_core/code/c/libraries/POCO/
 - pushd opdi_core/code/c/libraries/POCO
 - cat VERSION
 - ./build_poco_rpi.sh
 #- ./build_poco_i386.sh
 #- ./build_poco.sh
-- popd
-- pushd cd libraries/paho.mqtt.c
-- cmake -Bbuild -H. -DPAHO_BUILD_STATIC=ON -DPAHO_BUILD_SHARED=OFF -DCMAKE_C_COMPILER=arm-linux-gnueabihf-gcc
-- cmake --build build/
-- popd
-- pushd cd libraries/paho.mqtt.cpp
-- cmake -Bbuild -H. -DPAHO_BUILD_STATIC=ON -DPAHO_BUILD_SHARED=OFF -DCMAKE_CXX_COMPILER=arm-linux-gnueabihf-g++
-- cmake --build build/
 - popd
 - sudo pip install mkdocs
 - sudo pip install markdown-include

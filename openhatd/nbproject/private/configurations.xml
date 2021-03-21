@@ -33,8 +33,9 @@
           <runcommandpicklistitem>"${OUTPUT_PATH}" -c testconfigs/linux_test.ini -e</runcommandpicklistitem>
           <runcommandpicklistitem>"${OUTPUT_PATH}" -c ../config.ini -e</runcommandpicklistitem>
           <runcommandpicklistitem>"${OUTPUT_PATH}" -c ../testconfigs/linux_test.ini -e</runcommandpicklistitem>
+          <runcommandpicklistitem>"${OUTPUT_PATH}" -c ../testconfigs/linux_test.ini</runcommandpicklistitem>
         </runcommandpicklist>
-        <runcommand>"${OUTPUT_PATH}" -c ../testconfigs/linux_test.ini -e</runcommand>
+        <runcommand>"${OUTPUT_PATH}" -c ../testconfigs/linux_test.ini</runcommand>
         <rundir>src</rundir>
         <buildfirst>true</buildfirst>
         <terminal-type>0</terminal-type>

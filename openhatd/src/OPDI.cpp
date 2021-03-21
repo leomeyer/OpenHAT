@@ -366,8 +366,9 @@ uint8_t OPDI::doWork(uint8_t canSend, uint8_t* sleepTimeMs) {
     // sort schedules by next start time
     sort(this->portSchedules.begin(), this->portSchedules.end());
     
-    // return suggested sleep time: time until the next port is to be executed
-    *sleepTimeMs = std::get<0>(this->portSchedules[0]) - opdi_get_time_ms();
+	if (this->portSchedules.size() > 0)
+		// return suggested sleep time: time until the next port is to be executed
+		*sleepTimeMs = std::get<0>(this->portSchedules[0]) - opdi_get_time_ms();
 
 	return OPDI_STATUS_OK;
 }

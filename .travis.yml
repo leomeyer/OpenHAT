@@ -16,6 +16,14 @@ install:
 #- ./build_poco_i386.sh
 #- ./build_poco.sh
 - popd
+- pushd cd libraries/paho.mqtt.c
+- cmake -Bbuild -H. -DPAHO_BUILD_STATIC=ON -DPAHO_BUILD_SHARED=OFF -DCMAKE_C_COMPILER=arm-linux-gnueabihf-gcc
+- cmake --build build/
+- popd
+- pushd cd libraries/paho.mqtt.cpp
+- cmake -Bbuild -H. -DPAHO_BUILD_STATIC=ON -DPAHO_BUILD_SHARED=OFF -DCMAKE_CXX_COMPILER=arm-linux-gnueabihf-g++
+- cmake --build build/
+- popd
 - sudo pip install mkdocs
 - sudo pip install markdown-include
 

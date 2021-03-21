@@ -7,7 +7,17 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
+            <file>file:/home/leo/openhat/openhatd/src/OPDI.h</file>
+            <file>file:/home/leo/openhat/openhatd/src/AbstractOpenHAT.h</file>
+            <file>file:/home/leo/openhat/opdi_core/code/c/common/opdi_constants.h</file>
             <file>file:/home/leo/openhat/openhatd/src/AbstractOpenHAT.cpp</file>
+            <file>file:/home/leo/openhat/openhatd/src/OPDI.cpp</file>
+            <file>file:/home/leo/openhat/openhatd/testconfigs/linux_test.ini</file>
+            <file>file:/home/leo/openhat/openhatd/src/OPDI_Ports.cpp</file>
+            <file>file:/home/leo/openhat/openhatd/src/LinuxOpenHAT.cpp</file>
+            <file>file:/home/leo/openhat/openhatd/src/OPDI_Ports.h</file>
+            <file>file:/home/leo/openhat/openhatd/src/openhat_linux.cpp</file>
+            <file>file:/home/leo/openhat/openhatd/src/Ports.cpp</file>
         </group>
     </open-files>
 </project-private>

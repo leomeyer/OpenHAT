@@ -18,19 +18,19 @@
 openhat::AbstractOpenHAT* Opdi;
 
 void signal_handler(int) {
-	std::cout << "Interrupted, exiting" << std::endl;
-
 	// tell the OPDI system to shut down
-	if (Opdi != NULL)
-		Opdi->shutdown(OPENHATD_INTERRUPTED);
+	if (Opdi != NULL) {
+    	std::cout << "Interrupted, exiting" << std::endl;
+		Opdi->shutdown(0);
+    }
 }
 
 void signal_handler_term(int) {
-	std::cout << "Terminated, exiting" << std::endl;
-
 	// tell the OPDI system to shut down
-	if (Opdi != NULL)
-		Opdi->shutdown(OPENHATD_INTERRUPTED);
+	if (Opdi != NULL) {
+    	std::cout << "Terminated, exiting" << std::endl;
+		Opdi->shutdown(0);
+    }
 }
 
 void signal_handler_abrt(int signum) {
@@ -117,6 +117,10 @@ int main(int argc, char* argv[], char* envp[])
 		Opdi->logError("An unknown error occurred. Exiting.");
 		exitcode = OPDI_DEVICE_ERROR;
 	}
+
+	// regular shutdown?
+	if (exitcode == OPDI_SHUTDOWN)
+		exitcode = Opdi->shutdownExitCode;
 
 	Opdi->logNormal(Opdi->appName + " exited with code " + Opdi->to_string(exitcode) + ": " + Opdi->getResultCodeText(exitcode));
 

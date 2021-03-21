@@ -433,6 +433,8 @@ int AbstractOpenHAT::startup(const std::vector<std::string>& args, const std::ma
 
 uint8_t AbstractOpenHAT::shutdownInternal(void) {
     this->pluginList.clear();
+
+    return OPDI::shutdownInternal();
 }
 
 void AbstractOpenHAT::lockResource(const std::string& resourceID, const std::string& lockerID) {
@@ -779,7 +781,7 @@ void AbstractOpenHAT::configurePort(ConfigurationView::Ptr portConfig, opdi::Por
 
     uint portPriority = portConfig->getUInt("Priority", this->defaultPortPriority);
     if (portPriority > 255)
-        throw Poco::InvalidArgumentException("Priority must not exceed 255", to_string(portPriority));
+        this->throwSettingException(port->ID() + "Priority must not exceed 255", to_string(portPriority));
 	port->setPriority(portPriority);
 
 	std::string portLabel = this->getConfigString(portConfig, port->ID(), "Label", port->getLabel(), false);

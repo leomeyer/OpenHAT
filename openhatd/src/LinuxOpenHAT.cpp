@@ -94,7 +94,7 @@ static uint8_t io_receive(void* info, uint8_t* byte, uint16_t timeout, uint8_t c
 				} else
 				// perhaps Ctrl+C
 				if (errno == EINTR) {
-					Opdi->shutdown(OPENHATD_INTERRUPTED);
+					Opdi->shutdown(0);
 				}
 				else {
 					printf("Error: %d\n", errno);
@@ -170,7 +170,7 @@ sendloop:
 			} else
 			// perhaps Ctrl+C
 			if (errno == EINTR) {
-				Opdi->shutdown(OPENHATD_INTERRUPTED);
+				Opdi->shutdown(0);
 			}
 			else {
 				linuxOpenHAT->logError(std::string("Socket send failed: " ) + strerror(errno));
@@ -376,9 +376,14 @@ int LinuxOpenHAT::setupTCP(const std::string& /*interface_*/, int port) {
 					uint8_t workResult = this->doWork(false, &sleepTimeMs);
 					if (workResult != OPDI_STATUS_OK)
 						return workResult;
+
+                    struct timespec aSleep;
+                    aSleep.tv_sec = 0;
+                    aSleep.tv_nsec = (sleepTimeMs > 0 ? sleepTimeMs : 1) * 1000000;  // at least 1 ms
+                    struct timespec aRem;
                     
-                    // sleep at least one ms
-                    usleep((sleepTimeMs > 0 ? sleepTimeMs : 1) * 1000);
+                    if (nanosleep(&aSleep, &aRem) != 0)
+                        Opdi->shutdown(0);
                 } else
 					this->logNormal(std::string("Error accepting connection: ") + this->to_string(errno));
 			} else {

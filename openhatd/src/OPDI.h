@@ -46,8 +46,6 @@ protected:
 	// used to remember internal ordering when adding ports
 	int currentOrderID;
 
-	int shutdownExitCode;
-
 	// list pointers
 	PortList ports;
 	PortGroupList groups;
@@ -55,12 +53,13 @@ protected:
 //	opdi::PortGroup *first_portGroup;
 //	opdi::PortGroup *last_portGroup;
 
-        typedef std::tuple<uint8_t, opdi::Port*> PortSchedule;
+        typedef std::tuple<uint64_t, opdi::Port*> PortSchedule;
         typedef std::vector<PortSchedule> PortSchedules;
         PortSchedules portSchedules;
 
 	uint32_t idle_timeout_ms;
 	uint64_t last_activity;
+        uint64_t last_work_time;
 
 	// internal shutdown function; to be called when messages can be sent to the master
 	// May return OPDI_STATUS_OK to cancel the shutdown. Any other value stops message processing.
@@ -83,6 +82,8 @@ public:
 	/// Flag that indicates that the OPDI system is being shutdown
 	///
 	bool shutdownRequested;
+        /// Exit code in case OPDI exits regularly
+	int shutdownExitCode;
 
 	/** Prepares the OPDI class for use.
 	 * You can override this method to implement your platform specific setup.

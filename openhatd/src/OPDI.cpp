@@ -48,7 +48,7 @@ uint8_t OPDI::shutdownInternal(void) {
 	}
 	this->ports.clear();
 	this->disconnect();
-	return this->shutdownExitCode;
+	return OPDI_SHUTDOWN;
 }
 
 OPDI::OPDI(void) {
@@ -319,7 +319,6 @@ uint8_t OPDI::start() {
 uint8_t OPDI::doWork(uint8_t canSend, uint8_t* sleepTimeMs) {
     *sleepTimeMs = 0;
 	if (this->shutdownRequested) {
-        this->shutdownRequested = false;
 		return this->shutdownInternal();
 	}
 
@@ -337,33 +336,38 @@ uint8_t OPDI::doWork(uint8_t canSend, uint8_t* sleepTimeMs) {
             // determine random priority to distribute load
             std::uniform_int_distribution<> distr(0, (*it)->getPriority()); // define the range
             uint8_t rndPriority = distr(gen);
-            PortSchedule ps(rndPriority, *it);
+            PortSchedule ps(opdi_get_time_ms() + rndPriority, *it);
             this->portSchedules.push_back(ps);
         }
         
         // sort by first element
         sort(this->portSchedules.begin(), this->portSchedules.end());
+        
+        last_work_time = opdi_get_time_ms();
     }
     
-    // go through port schedules, execute those that have current priority 0
+    last_work_time = opdi_get_time_ms();
+    
+    // go through port schedules
     for (auto& sched: this->portSchedules) {
         // needs to be executed?
-        if (std::get<0>(sched) == 0) {
-            uint8_t result = std::get<1>(sched)->doWork(canSend);
+        if (std::get<0>(sched) <= opdi_get_time_ms()) {
+            Port* port = std::get<1>(sched);
+            if (port->getLogVerbosity() > LogVerbosity::EXTREME)
+                this->logDebug(std::string("Executing doWork of port ") + port->getID());
+            uint8_t result = port->doWork(canSend);
             if (result != OPDI_STATUS_OK)
                 return result;
             // update priority after processing
-            std::get<0>(sched) = std::get<1>(sched)->getPriority();
-        } else
-            // decrease waiting time
-            std::get<0>(sched) -= 1;
+            std::get<0>(sched) = opdi_get_time_ms() + std::get<1>(sched)->getPriority();
+        }
     }
-   
-    // sort schedules
+    
+    // sort schedules by next start time
     sort(this->portSchedules.begin(), this->portSchedules.end());
     
-    // return suggested sleep time: time until the first port is to be executed
-    *sleepTimeMs = std::get<0>(this->portSchedules[0]);
+    // return suggested sleep time: time until the next port is to be executed
+    *sleepTimeMs = std::get<0>(this->portSchedules[0]) - opdi_get_time_ms();
 
 	return OPDI_STATUS_OK;
 }

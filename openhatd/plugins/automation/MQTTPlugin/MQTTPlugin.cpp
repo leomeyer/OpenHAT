@@ -66,6 +66,7 @@ protected:
 	bool valueSet;
 	uint64_t lastQueryTime;
 	int32_t queryInterval;
+	uint64_t timeoutCounter;
 public:
 	std::string pid;
 	
@@ -76,6 +77,7 @@ public:
 		this->valueSet = false;
 		this->lastQueryTime = 0;
 		this->queryInterval = 10;
+		this->timeoutCounter = 0;
 	};
 	
 	virtual void subscribe(mqtt::async_client *client) = 0;
@@ -361,6 +363,10 @@ void HG06337Switch::handle_payload(std::string payload) {
 		this->switchState = -1;
 		this->valueSet = true;
 	}
+	// reset query timer
+	this->lastQueryTime = opdi_get_time_ms();
+	// reset timeout counter
+	this->timeoutCounter = opdi_get_time_ms();
 }
 
 uint8_t HG06337Switch::doWork(uint8_t canSend) {
@@ -373,6 +379,16 @@ uint8_t HG06337Switch::doWork(uint8_t canSend) {
 	}
 
 	Poco::Mutex::ScopedLock lock(this->plugin->mutex);
+	
+	// no error?
+	if (this->switchState > -1) {
+		// error timeout reached without message?
+		if ((opdi_get_time_ms() - this->timeoutCounter) / 1000 > this->plugin->timeoutSeconds) {
+			// change to error state
+			this->switchState = -1;
+			this->setError(Error::VALUE_NOT_AVAILABLE);
+		}
+	}
 
 	// has a value been returned?
 	if (this->valueSet) {
@@ -608,7 +624,7 @@ void MQTTPlugin::errorOccurred(const std::string& message) {
 void MQTTPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const std::string& node, openhat::ConfigurationView::Ptr nodeConfig, openhat::ConfigurationView::Ptr parentConfig, const std::string& /*driverPath*/) {
 	this->openhat = abstractOpenHAT;
 	this->nodeID = node;
-	this->timeoutSeconds = 5;			// short timeout (assume local network)
+	this->timeoutSeconds = 30;	// time without received payloads until the devices go into error mode
 
 	this->errorCount = 0;
 

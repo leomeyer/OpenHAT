@@ -190,6 +190,7 @@ endif
 	cp -r ../testconfigs $(TARFOLDER)
 	@echo Preparing documentation folder...
 	mkdir -p $(TARFOLDER)/doc
+	mkdir -p ../openhatd-docs-$(VERSION)
 	cp -r ../openhatd-docs-$(VERSION)/* $(TARFOLDER)/doc/
 	find $(TARFOLDER)/doc/ -type f -name '*.vsdx' -exec rm {} \;
 	@echo Making tar...

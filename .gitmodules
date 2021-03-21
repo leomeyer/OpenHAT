@@ -24,3 +24,9 @@
 [submodule "openhatd/plugins/WebServerPlugin/webdocroot/opdi_assets"]
 	path = openhatd/plugins/WebServerPlugin/webdocroot/opdi_assets
 	url = https://github.com/leomeyer/opdi_assets.git
+[submodule "libraries/paho"]
+	path = libraries/paho.mqtt.cpp
+	url = https://github.com/eclipse/paho.mqtt.cpp.git
+[submodule "libraries/paho.mqtt.c"]
+	path = libraries/paho.mqtt.c
+	url = https://github.com/eclipse/paho.mqtt.c.git

@@ -165,7 +165,7 @@ else
 	md5sum openhatd-docs-$(VERSION).tar.gz > openhatd-docs-$(VERSION).tar.gz.md5
 endif
 
-release: docs plugins $(TARGET)
+release: plugins $(TARGET)
 	@echo Preparing tar folder...
 	mkdir -p $(TARFOLDER)
 	mkdir -p $(TARFOLDER)/bin

@@ -119,6 +119,7 @@
                    projectFiles="false"
                    kind="IMPORTANT_FILES_FOLDER">
       <itemPath>openhatd-Makefile.mk</itemPath>
+      <itemPath>plugins</itemPath>
       <itemPath>testconfigs</itemPath>
     </logicalFolder>
   </logicalFolder>

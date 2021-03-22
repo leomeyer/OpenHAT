@@ -49,6 +49,10 @@ class WebServerPlugin : public IOpenHATPlugin, public opdi::DigitalPort {
 	std::string ipACL;
 
 	std::string jsonRpcUrl;
+	
+	uint8_t oldPriority;
+	uint64_t accelTime;
+	uint32_t accelDuration;
 
 public:
 	WebServerPlugin(): opdi::DigitalPort("WebServerPlugin", OPDI_PORTDIRCAP_OUTPUT, 0), mgr() {
@@ -409,6 +413,10 @@ void WebServerPlugin::handleEvent(struct mg_connection* nc, int ev, void* p) {
 	
   	switch (ev) {
 		case MG_EV_HTTP_REQUEST:
+			// accelerate processing
+			this->priority = 5;
+			this->accelTime = opdi_get_time_ms();
+			
 			// prepare log message
 			char address[INET6_ADDRSTRLEN];
 			inet_ntop(nc->sa.sa.sa_family, get_in_addr(&nc->sa.sa), address, sizeof address);
@@ -564,7 +572,9 @@ void WebServerPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::
 	this->opdi = this->openhat = openhat;
 	this->setID(node.c_str());
 	this->setLabel(node.c_str());
-
+	this->oldPriority = this->priority;
+	this->accelDuration = 5000;	//ms
+	
 	openhat->configureDigitalPort(nodeConfig, this, false);
 	this->logVerbosity = openhat->getConfigLogVerbosity(nodeConfig, opdi::LogVerbosity::UNKNOWN);
 
@@ -640,6 +650,11 @@ uint8_t WebServerPlugin::doWork(uint8_t canSend) {
 	if (this->line == 1)
 		// call Mongoose work function
 		mg_mgr_poll(&this->mgr, 1);
+	
+	// reset priority if acceleration time is over
+	if (opdi_get_time_ms() - this->accelTime > this->accelDuration) {
+		this->priority = this->oldPriority;
+	}
 	
 	return OPDI_STATUS_OK;
 }

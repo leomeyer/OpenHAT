@@ -45,7 +45,7 @@ POCOLIBS = -lPocoUtil -lPocoNet -lPocoFoundation
 LIBS = -lpthread 
 
 # The compiler to be used.
-CC ?= g++
+CC = g++
 
 # List any extra directories to look for include files here.
 # Each directory must be separated by a space.
@@ -59,7 +59,7 @@ CDEFINES = -Dlinux
 
 # Compiler flags.
 CFLAGS = -Wall $(CDEFS) $(CINCS) -L $(POCOLIBPATH) $(CDEFINES)
-CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS)) -ggdb -O2 -std=c++11 -static-libstdc++
+CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS)) -ggdb -O2 -std=c++11 -static-libstdc++ -Wl,-z,defs -Wl,--as-needed
 
 OBJECTS = $(SRC)
 

@@ -432,6 +432,13 @@ int AbstractOpenHAT::startup(const std::vector<std::string>& args, const std::ma
 }
 
 uint8_t AbstractOpenHAT::shutdownInternal(void) {
+	// terminate and unload plugins
+	auto it = this->pluginList.begin();
+	auto ite = this->pluginList.end();
+	while (it != ite) {
+		(*it)->terminate();
+		++it;
+	}
     this->pluginList.clear();
 
     return OPDI::shutdownInternal();

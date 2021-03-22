@@ -36,6 +36,8 @@ struct IOpenHATPlugin {
 	/// driverPath is the actual resolved dynamic library path that has been used to load the plugin.
 	virtual void setupPlugin(openhat::AbstractOpenHAT* openHAT, const std::string& nodeName, openhat::ConfigurationView::Ptr nodeConfig, openhat::ConfigurationView::Ptr parentConfig, const std::string& driverPath) = 0;
 
+        virtual void terminate(void) {};
+        
 	// virtual destructor (called when the plugin is deleted)
 	virtual ~IOpenHATPlugin() {}
 };

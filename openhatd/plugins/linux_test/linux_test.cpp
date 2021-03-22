@@ -15,7 +15,7 @@ public:
 
 DigitalTestPort::DigitalTestPort() : opdi::DigitalPort("LinuxTestPluginPort", OPDI_PORTDIRCAP_OUTPUT, 0) {}
 
-void DigitalTestPort::setLine(uint8_t line, ChangeSource /*changeSource*/) {
+void DigitalTestPort::setLine(uint8_t line, ChangeSource changeSource) {
 	opdi::DigitalPort::setLine(line);
 
 	openhat::AbstractOpenHAT* openhat = (openhat::AbstractOpenHAT*)this->opdi;
@@ -39,7 +39,7 @@ public:
 };
 
 
-void LinuxTestOpenHATPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, openhat::ConfigurationView::Ptr nodeConfig, openhat::ConfigurationView::Ptr parentConfig, const std::string& /*driverPath*/) {
+void LinuxTestOpenHATPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, openhat::ConfigurationView::Ptr nodeConfig, openhat::ConfigurationView::Ptr parentConfig, const std::string& driverPath) {
 	this->openhat = openhat;
 
 	// add emulated test port

@@ -36,20 +36,9 @@ class action_listener : public virtual mqtt::iaction_listener
 	std::string name_;
 
 	void on_failure(const mqtt::token& tok) override {
-		std::cout << name_ << " failure";
-		if (tok.get_message_id() != 0)
-			std::cout << " for token: [" << tok.get_message_id() << "]" << std::endl;
-		std::cout << std::endl;
 	}
 
 	void on_success(const mqtt::token& tok) override {
-		std::cout << name_ << " success";
-		if (tok.get_message_id() != 0)
-			std::cout << " for token: [" << tok.get_message_id() << "]" << std::endl;
-		auto top = tok.get_topics();
-		if (top && !top->empty())
-			std::cout << "\ttoken topic: '" << (*top)[0] << "'" << std::endl;
-		std::cout << std::endl;
 	}
 
 public:
@@ -93,6 +82,7 @@ public:
 
 	enum ActionType {
 		QUERY,
+		RECONNECT
 	};
 
 	ActionType type;
@@ -154,13 +144,12 @@ protected:
 	
 	// callback implementation
 	void connection_lost(const std::string& cause) override {
-		this->openhat->logError(nodeID + ": Lost connection: " + cause);
-		this->client = nullptr;
+		this->openhat->logError(nodeID + ": Lost connection" + (cause.size() > 0 ? ": " + cause : ""));
+		queue.enqueueNotification(new ActionNotification(ActionNotification::RECONNECT, nullptr));
 	}
 
 	void on_failure(const mqtt::token& tok) override {
 		this->openhat->logError(nodeID + ": Connection attempt failed");
-		this->client = nullptr;
 	}
 
 	// (Re)connection success
@@ -169,13 +158,18 @@ protected:
 
 	// (Re)connection success
 	void connected(const std::string& cause) override {
-		this->openhat->logNormal(nodeID + ": Connection established");
+		this->openhat->logVerbose(nodeID + ": Connection established", this->logVerbosity);
+
+		// clear pending queries
+		this->queue.clear();
 		
 		// client is connected, subscribe ports to their topics
 		auto it = this->myPorts.begin();
 		auto ite = this->myPorts.end();
 		while (it != ite) {
 			(*it)->subscribe(client);
+			// post query notification
+			queue.enqueueNotification(new ActionNotification(ActionNotification::QUERY, *it));
 			++it;
 		}
 	}
@@ -186,7 +180,7 @@ protected:
 	}
 
 	void message_arrived(mqtt::const_message_ptr msg) override {
-		this->openhat->logDebug(this->nodeID + ": Message received, topic: '" + msg->get_topic() + "', payload: '" + msg->to_string() + "'");
+		this->openhat->logDebug(this->nodeID + ": Message received, topic: '" + msg->get_topic() + "', payload: '" + msg->to_string() + "'", this->logVerbosity);
 		
 		// distribute to the correct port
 		auto it = this->myPorts.begin();
@@ -231,6 +225,8 @@ protected:
 	
 	mqtt::async_client *client;
 	
+	bool terminateRequested;
+	
 	void publish(const std::string& topic, const std::string& payload);
 
 	void errorOccurred(const std::string& message);
@@ -240,10 +236,14 @@ public:
 
 	virtual void masterConnected(void) override;
 	virtual void masterDisconnected(void) override;
+	
+	bool is_connected(void);
 
 	virtual void run(void);
 
 	virtual void setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const std::string& node, openhat::ConfigurationView::Ptr nodeConfig, openhat::ConfigurationView::Ptr parentConfig, const std::string& driverPath) override;
+	
+	virtual void terminate(void) override;
 };
 
 ////////////////////////////////////////////////////////////////////////
@@ -332,22 +332,24 @@ HG06337Switch::HG06337Switch(MQTTPlugin* plugin, const std::string& id, const st
 
 void HG06337Switch::subscribe(mqtt::async_client *client) {
 	Poco::Mutex::ScopedLock lock(this->plugin->mutex);
-	try {
-		client->subscribe(this->topic, this->plugin->QOS, nullptr, this->listener);
-	}  catch (mqtt::exception& ex) {
-		this->plugin->openhat->logError(std::string(this->getID()) + ": Error subscribing to topic " + this->topic + ": " + ex.what());
-	}
+	if (client->is_connected())
+		try {
+			client->subscribe(this->topic, this->plugin->QOS, nullptr, this->listener);
+		}  catch (mqtt::exception& ex) {
+			this->plugin->openhat->logError(std::string(this->getID()) + ": Error subscribing to topic " + this->topic + ": " + ex.what());
+		}
 }
 
 void HG06337Switch::query(mqtt::async_client *client) {
-	this->plugin->openhat->logDebug(this->pid + ": Querying state");
+	this->plugin->openhat->logDebug(this->pid + ": Querying state", this->logVerbosity);
 	Poco::Mutex::ScopedLock lock(this->plugin->mutex);
-	try {
-		client->publish(this->topic + "/get", "{\"state\":\"\"}");
-	}  catch (mqtt::exception& ex) {
-		this->plugin->openhat->logError(std::string(this->getID()) + ": Error querying state: " + this->topic + ": " + ex.what());
+	if (client->is_connected())
+		try {
+			client->publish(this->topic + "/get", "{\"state\":\"\"}");
+		}  catch (mqtt::exception& ex) {
+			this->plugin->openhat->logError(std::string(this->getID()) + ": Error querying state: " + this->topic + ": " + ex.what());
+		}
 	}
-}
 
 void HG06337Switch::handle_payload(std::string payload) {
 	this->plugin->openhat->logDebug(this->pid + ": Payload received: '" + payload + "'");
@@ -372,13 +374,13 @@ void HG06337Switch::handle_payload(std::string payload) {
 uint8_t HG06337Switch::doWork(uint8_t canSend) {
 	opdi::DigitalPort::doWork(canSend);
 
+	Poco::Mutex::ScopedLock lock(this->plugin->mutex);
+
 	// time for refresh?
 	if (opdi_get_time_ms() - this->lastQueryTime > this->queryInterval * 1000) {
 		this->plugin->queue.enqueueNotification(new ActionNotification(ActionNotification::QUERY, this));
 		this->lastQueryTime = opdi_get_time_ms();
 	}
-
-	Poco::Mutex::ScopedLock lock(this->plugin->mutex);
 	
 	// no error?
 	if (this->switchState > -1) {
@@ -637,6 +639,7 @@ void MQTTPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const st
 	this->QOS = 1;
 	
 	this->client = nullptr;
+	this->terminateRequested = false;
 
 	// store main node's group (will become the default of ports)
 	std::string group = nodeConfig->getString("Group", "");
@@ -805,6 +808,10 @@ void MQTTPlugin::masterConnected() {
 void MQTTPlugin::masterDisconnected() {
 }
 
+bool MQTTPlugin::is_connected(void) {
+	return this->client != nullptr && this->client->is_connected();
+}
+
 void MQTTPlugin::run(void) {
 
 	this->openhat->logVerbose(this->nodeID + ": MQTTPlugin worker thread started", this->logVerbosity);
@@ -812,16 +819,23 @@ void MQTTPlugin::run(void) {
 //	sample_mem_persistence persist;
 	Callback callback(this);
 	
-	while (!this->openhat->shutdownRequested) {
+	while (!this->openhat->shutdownRequested && !this->terminateRequested) {
+		
+		// current client disconnected?
+		if (this->client != nullptr) {
+			if (!this->client->is_connected()) {
+				delete this->client;
+				this->client = nullptr;
+			}
+		}
 		
 		if (this->client == nullptr) {
-			this->openhat->logVerbose(this->nodeID + ": Initializing MQTT client", this->logVerbosity);
+			this->openhat->logDebug(this->nodeID + ": Initializing MQTT client", this->logVerbosity);
 			// try to connect to the server
 			std::string server_address = std::string("tcp://") + this->host + ":" + this->openhat->to_string(this->port);
 			this->client = new mqtt::async_client(server_address, this->openhat->getSlaveName());
 			
 			this->client->set_callback(callback);
-			//this->client->set_timeout(this->timeoutSeconds * 1000);
 			
 			mqtt::connect_options connOpts;
 			connOpts.set_keep_alive_interval(20);
@@ -831,54 +845,95 @@ void MQTTPlugin::run(void) {
 				this->openhat->logVerbose(this->nodeID + ": Connecting to MQTT server: " + server_address, this->logVerbosity);
 				mqtt::token_ptr cr = this->client->connect(connOpts);
 			} catch (const mqtt::exception& exc) {
-				this->openhat->logVerbose(this->nodeID + ": Error connecting to MQTT server " + server_address + ": " + exc.what(), this->logVerbosity);
-				delete client;
-				client = nullptr;
+				this->openhat->logError(this->nodeID + ": Error connecting to MQTT server " + server_address + ": " + exc.what());
+				delete this->client;
+				this->client = nullptr;
 			} catch (const std::exception& exc) {
-				this->openhat->logVerbose(this->nodeID + ": Error connecting to MQTT server " + server_address + ": " + exc.what(), this->logVerbosity);
-				delete client;
-				client = nullptr;
+				this->openhat->logError(this->nodeID + ": Error connecting to MQTT server " + server_address + ": " + exc.what());
+				delete this->client;
+				this->client = nullptr;
 			}
-			
-			if (client == nullptr) {
+			if (this->client == nullptr) {
 				// sleep and try again
                 struct timespec aSleep;
                 struct timespec aRem;
 				aSleep.tv_sec = 10;
 				aSleep.tv_nsec = 0;
 				nanosleep(&aSleep, &aRem);
-				break;
+			} else {
+				// wait until connection established or timeout up
+				uint64_t aTime = opdi_get_time_ms();
+				while ((opdi_get_time_ms() - aTime < this->timeoutSeconds * 1000)
+						&& !this->client->is_connected()) {
+					struct timespec aSleep;
+					struct timespec aRem;
+					aSleep.tv_sec = 0;
+					aSleep.tv_nsec = 1000000;
+					nanosleep(&aSleep, &aRem);
+				}
+				
+				// still not connected?
+				if (!this->client->is_connected()) {
+					this->openhat->logError(this->nodeID + ": Could not connect to MQTT server, retrying");
+					delete this->client;
+					this->client = nullptr;
+/*
+					// sleep and try again
+					struct timespec aSleep;
+					struct timespec aRem;
+					aSleep.tv_sec = 10;
+					aSleep.tv_nsec = 0;
+					nanosleep(&aSleep, &aRem);
+ * */
+				}
 			}
 		}
 
-		try {
-			Poco::Notification::Ptr notification = this->queue.waitDequeueNotification(100);
-			if (!this->openhat->shutdownRequested && notification) {
-				ActionNotification::Ptr workNf = notification.cast<ActionNotification>();
-				if (workNf) {
-					std::string action;
-					switch (workNf->type) {
-					case ActionNotification::QUERY: action = "QUERY"; break;
-					}
-					MQTTPort* port = (MQTTPort*)workNf->port;
-					this->openhat->logDebug(this->nodeID + ": MQTTPlugin processing requested action: " + action + " for port: " + port->pid, this->logVerbosity);
-					// inspect action and decide what to do
-					switch (workNf->type) {
-					case ActionNotification::QUERY: workNf->port->query(this->client); break;
+		if (this->client != nullptr && this->client->is_connected()) {
+			try {
+				Poco::Notification::Ptr notification = this->queue.waitDequeueNotification(100);
+				if (!this->openhat->shutdownRequested && notification) {
+					ActionNotification::Ptr workNf = notification.cast<ActionNotification>();
+					if (workNf) {
+						std::string action;
+						switch (workNf->type) {
+						case ActionNotification::QUERY: action = "QUERY"; break;
+						case ActionNotification::RECONNECT: action = "RECONNECT"; break;
+						}
+						MQTTPort* port = (MQTTPort*)workNf->port;
+						if (port == nullptr)
+							this->openhat->logDebug(this->nodeID + ": Processing requested action: " + action, this->logVerbosity);
+						else
+							this->openhat->logDebug(this->nodeID + ": Processing requested action: " + action + " for port: " + port->pid, this->logVerbosity);
+						// inspect action and decide what to do
+						switch (workNf->type) {
+						case ActionNotification::QUERY: 
+							if (this->client != nullptr && this->client->is_connected())
+								workNf->port->query(this->client); break;
+						case ActionNotification::RECONNECT:
+							break;
+						}
 					}
 				}
+			} catch (Poco::Exception &e) {
+				this->openhat->logNormal(this->nodeID + ": Unhandled exception in worker thread: " + this->openhat->getExceptionMessage(e), this->logVerbosity);
 			}
-		} catch (Poco::Exception &e) {
-			this->openhat->logNormal(this->nodeID + ": Unhandled exception in worker thread: " + this->openhat->getExceptionMessage(e), this->logVerbosity);
 		}
 	}
 	
 	if (this->client != nullptr && this->client->is_connected()) {
 		this->client->disconnect();
+		delete this->client;
 		this->client = nullptr;
 	}
 
 	this->openhat->logVerbose(this->nodeID + ": MQTTPlugin worker thread terminated", this->logVerbosity);
+}
+
+void MQTTPlugin::terminate() {
+	this->terminateRequested = true;
+	while (this->workThread.isRunning())
+		Poco::Thread::current()->yield();
 }
 
 // plugin instance factory function

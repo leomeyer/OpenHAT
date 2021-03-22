@@ -382,8 +382,10 @@ int LinuxOpenHAT::setupTCP(const std::string& /*interface_*/, int port) {
                     aSleep.tv_nsec = (sleepTimeMs > 0 ? sleepTimeMs : 1) * 1000000;  // at least 1 ms
                     struct timespec aRem;
                     
-                    if (nanosleep(&aSleep, &aRem) != 0)
+                    if (nanosleep(&aSleep, &aRem) != 0) {
                         Opdi->shutdown(0);
+						return OPDI_SHUTDOWN;
+					}
                 } else
 					this->logNormal(std::string("Error accepting connection: ") + this->to_string(errno));
 			} else {
@@ -417,12 +419,12 @@ IOpenHATPlugin* LinuxOpenHAT::getPlugin(const std::string& driver) {
 	std::string lDriver(driver);
 	if (lDriver.find(".so") != lDriver.length() - 3)
 		lDriver.append(".so");
-
+	
 	this->logDebug("Trying to load plugin shared library: " + lDriver);
 
 	this->warnIfPluginMoreRecent(lDriver);
 
-	void* hndl = dlopen(lDriver.c_str(), RTLD_NOW);
+	void* hndl = dlopen(lDriver.c_str(), RTLD_LAZY);
 	if (hndl == NULL){
 		throw Poco::FileException("Could not load the plugin library", dlerror());
 	}
@@ -439,6 +441,7 @@ IOpenHATPlugin* LinuxOpenHAT::getPlugin(const std::string& driver) {
 		dlclose(hndl);
 		throw Poco::ApplicationException("Invalid plugin library; could not locate function 'GetPluginInstance' in " + lDriver, lasterror);
 	}
+	
 
 	// call the library function to get the plugin instance
 	return ((IOpenHATPlugin* (*)(int, int, int))(getPluginInstance))(this->majorVersion, this->minorVersion, this->patchVersion);

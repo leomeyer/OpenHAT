@@ -108,6 +108,10 @@ protected:
 	/// extended info string.
 	std::string unit;
 
+	/// The color scheme specification of the port. Is sent to the master as part of the
+	/// extended info string.
+	std::string colorScheme;
+
 	/// The icon specification of the port. Is sent to the master as part of the
 	/// extended info string.
 	std::string icon;
@@ -459,6 +463,14 @@ public:
 	/// Returns the unit of the port.
 	///
 	const std::string& getUnit(void) const;
+
+	/// Sets the color scheme of the port.
+	/// The color scheme is a specification that needs to be correctly interpreted by a GUI.
+	void setColorScheme(const std::string& colorScheme);
+
+	/// Returns the color scheme of the port.
+	///
+	const std::string& getColorScheme(void) const;
 
 	/// Sets the icon of the port.
 	/// The icon is an identifier that needs to be correctly interpreted by a GUI.

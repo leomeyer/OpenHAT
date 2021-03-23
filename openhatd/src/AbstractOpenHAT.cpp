@@ -842,6 +842,10 @@ void AbstractOpenHAT::configurePort(ConfigurationView::Ptr portConfig, opdi::Por
 	if (unit != "") {
 		port->setUnit(unit);
 	}
+	std::string colorScheme = this->getConfigString(portConfig, port->ID(), "ColorScheme", "", false);
+	if (colorScheme != "") {
+		port->setColorScheme(colorScheme);
+	}
 	std::string icon = this->getConfigString(portConfig, port->ID(), "Icon", "", false);
 	if (icon != "") {
 		port->setIcon(icon);

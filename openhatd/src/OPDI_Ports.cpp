@@ -238,6 +238,9 @@ void Port::updateExtendedInfo(void) {
 	if (this->unit.size() > 0) {
 		exInfo += "unit=" + escapeKeyValueText(this->unit) + ";";
 	}
+	if (this->colorScheme.size() > 0) {
+		exInfo += "colorScheme=" + escapeKeyValueText(this->unit) + ";";
+	}
 	if (this->icon.size() > 0) {
 		exInfo += "icon=" + escapeKeyValueText(this->icon) + ";";
 	}
@@ -253,8 +256,21 @@ void Port::setUnit(const std::string& unit) {
 	}
 }
 
-const std::string & Port::getUnit(void) const {
+const std::string& Port::getUnit(void) const {
 	return this->unit;
+}
+
+void Port::setColorScheme(const std::string& cs) {
+	if (this->colorScheme != cs) {
+		this->colorScheme = cs;
+		this->updateExtendedInfo();
+		if (this->opdi != nullptr)
+			this->opdi->updatePortData(this);
+	}
+}
+
+const std::string& Port::getColorScheme(void) const {
+	return this->colorScheme;
 }
 
 void Port::setIcon(const std::string& icon) {

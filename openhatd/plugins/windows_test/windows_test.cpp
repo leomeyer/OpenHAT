@@ -30,7 +30,7 @@ protected:
 	openhat::AbstractOpenHAT* openhat;
 
 public:
-	virtual void setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const std::string& node, openhat::ConfigurationView* nodeConfig, openhat::ConfigurationView* parentConfig, const std::string& driverPath) override;
+	virtual void setupPlugin(openhat::AbstractOpenHAT* openHAT, const std::string& nodeName, openhat::ConfigurationView::Ptr nodeConfig, openhat::ConfigurationView::Ptr parentConfig, const std::string& driverPath) override;
 
 	virtual void masterConnected(void) override;
 	virtual void masterDisconnected(void) override;
@@ -39,8 +39,8 @@ public:
 }	// end anonymous namespace
 
 
-void WindowsTestPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const std::string& node, openhat::ConfigurationView* nodeConfig, openhat::ConfigurationView* parentConfig, const std::string& driverPath) {
-	this->openhat = abstractOpenHAT;
+void WindowsTestPlugin::setupPlugin(openhat::AbstractOpenHAT* openHAT, const std::string& nodeName, openhat::ConfigurationView::Ptr nodeConfig, openhat::ConfigurationView::Ptr parentConfig, const std::string& driverPath) {
+	this->openhat = openHAT;
 
 	// get port type
 	std::string portType = nodeConfig->getString("Type", "");
@@ -48,14 +48,14 @@ void WindowsTestPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, c
 	if (portType == "DigitalPort") {
 		// add test port
 		DigitalTestPort* port = new DigitalTestPort();
-		abstractOpenHAT->configureDigitalPort(nodeConfig, port);
-		abstractOpenHAT->addPort(port);
+		this->openhat->configureDigitalPort(nodeConfig, port);
+		this->openhat->addPort(port);
 	} else
 		this->openhat->throwSettingException("This plugin supports only node type 'DigitalPort'", portType);
 
 	this->openhat->addConnectionListener(this);
 
-	this->openhat->logVerbose("WindowsTestPlugin setup completed successfully as node " + node);
+	this->openhat->logVerbose("WindowsTestPlugin setup completed successfully as node " + nodeName);
 }
 
 void WindowsTestPlugin::masterConnected() {

@@ -14,21 +14,21 @@
     <ProjectGuid>{DADABACD-C0D5-4F75-8490-0A43D377F911}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>WebServerPlugin</RootNamespace>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -56,7 +56,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;WINDOWS_TEST_EXPORTS;POCO_STATIC;_WINSOCK_DEPRECATED_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../../../opdi_core/code/c/common;../../../opdi_core/code/c/platforms;../../../opdi_core/code/c/platforms/win32;../../../opdi_core/code/c/libraries/POCO/Foundation/include;../../../opdi_core/code/c/libraries/POCO/Util/include;../../../opdi_core/code/c/libraries/POCO/JSON/include;../../../libraries/Mongoose;../../../opdi_core/code/c/common/cppwrapper;../../src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../../opdi_core/code/c/common;../../../opdi_core/code/c/platforms;../../../opdi_core/code/c/platforms/win32;../../../opdi_core/code/c/libraries/POCO/Foundation/include;../../../opdi_core/code/c/libraries/POCO/Util/include;../../../opdi_core/code/c/libraries/POCO/Net/include;../../../opdi_core/code/c/libraries/POCO/JSON/include;../../../libraries/Mongoose;../../../opdi_core/code/c/common/cppwrapper;../../src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4297</DisableSpecificWarnings>
     </ClCompile>
     <Link>
@@ -75,7 +75,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;WINDOWS_TEST_EXPORTS;POCO_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../../../opdi_core/code/c/common;../../../opdi_core/code/c/platforms;../../../opdi_core/code/c/platforms/win32;../../../opdi_core/code/c/libraries/POCO/Foundation/include;../../../opdi_core/code/c/libraries/POCO/Util/include;../../../opdi_core/code/c/libraries/POCO/JSON/include;../../../libraries/Mongoose;../../../opdi_core/code/c/common/cppwrapper;../../src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../../opdi_core/code/c/common;../../../opdi_core/code/c/platforms;../../../opdi_core/code/c/platforms/win32;../../../opdi_core/code/c/libraries/POCO/Foundation/include;../../../opdi_core/code/c/libraries/POCO/Util/include;../../../opdi_core/code/c/libraries/POCO/Net/include;../../../opdi_core/code/c/libraries/POCO/JSON/include;../../../libraries/Mongoose;../../../opdi_core/code/c/common/cppwrapper;../../src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>

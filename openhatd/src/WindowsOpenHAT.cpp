@@ -57,9 +57,11 @@ static uint8_t io_receive(void* info, uint8_t* byte, uint16_t timeout, uint8_t c
 	while (1) {
 		// call work function
 		if (canSend) {
-			uint8_t waitResult = Opdi->waiting(canSend);
+			uint8_t sleepTimeMs;
+			uint8_t waitResult = Opdi->doWork(canSend, &sleepTimeMs);
 			if (waitResult != OPDI_STATUS_OK)
 				return waitResult;
+			Sleep(sleepTimeMs);
 		}
 
 		if (connection_mode == MODE_TCP) {
@@ -285,18 +287,13 @@ int WindowsOpenHAT::setupTCP(const std::string& interface_, int port) {
 			if (csock == INVALID_SOCKET) {
 				int lastError = WSAGetLastError();
 				if (lastError == WSAEWOULDBLOCK) {
+					uint8_t sleepTimeMs;
 					// not yet connected; process housekeeping regularly
-					uint8_t waitResult = this->waiting(false);
+					uint8_t waitResult = this->doWork(false, &sleepTimeMs);
 					if (waitResult != OPDI_STATUS_OK)
 						return waitResult;
 
-					// The minimum time to sleep in Windows is one millisecond. However, the actual time
-					// that the thread spends sleeping may be much higher.
-					// On Linux there's a rather intricate mechanism to adjust sleep time to achieve a
-					// certain configured number of "frames" per second. On Windows, as there is no
-					// sub-millisecond sleep function and granularity would be far too coarse, we just
-					// sleep for a ms and ignore the specified fps setting (at least for now).
-					Sleep(1);
+					Sleep(sleepTimeMs);
 				} else 
 					this->logError(std::string("Error accepting connection: ") + this->to_string(lastError));
 			} else {

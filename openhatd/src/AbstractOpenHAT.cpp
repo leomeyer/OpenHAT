@@ -567,7 +567,7 @@ std::string AbstractOpenHAT::setupGeneralConfiguration(ConfigurationView::Ptr co
 
 	this->allowHiddenPorts = general->getBool("AllowHidden", true);
         
-    uint portPriority = general->getUInt("PortPriority", opdi::DEFAULT_PORT_PRIORITY);
+    uint8_t portPriority = general->getUInt("PortPriority", opdi::DEFAULT_PORT_PRIORITY);
     if (portPriority > 255)
         throw Poco::InvalidArgumentException("PortPriority must not exceed 255", to_string(portPriority));
     this->defaultPortPriority = portPriority;
@@ -786,7 +786,7 @@ void AbstractOpenHAT::configurePort(ConfigurationView::Ptr portConfig, opdi::Por
 	// ports can be persistent
 	port->setPersistent(portConfig->getBool("Persistent", port->isPersistent()));
 
-    uint portPriority = portConfig->getUInt("Priority", this->defaultPortPriority);
+    uint8_t portPriority = portConfig->getUInt("Priority", this->defaultPortPriority);
     if (portPriority > 255)
         this->throwSettingException(port->ID() + "Priority must not exceed 255", to_string(portPriority));
 	port->setPriority(portPriority);

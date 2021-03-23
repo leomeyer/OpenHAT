@@ -17,7 +17,9 @@
 #include <algorithm>    // std::sort
 #include <unordered_set>
 #include <random>
+#ifdef LINUX
 #include <bits/stdc++.h> 
+#endif
 
 #include "opdi_constants.h"
 #include "opdi_protocol.h"

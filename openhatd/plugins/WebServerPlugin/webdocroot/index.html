@@ -297,13 +297,19 @@ var Port = Class.extend({
         this.unit = null;
         if (typeof this.extendedInfo.unit != "undefined") {
             this.unit = getUnitSettings(this.extendedInfo.unit);
-		}
+	}
         this.groupID = this.extendedInfo.group;
         this.extendedState = getProperties(port.extendedState);
+	// console.log(this.extendedState);
         this.history = null;
+	this.inaccurate = false;
         if (typeof this.extendedState.history != "undefined") {
             this.history = getProperties(this.extendedState.history);
         }
+	if (typeof this.extendedState.inaccurate != "undefined") {
+		this.inaccurate = getProperties(this.extendedState.inaccurate);
+		// console.log("Port " + this.id + " is inaccurate");
+	}
     },
 
     refresh: function() {
@@ -531,7 +537,9 @@ var AnalogPort = Port.extend({
         this.port.noRefresh = true;
         $("#Port_" + this.port.id + "_Slider").slider("value", this.port.state.value);
         this.port.noRefresh = false;
-        $("#Port_" + this.port.id + "_Value").html("<nobr>" + this.getPortValue());
+        $("#Port_" + this.port.id + "_Value").html("<nobr>" 
+		+ (this.inaccurate ? "<span style=\"opacity: 0.5;\">" : "")
+		+ this.getPortValue());
     },
 
     sliderChanged: function() {
@@ -653,14 +661,18 @@ var DialPort = Port.extend({
                             // fallback content
                             + this.createLabel() + "</canvas></td><td width='5px'>&nbsp;</td><td width='"+ this.getMaxLengthInPixels([this.port.min, this.port.max]) + "'>"
                     )
-                    + "<div class='DialPortState' id='Port_" + this.port.id + "_Value'><nobr>" + this.getPortValue() + "</div></td>"
+                    + "<div class='DialPortState' id='Port_" + this.port.id + "_Value'><nobr>" 
+			+ (this.inaccurate ? "<span style=\"opacity: 0.5;\">" : "")
+			+ this.getPortValue() + "</div></td>"
                 // with slider, standard appearance
                 : "<td align='left'><table width='" + (portWidgetWidth - 100) + "px'>"
                 + "<tr><td>" + this.createLabel() + "</td></tr>"
                 + "<tr><td class='PortState'><div id='Port_" + this.port.id + "_Slider'></div></td>"
                 + "<td width='5px'>&nbsp;</td>"
                 + "<td width='"+ this.getMaxLengthInPixels([this.port.min, this.port.max]) + "'>"
-                    + "<div class='DialPortState' id='Port_" + this.port.id + "_Value'><nobr>" + this.getPortValue() + "</div></td><tr>"
+                    + "<div class='DialPortState' id='Port_" + this.port.id + "_Value'><nobr>"
+			+ (this.inaccurate ? "<span style=\"opacity: 0.5;\">" : "")
+			+ this.getPortValue() + "</div></td><tr>"
                 + "</table></td>")
         + "</tr></table></div>", 1, 1];
 
@@ -688,7 +700,7 @@ var DialPort = Port.extend({
                 // for the non-two-rows layout, draw the canvas
                 var canvas = document.getElementById("Port_" + this.port.id + "_Canvas");
                 if (canvas.getContext) {
-					var title = "";
+			var title = "";
                     var ctx = canvas.getContext('2d');
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
                     // draw background if history available
@@ -807,11 +819,13 @@ var DialPort = Port.extend({
                         }
                         ctx.stroke();
                     }
-					canvas.title = title;
+			canvas.title = title;
                 }
             }
         }
-        $("#Port_" + this.port.id + "_Value").html("<nobr>" + this.getPortValue());
+        $("#Port_" + this.port.id + "_Value").html("<nobr>" 
+		+ (this.inaccurate ? "<span style=\"opacity: 0.5;\">" : "")
+		+ this.getPortValue());
     },
 
     setPosition: function(newPosition) {
@@ -1081,7 +1095,9 @@ var SelectPort = Port.extend({
     updateUI: function(port) {
         this._super(port);
         $("#Port_" + this.port.id + "_Icon").attr("src", this.getPortIconSrc());
-        $("#Port_" + this.port.id + "_Position").html("<nobr>" + this.getPositionText());
+        $("#Port_" + this.port.id + "_Position").html("<nobr>" 
+		+ (this.inaccurate ? "<span style=\"opacity: 0.5;\">" : "")
+		+ this.getPositionText());
     },
 
     showMenu: function(ev) {

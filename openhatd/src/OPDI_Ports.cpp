@@ -239,7 +239,7 @@ void Port::updateExtendedInfo(void) {
 		exInfo += "unit=" + escapeKeyValueText(this->unit) + ";";
 	}
 	if (this->colorScheme.size() > 0) {
-		exInfo += "colorScheme=" + escapeKeyValueText(this->unit) + ";";
+		exInfo += "colorScheme=" + escapeKeyValueText(this->colorScheme) + ";";
 	}
 	if (this->icon.size() > 0) {
 		exInfo += "icon=" + escapeKeyValueText(this->icon) + ";";

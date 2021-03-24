@@ -1425,8 +1425,6 @@ void FilePort::configure(ConfigurationView::Ptr config, ConfigurationView::Ptr p
 
 	this->filePath = this->openhat->resolveRelativePath(config, this->ID(), openhat->getConfigString(config, this->ID(), "File", "", true), "Config");
 
-  this->openhat->println("FilePort: filePath = " + this->filePath);
-
 	// read port node, create configuration view and setup the port according to the specified type
 	std::string portNode = openhat->getConfigString(config, this->ID(), "PortNode", "", true);
 	Poco::AutoPtr<ConfigurationView> nodeConfig = this->openhat->createConfigView(parentConfig, portNode);
@@ -1464,6 +1462,9 @@ void FilePort::configure(ConfigurationView::Ptr config, ConfigurationView::Ptr p
 		this->openhat->throwSettingException(this->ID() + ": Node " + portNode + ": Type unsupported, expected 'DigitalPort', 'AnalogPort', 'DialPort', 'SelectPort', or 'StreamingPort': " + portType);
 
 	this->openhat->addPort(this->valuePort);
+	
+	// set initial error: unavailable
+	this->valuePort->setError(Error::VALUE_NOT_AVAILABLE);
 
 	// if the port is not read-only, we react to state changes
 	if (!this->valuePort->isReadonly()) {
@@ -1544,9 +1545,9 @@ AggregatorPort::Calculation::Calculation(std::string id) : opdi::DialPort(id.c_s
 }
 
 void AggregatorPort::Calculation::calculate(AggregatorPort* aggregator) {
-	aggregator->logExtreme("Calculating new value");
+	aggregator->logExtreme(std::string(aggregator->getID()) + ": Calculating new value");
 	if ((aggregator->values.size() < aggregator->totalValues) && !this->allowIncomplete)
-		aggregator->logDebug("Cannot compute result because not all values have been collected and AllowIncomplete is false");
+		aggregator->logDebug(std::string(aggregator->getID()) + ": Cannot compute result because not all values have been collected and AllowIncomplete is false");
 	else {
 		// copy values, multiply if necessary
 		std::vector<int64_t> values = aggregator->values;
@@ -1556,21 +1557,30 @@ void AggregatorPort::Calculation::calculate(AggregatorPort* aggregator) {
 		switch (this->algorithm) {
 		case DELTA: {
 			int64_t newValue = values.at(values.size() - 1) - values.at(0);
-			aggregator->logDebug(std::string() + "New value according to Delta algorithm: " + this->to_string(newValue));
-			if ((newValue >= this->getMin()) && (newValue <= this->getMax()))
+			// needs interpolation?
+			bool interpolated = false;
+			if (values.size() < aggregator->totalValues) {
+				aggregator->logDebug(std::string(aggregator->getID()) + ": Value requires interpolation");
+				newValue = (double)newValue / values.size() * aggregator->totalValues;
+				interpolated = true;
+			}
+			aggregator->logDebug(std::string(aggregator->getID()) + ": New value according to Delta algorithm: " + this->to_string(newValue));
+			if ((newValue >= this->getMin()) && (newValue <= this->getMax())) {
 				this->setPosition(newValue);
+				this->setInaccurate(interpolated);
+			}
 			else
-				aggregator->logWarning(std::string() + "Cannot set new position: Calculated delta value is out of range: " + this->to_string(newValue));
+				aggregator->logWarning(std::string(aggregator->getID()) + ": Cannot set new position: Calculated delta value is out of range: " + this->to_string(newValue));
 			break;
 		}
 		case ARITHMETIC_MEAN: {
 			int64_t sum = std::accumulate(values.begin(), values.end(), (int64_t)0);
 			int64_t mean = sum / values.size();
-			aggregator->logDebug(std::string() + "New value according to ArithmeticMean algorithm: " + this->to_string(mean));
+			aggregator->logDebug(std::string(aggregator->getID()) + ": New value according to ArithmeticMean algorithm: " + this->to_string(mean));
 			if ((mean >= this->getMin()) && (mean <= this->getMax()))
 				this->setPosition(mean);
 			else
-				aggregator->logWarning(std::string() + "Cannot set new position: Calculated average value is out of range: " + this->to_string(mean));
+				aggregator->logWarning(std::string(aggregator->getID()) + ": Cannot set new position: Calculated average value is out of range: " + this->to_string(mean));
 			break;
 		}
 		case MINIMUM: {
@@ -1578,11 +1588,11 @@ void AggregatorPort::Calculation::calculate(AggregatorPort* aggregator) {
 			if (minimum == values.end())
 				this->setError(Error::VALUE_NOT_AVAILABLE);
 			int64_t min = *minimum;
-			aggregator->logDebug(std::string() + "New value according to Minimum algorithm: " + this->to_string(min));
+			aggregator->logDebug(std::string(aggregator->getID()) + ": New value according to Minimum algorithm: " + this->to_string(min));
 			if ((min >= this->getMin()) && (min <= this->getMax()))
 				this->setPosition(min);
 			else
-				aggregator->logWarning(std::string() + "Cannot set new position: Calculated minimum value is out of range: " + this->to_string(min));
+				aggregator->logWarning(std::string(aggregator->getID()) + ": Cannot set new position: Calculated minimum value is out of range: " + this->to_string(min));
 			break;
 		}
 		case MAXIMUM: {
@@ -1590,15 +1600,15 @@ void AggregatorPort::Calculation::calculate(AggregatorPort* aggregator) {
 			if (maximum == values.end())
 				this->setError(Error::VALUE_NOT_AVAILABLE);
 			int64_t max = *maximum;
-			aggregator->logDebug(std::string() + "New value according to Maximum algorithm: " + this->to_string(max));
+			aggregator->logDebug(std::string(aggregator->getID()) + ": New value according to Maximum algorithm: " + this->to_string(max));
 			if ((max >= this->getMin()) && (max <= this->getMax()))
 				this->setPosition(max);
 			else
-				aggregator->logWarning(std::string() + "Cannot set new position: Calculated minimum value is out of range: " + this->to_string(max));
+				aggregator->logWarning(std::string(aggregator->getID()) + ": Cannot set new position: Calculated minimum value is out of range: " + this->to_string(max));
 			break;
 		}
 		default:
-			throw Poco::ApplicationException("Algorithm not supported");
+			throw Poco::ApplicationException(std::string(aggregator->getID()) + ": Algorithm not supported");
 		}
 	}
 }
@@ -1925,7 +1935,7 @@ void AggregatorPort::configure(ConfigurationView::Ptr config, ConfigurationView:
 
 		if (algStr == "Delta") {
 			calc->algorithm = DELTA;
-			calc->allowIncomplete = false;
+			calc->allowIncomplete = true;
 		} else
 		if (algStr == "ArithmeticMean" || algStr == "Average") {
 			calc->algorithm = ARITHMETIC_MEAN;

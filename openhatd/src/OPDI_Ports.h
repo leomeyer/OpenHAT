@@ -128,6 +128,9 @@ protected:
 	/// extended state string.
 	std::string history;
 
+        /// Indicates that the value of this port may not be accurate (extended port state).
+        bool inaccurate;    
+
 	/// Pointer to OPDI class instance.
 	OPDI* opdi;
 
@@ -501,10 +504,14 @@ public:
 	/// Clears the port history.
 	///
 	void clearHistory(void);
+        
+        bool isInaccurate(void) const;
+        
+        void setInaccurate(bool inaccurate);
 
 	/// Returns the extended state of the port.
 	/// The extended state is a set of name=value pairs.
-	virtual std::string getExtendedState(void) const;
+	virtual std::string getExtendedState(bool withHistory = false) const;
 
 	/// Returns the extended info of the port.
 	/// The extended state is a set of name=value pairs.

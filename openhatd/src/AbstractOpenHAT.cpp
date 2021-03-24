@@ -567,7 +567,7 @@ std::string AbstractOpenHAT::setupGeneralConfiguration(ConfigurationView::Ptr co
 
 	this->allowHiddenPorts = general->getBool("AllowHidden", true);
         
-    uint8_t portPriority = general->getUInt("PortPriority", opdi::DEFAULT_PORT_PRIORITY);
+    uint32_t portPriority = general->getUInt("PortPriority", opdi::DEFAULT_PORT_PRIORITY);
     if (portPriority > 255)
         throw Poco::InvalidArgumentException("PortPriority must not exceed 255", to_string(portPriority));
     this->defaultPortPriority = portPriority;
@@ -680,7 +680,7 @@ std::string AbstractOpenHAT::resolveRelativePath(ConfigurationView::Ptr config, 
 		Poco::Path absPath(filePath.absolute());
 		// absolute path specified?
 		if (filePath.toString() == absPath.toString()) {
-			this->logWarning("Path specified as relative to Plugin, but absolute path given: '" + path + "'");
+			//this->logWarning("Path specified as relative to Plugin, but absolute path given: '" + path + "'");
 			return absPath.toString();
 		}
 		// determine plugin-relative path depending on location of plugin file
@@ -700,7 +700,7 @@ std::string AbstractOpenHAT::resolveRelativePath(ConfigurationView::Ptr config, 
 		Poco::Path absPath(filePath.absolute());
 		// absolute path specified?
 		if (filePath.toString() == absPath.toString()) {
-			this->logWarning("Path specified as relative to Config, but absolute path given: '" + path + "'");
+			//this->logWarning("Path specified as relative to Config, but absolute path given: '" + path + "'");
 			return absPath.toString();
 		}
 		// determine configuration-relative path depending on location of previous config file
@@ -787,8 +787,8 @@ void AbstractOpenHAT::configurePort(ConfigurationView::Ptr portConfig, opdi::Por
 	port->setPersistent(portConfig->getBool("Persistent", port->isPersistent()));
 
     uint8_t portPriority = portConfig->getUInt("Priority", this->defaultPortPriority);
-    if (portPriority > 255)
-        this->throwSettingException(port->ID() + "Priority must not exceed 255", to_string(portPriority));
+	if (portPriority > 255)
+		this->throwSettingException(port->ID() + "Priority must not exceed 255", to_string(portPriority));
 	port->setPriority(portPriority);
 
 	std::string portLabel = this->getConfigString(portConfig, port->ID(), "Label", port->getLabel(), false);

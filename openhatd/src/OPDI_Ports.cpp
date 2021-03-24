@@ -52,8 +52,8 @@ Port::Port(const char* id, const char* type) {
 	this->persistent = false;
 	this->error = Error::VALUE_OK;
 	this->logVerbosity = LogVerbosity::UNKNOWN;
-        this->priority = DEFAULT_PORT_PRIORITY;
-
+	this->priority = DEFAULT_PORT_PRIORITY;
+	this->inaccurate = false;
 	this->setID(id);
 	this->setLabel(id);
 	this->type[0] = type[0];
@@ -325,6 +325,14 @@ void Port::clearHistory(void) {
 		this->refreshRequired = true;
 }
 
+bool Port::isInaccurate(void) const {
+	return this->inaccurate;
+}
+
+void Port::setInaccurate(bool inaccurate) {
+	this->inaccurate = inaccurate;
+}
+
 std::string Port::getExtendedInfo() const {
 	return this->extendedInfo;
 }
@@ -338,11 +346,15 @@ LogVerbosity Port::getLogVerbosity(void) const {
 	return this->logVerbosity;
 }
 
-std::string Port::getExtendedState() const {
-	if (this->history.empty())
+std::string Port::getExtendedState(bool withHistory) const {
+	if (this->error != Error::VALUE_OK)
 		return "";
-	else
-		return "history=" + this->escapeKeyValueText(history);
+	std::string result;
+	if (withHistory && !this->history.empty())
+		result += "history=" + this->escapeKeyValueText(history);
+	if (this->inaccurate)
+		result += (result.size() > 0 ? std::string(";") : std::string("")) + "inaccurate=true";
+	return result;
 }
 
 std::string Port::escapeKeyValueText(const std::string& str) const {

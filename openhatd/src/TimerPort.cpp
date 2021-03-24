@@ -846,8 +846,8 @@ void TimerPort::setLine(uint8_t line, ChangeSource changeSource) {
 	this->refreshRequired = true;
 }
 
-std::string TimerPort::getExtendedState(void) const {
-	std::string result = DigitalPort::getExtendedState();
+std::string TimerPort::getExtendedState(bool withHistory) const {
+	std::string result = DigitalPort::getExtendedState(withHistory);
 	std::string myText;
 	if (this->line != 1) {
 		myText = this->deactivatedText;

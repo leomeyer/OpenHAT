@@ -221,7 +221,7 @@ namespace openhat {
 
 		virtual void prepare() override;
 
-		virtual std::string getExtendedState(void) const override;
+		virtual std::string getExtendedState(bool withHistory = false) const override;
 	};
 
 }		// namespace openhat

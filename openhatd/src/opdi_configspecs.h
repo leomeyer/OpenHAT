@@ -67,7 +67,7 @@ extern "C" {
 
 // extended protocol info buffer (on stack)
 // used for extended device info and extended port state
-#define OPDI_EXTENDED_INFO_LENGTH		64
+#define OPDI_EXTENDED_INFO_LENGTH		4096
 
 /** Defines the block size of data for encryption. Depends on the encryption implementation.
 *   Data is always sent to the encrypt_block function in blocks of this size. If necessary, it is

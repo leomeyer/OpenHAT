@@ -9,8 +9,10 @@
         <group>
             <file>file:/home/leo/openhat/openhatd/plugins/linux_test/linux_test.cpp</file>
             <file>file:/home/leo/openhat/openhatd/src/OPDI.h</file>
+            <file>file:/home/leo/openhat/opdi_core/code/c/common/opdi_slave_protocol.c</file>
             <file>file:/home/leo/openhat/openhatd/plugins/automation/MQTTPlugin/MQTTPlugin.cpp</file>
             <file>file:/home/leo/openhat/opdi_core/code/c/common/opdi_constants.h</file>
+            <file>file:/home/leo/openhat/openhatd/plugins/WebServerPlugin/WebServerPlugin.cpp</file>
             <file>file:/home/leo/openhat/openhatd/src/OPDI_Ports.cpp</file>
             <file>file:/home/leo/openhat/openhatd/plugins/automation/FritzBoxPlugin/FritzBoxPlugin.cpp</file>
             <file>file:/home/leo/openhat/openhatd/src/LinuxOpenHAT.cpp</file>
@@ -21,6 +23,7 @@
             <file>file:/home/leo/openhat/openhatd/src/AbstractOpenHAT.cpp</file>
             <file>file:/home/leo/openhat/openhatd/src/OPDI.cpp</file>
             <file>file:/home/leo/openhat/openhatd/testconfigs/linux_test.ini</file>
+            <file>file:/home/leo/openhat/opdi_core/code/c/common/opdi_protocol_constants.h</file>
             <file>file:/home/leo/openhat/openhatd/src/openhat_linux.cpp</file>
         </group>
     </open-files>

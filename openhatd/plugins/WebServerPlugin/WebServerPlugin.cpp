@@ -197,7 +197,7 @@ Poco::JSON::Object WebServerPlugin::jsonGetPortInfo(opdi::Port* port) {
 	}
 	result.set("state", this->jsonGetPortState(port));
 	result.set("extendedInfo", port->getExtendedInfo());
-	result.set("extendedState", port->getExtendedState());
+	result.set("extendedState", port->getExtendedState(true));
 	return result;
 }
 

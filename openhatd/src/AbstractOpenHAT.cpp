@@ -28,6 +28,8 @@
 #include "TimerPort.h"
 #include "ExpressionPort.h"
 #include "ExecPort.h"
+#include "opdi_protocol.h"
+#include "TypeGUIDs.h"
 
 #define DEFAULT_IDLETIMEOUT_MS	180000
 #define DEFAULT_TCP_PORT		13110
@@ -1088,6 +1090,34 @@ void AbstractOpenHAT::setupDialPort(ConfigurationView::Ptr portConfig, const std
 	this->addPort(dialPort);
 }
 
+void AbstractOpenHAT::configureCustomPort(ConfigurationView::Ptr portConfig, opdi::CustomPort* port) {
+	
+	// general port configuration
+	this->configurePort(portConfig, port, 0);
+
+	std::string value = this->getConfigString(portConfig, port->ID(), "Value", "", false);
+	port->setValue(value);
+
+	// custom configuration
+	port->configure(portConfig);
+}
+
+void AbstractOpenHAT::setupCustomPort(ConfigurationView::Ptr portConfig, const std::string& port) {
+	this->logDebug("Setting up Custom port: " + port);
+
+	opdi::CustomPort* customPort;
+	std::string kind = this->getConfigString(portConfig, port, "Kind", "<not specified>", false);
+	
+	if (kind == "Text") {
+		customPort = new opdi::CustomPort(port, OPDI_CUSTOM_PORT_TYPEGUID);
+	} else
+		this->throwSettingException("Invalid configuration: Unknown custom port kind: " + kind);
+	
+	this->configureCustomPort(portConfig, customPort);
+	
+	this->addPort(customPort);
+}
+
 void AbstractOpenHAT::configureStreamingPort(ConfigurationView::Ptr portConfig, opdi::StreamingPort* port) {
 	this->configurePort(portConfig, port, 0);
 }
@@ -1100,7 +1130,6 @@ void AbstractOpenHAT::setupSerialStreamingPort(ConfigurationView::Ptr portConfig
 
 	this->addPort(ssPort);
 }
-
 
 template <typename PortType>
 void AbstractOpenHAT::setupPort(ConfigurationView::Ptr portConfig, const std::string& portID) {
@@ -1199,6 +1228,9 @@ void AbstractOpenHAT::setupNode(ConfigurationView::Ptr config, const std::string
 	} else
 	if (nodeType == "DialPort") {
 		this->setupDialPort(nodeConfig, node);
+	} else
+	if (nodeType == "Custom") {
+		this->setupCustomPort(nodeConfig, node);
 	} else
 	if (nodeType == "SerialStreamingPort") {
 		this->setupSerialStreamingPort(nodeConfig, node);
@@ -2061,6 +2093,56 @@ uint8_t opdi_set_dial_port_position(opdi_Port* port, int64_t position) {
 }
 
 #endif	// OPDI_NO_DIAL_PORTS
+
+#ifdef OPDI_USE_CUSTOM_PORTS
+
+uint8_t opdi_get_custom_port_value(opdi_Port* aPort, char* buffer) {
+	opdi::CustomPort* port = (opdi::CustomPort*)Opdi->findPort(aPort);
+	if (port == nullptr)
+		return OPDI_PORT_UNKNOWN;
+
+	try {
+		std::string value = port->getValue();
+		strcpy(buffer, value.c_str());
+	} catch (opdi::Port::ValueUnavailableException&) {
+		// TODO localize message
+		opdi_set_port_message("Value unavailable");
+		return OPDI_PORT_ERROR;
+	} catch (opdi::Port::ValueExpiredException&) {
+		// TODO localize message
+		opdi_set_port_message("Value expired");
+		return OPDI_PORT_ERROR;
+	} catch (opdi::Port::PortError &pe) {
+		opdi_set_port_message(pe.message().c_str());
+		return OPDI_PORT_ERROR;
+	} catch (opdi::Port::AccessDeniedException &ad) {
+		opdi_set_port_message(ad.message().c_str());
+		return OPDI_PORT_ACCESS_DENIED;
+	}
+	return OPDI_STATUS_OK;
+}
+
+uint8_t opdi_set_custom_port_value(opdi_Port* aPort, const char* value) {
+	opdi::CustomPort* port = (opdi::CustomPort*)Opdi->findPort(aPort);
+	if (port == nullptr)
+		return OPDI_PORT_UNKNOWN;
+
+	if (port->isReadonly())
+		return OPDI_PORT_ACCESS_DENIED;
+
+	try {
+		port->setValue(std::string(value), opdi::Port::ChangeSource::CHANGESOURCE_USER);
+	} catch (opdi::Port::PortError &pe) {
+		opdi_set_port_message(pe.message().c_str());
+		return OPDI_PORT_ERROR;
+	} catch (opdi::Port::AccessDeniedException &ad) {
+		opdi_set_port_message(ad.message().c_str());
+		return OPDI_PORT_ACCESS_DENIED;
+	}
+	return OPDI_STATUS_OK;
+}
+
+#endif	// OPDI_USE_CUSTOM_PORTS
 
 uint8_t opdi_choose_language(const char* /*languages*/) {
 	// TODO

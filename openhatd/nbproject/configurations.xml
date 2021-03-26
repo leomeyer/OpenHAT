@@ -45,6 +45,7 @@
         <itemPath>src/Ports.h</itemPath>
         <itemPath>src/SunRiseSet.h</itemPath>
         <itemPath>src/TimerPort.h</itemPath>
+        <itemPath>src/TypeGUIDs.h</itemPath>
         <itemPath>src/WindowsOpenHAT.h</itemPath>
         <itemPath>src/opdi_configspecs.h</itemPath>
         <itemPath>src/stdafx.h</itemPath>
@@ -487,6 +488,8 @@
       </item>
       <item path="src/TimerPort.h" ex="false" tool="3" flavor2="0">
       </item>
+      <item path="src/TypeGUIDs.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="src/WindowsOpenHAT.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="src/opdi_configspecs.h" ex="false" tool="3" flavor2="0">
@@ -854,6 +857,8 @@
       <item path="src/TimerPort.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="src/TimerPort.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/TypeGUIDs.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="src/WindowsOpenHAT.h" ex="false" tool="3" flavor2="0">
       </item>

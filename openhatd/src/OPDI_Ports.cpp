@@ -1281,6 +1281,57 @@ void DialPort::testValue(const std::string & property, const std::string & expec
 	}
 
 	Port::testValue(property, expectedValue);
+}
+
+#endif // OPDI_NO_DIAL_PORTS
+
+#ifdef OPDI_USE_CUSTOM_PORTS
+
+CustomPort::CustomPort(const std::string& id, const std::string& typeGUID) : Port(id.c_str(), OPDI_PORTTYPE_CUSTOM, OPDI_PORTDIRCAP_BIDI, 0, nullptr) {
+	this->value = "";
+	this->setTypeGUID(typeGUID);
+}
+
+CustomPort::~CustomPort() {
+	// release additional data structure memory
+	opdi_Port* oPort = (opdi_Port*)this->data;
+
+	if (oPort->info.ptr != nullptr)
+		free(oPort->info.ptr);
+}
+
+void CustomPort::configure(Poco::Util::AbstractConfiguration::Ptr portConfig) {
+
+}
+
+void CustomPort::setValue(const std::string& newValue, ChangeSource changeSource) {
+	if (this->error != Error::VALUE_OK)
+		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
+	bool changed = (newValue != this->value);
+	if (changed) {
+		this->refreshRequired |= (this->refreshMode == RefreshMode::REFRESH_AUTO);
+		this->value = newValue;
+		this->logDebug(this->ID() + ": Value changed to: " + this->value + " by: " + this->getChangeSourceText(changeSource));
+	}
+	this->error = Error::VALUE_OK;
+	if (persistent && (this->opdi != nullptr))
+		this->opdi->persist(this);
+	if (changed)
+		this->handleStateChange(changeSource);
+}
+
+std::string CustomPort::getValue(void) const {
+	return this->value;
+}
+
+bool CustomPort::hasError(void) const {
+	return false;
+}
+
+void CustomPort::testValue(const std::string & property, const std::string & expectedValue) {
+	if (property == "Value") {
+		return this->compareProperty(property, expectedValue, this->to_string(this->value));
+	}
 
 	Port::testValue(property, expectedValue);
 }

@@ -98,6 +98,7 @@ protected:
 	bool fallbackSpecified;
 	double deactivationValue;
 	bool deactivationSpecified;
+        double currentFrame;
 
 	timestamp_func timestampFunc;
 

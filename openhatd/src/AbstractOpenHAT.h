@@ -270,6 +270,10 @@ public:
 
 	virtual void setupDialPort(ConfigurationView::Ptr portConfig, const std::string& port);
 
+        virtual void configureCustomPort(ConfigurationView::Ptr portConfig, opdi::CustomPort* port);
+        
+       	virtual void setupCustomPort(ConfigurationView::Ptr portConfig, const std::string& port);
+
 	/** Reads special properties from the configuration and configures the streaming port. */
 	virtual void configureStreamingPort(ConfigurationView::Ptr portConfig, opdi::StreamingPort* port);
 

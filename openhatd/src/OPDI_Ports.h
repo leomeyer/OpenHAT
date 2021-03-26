@@ -15,6 +15,7 @@
 #include "Poco/Exception.h"
 #include "Poco/RegularExpression.h"
 #include "Poco/NumberParser.h"
+#include "Poco/Util/AbstractConfiguration.h"
 
 #include "opdi_platformtypes.h"
 #include "opdi_configspecs.h"
@@ -922,6 +923,41 @@ public:
 	/// This method is used to test values of a Dial port.
 	virtual void testValue(const std::string& property, const std::string& expectedValue);
 };
+
+#ifdef OPDI_USE_CUSTOM_PORTS
+/// Defines a Custom port.
+///
+class CustomPort : public Port {
+	friend class OPDI;
+
+protected:
+	std::string value;
+
+public:
+	/// Constructs a Custom port with the given ID and typeGUID.
+	explicit CustomPort(const std::string& id, const std::string& typeGUID);
+
+	/// Virtual destructor.
+	///
+	virtual ~CustomPort();
+        
+        virtual void configure(Poco::Util::AbstractConfiguration::Ptr portConfig); 
+
+	/// Sets the value.
+	///
+	virtual void setValue(const std::string& value, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT);
+
+	/// Returns the value.
+	///
+	virtual std::string getValue(void) const;
+        
+        virtual bool hasError(void) const override;
+
+	/// This method is used to test values of a Custom port.
+	virtual void testValue(const std::string& property, const std::string& expectedValue);
+};
+
+#endif
 
 /// Defines an abstract Streaming port.
 /// This class can not be used directly. Use one of its subclasses instead.

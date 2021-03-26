@@ -91,6 +91,13 @@ bool ExpressionPort::prepareVariables(bool duringSetup) {
 
 		if (symbol.second != parser_t::e_st_variable)
 			continue;
+		
+		if (symbol.first == "currentframe") {
+			this->currentFrame = this->openhat->getCurrentFrame();
+			if (!this->symbol_table.add_variable("currentframe", this->currentFrame))
+				return false;			
+			continue;
+		}
 
 		// find port (variable name is the port ID)
 		opdi::Port* port = this->openhat->findPortByID(symbol.first.c_str(), true);
@@ -180,22 +187,27 @@ void ExpressionPort::setOutputPorts(double value) {
 					((opdi::DigitalPort*)(*it))->setLine(1);
 			}
 			else
-				if ((*it)->getType()[0] == OPDI_PORTTYPE_ANALOG[0]) {
-					// analog port: relative value (0..1)
-					((opdi::AnalogPort*)(*it))->setRelativeValue(value);
-				}
-				else
-					if ((*it)->getType()[0] == OPDI_PORTTYPE_DIAL[0]) {
-						// dial port: absolute value
-						((opdi::DialPort*)(*it))->setPosition((int64_t)value);
-					}
-					else
-						if ((*it)->getType()[0] == OPDI_PORTTYPE_SELECT[0]) {
-							// select port: current position number
-							((opdi::SelectPort*)(*it))->setPosition((uint16_t)value);
-						}
-						else
-							throw PortError("");
+			if ((*it)->getType()[0] == OPDI_PORTTYPE_ANALOG[0]) {
+				// analog port: relative value (0..1)
+				((opdi::AnalogPort*)(*it))->setRelativeValue(value);
+			}
+			else
+			if ((*it)->getType()[0] == OPDI_PORTTYPE_DIAL[0]) {
+				// dial port: absolute value
+				((opdi::DialPort*)(*it))->setPosition((int64_t)value);
+			}
+			else
+			if ((*it)->getType()[0] == OPDI_PORTTYPE_SELECT[0]) {
+				// select port: current position number
+				((opdi::SelectPort*)(*it))->setPosition((uint16_t)value);
+			}
+			else
+			if ((*it)->getType()[0] == OPDI_PORTTYPE_CUSTOM[0]) {
+				// custom port: set text value
+				((opdi::CustomPort*)(*it))->setValue(this->openhat->to_string(value));
+			}
+			else
+				throw PortError("");
 		}
 		catch (Poco::Exception &e) {
 			this->logNormal("Error setting output port value of port " + (*it)->ID() + ": " + this->openhat->getExceptionMessage(e));

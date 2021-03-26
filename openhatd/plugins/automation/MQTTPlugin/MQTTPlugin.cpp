@@ -26,6 +26,8 @@
 
 #include "AbstractOpenHAT.h"
 
+#include "TypeGUIDs.h"
+
 // requires PAHO C libraries, see https://github.com/eclipse/paho.mqtt.cpp
 #include "mqtt/client.h"
 
@@ -57,10 +59,11 @@ protected:
 	uint32_t queryInterval;
 	uint64_t timeoutCounter;
 	Poco::Mutex mutex;
+	action_listener listener;
 public:
 	std::string pid;
 	
-	MQTTPort(MQTTPlugin *plugin, const std::string& id, const std::string& topic) {
+	MQTTPort(MQTTPlugin *plugin, const std::string& id, const std::string& topic): listener(id) {
 		this->plugin = plugin;
 		this->pid = id;
 		this->topic = topic;
@@ -176,7 +179,7 @@ protected:
 	void message_arrived(mqtt::const_message_ptr msg) override {
 //		this->openhat->logDebug(this->nodeID + ": Message received, topic: '" + msg->get_topic() + "', payload: '" + msg->to_string() + "'", this->logVerbosity);
 		
-		// distribute to the correct port
+		// distribute to the correct port(s)
 		auto it = this->myPorts.begin();
 		auto ite = this->myPorts.end();
 		bool handled = false;
@@ -184,7 +187,6 @@ protected:
 			if ((*it)->topic == msg->get_topic()) {
 				(*it)->handle_payload(msg->to_string());
 				handled = true;
-				break;
 			}
 			++it;
 		}
@@ -242,14 +244,35 @@ public:
 ////////////////////////////////////////////////////////////////////////
 // Plugin ports
 ////////////////////////////////////////////////////////////////////////
+
+class GenericPort : public opdi::CustomPort, public MQTTPort {
+	friend class MQTTPlugin;
+protected:
+	std::string myValue;
+	std::string initialValue;
+public:
+	GenericPort(MQTTPlugin* plugin, const std::string& id, const std::string& topic);
+	
+	virtual void subscribe(mqtt::async_client *client) override;
+	
+	virtual void query(mqtt::async_client *client) override;
+	
+	virtual void handle_payload(std::string payload) override;
+
+	virtual uint8_t doWork(uint8_t canSend) override;
+	
+	virtual void setValue(const std::string& value, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT) override;
+	
+	virtual void configure(Poco::Util::AbstractConfiguration::Ptr config) override;
+};
+
+
 class HG06337Switch : public opdi::DigitalPort, public MQTTPort {
 	friend class MQTTPlugin;
 protected:
 	int8_t switchState;
-
+	int8_t initialLine;
 	virtual void setSwitchState(int8_t line);
-	
-	action_listener listener;
 
 public:
 	HG06337Switch(MQTTPlugin* plugin, const std::string& id, const std::string& topic);
@@ -266,58 +289,107 @@ public:
 };
 
 }	// end anonymous namespace
-/*
-class FritzDECT200Power : public opdi::DialPort, public FritzPort {
-	friend class FritzBoxPlugin;
-protected:
-	FritzBoxPlugin* plugin;
 
-	int32_t power;
+GenericPort::GenericPort(MQTTPlugin* plugin, const std::string& id, const std::string& topic) : 
+	opdi::CustomPort(id, OPDI_CUSTOM_PORT_TYPEGUID), MQTTPort(plugin, id, topic) {
+	this->myValue = "";
+	this->valueSet = true;		// causes setError in doWork
+}
 
-	virtual void setPower(int32_t power);
+void GenericPort::subscribe(mqtt::async_client *client) {
+	if (client->is_connected())
+		try {
+			this->plugin->openhat->logDebug(std::string(this->getID()) + ": Subscribing to topic: " + this->topic, this->logVerbosity);
+			client->subscribe(this->topic, this->plugin->QOS, nullptr, this->listener);
+			
+			if (this->initialValue != "") {
+				this->setValue(this->initialValue);
+				this->initialValue = "";
+			}
+		}  catch (mqtt::exception& ex) {
+			this->plugin->openhat->logError(std::string(this->getID()) + ": Error subscribing to topic " + this->topic + ": " + ex.what());
+		}
+}
 
-public:
-	FritzDECT200Power(FritzBoxPlugin* plugin, const std::string& id, const std::string& ain, int queryInterval);
+void GenericPort::query(mqtt::async_client *client) {
+	this->plugin->openhat->logDebug(this->pid + ": Querying state", this->logVerbosity);
+	if (client->is_connected())
+		try {
+			client->publish(this->topic + "/get", "{\"state\":\"\"}");
+		}  catch (mqtt::exception& ex) {
+			this->plugin->openhat->logError(std::string(this->getID()) + ": Error querying state: " + this->topic + ": " + ex.what());
+		}
+	}
 
-	virtual uint8_t doWork(uint8_t canSend) override;
-};
+void GenericPort::handle_payload(std::string payload) {
+	this->plugin->openhat->logDebug(this->pid + ": Payload received: '" + payload + "'");
+	this->myValue = payload;
+	this->valueSet = true;
 
-class FritzDECT200Energy : public opdi::DialPort, public FritzPort {
-	friend class FritzBoxPlugin;
-protected:
-	FritzBoxPlugin* plugin;
+	// reset query timer
+	this->lastQueryTime = opdi_get_time_ms();
+	// reset timeout counter
+	this->timeoutCounter = opdi_get_time_ms();
+}
 
-	int32_t energy;
+uint8_t GenericPort::doWork(uint8_t canSend) {
+	opdi::CustomPort::doWork(canSend);
+	
+	// time for refresh?
+	if (opdi_get_time_ms() - this->lastQueryTime > this->queryInterval * 1000) {
+		this->plugin->queue.enqueueNotification(new ActionNotification(ActionNotification::QUERY, this));
+		this->lastQueryTime = opdi_get_time_ms();
+	}
+	
+	Poco::Mutex::ScopedLock lock(this->mutex);
+	// no error?
+	if (this->myValue != "") {
+		// error timeout reached without message?
+		if ((opdi_get_time_ms() - this->timeoutCounter) / 1000 > this->plugin->timeoutSeconds) {
+			// change to error state
+			this->myValue = "";
+			this->setError(Error::VALUE_NOT_AVAILABLE);
+		}
+	}
 
-	virtual void setEnergy(int32_t energy);
+	// has a value been returned?
+	if (this->valueSet) {
+		// empty values signify an error
+		if (this->myValue != "")
+			// use base method to avoid triggering an action!
+			opdi::CustomPort::setValue(this->myValue);
+		else
+			this->setError(Error::VALUE_NOT_AVAILABLE);
+		this->valueSet = false;
+	}
 
-public:
-	FritzDECT200Energy(FritzBoxPlugin* plugin, const std::string& id, const std::string& ain, int queryInterval);
+	return OPDI_STATUS_OK;
+}
 
-	virtual uint8_t doWork(uint8_t canSend) override;
-};
+void GenericPort::setValue(const std::string& newValue, ChangeSource changeSource) {
+	opdi::CustomPort::setValue(newValue, changeSource);
+	
+	try {
+		if (this->plugin->client != nullptr && this->plugin->client->is_connected()) {
+			this->plugin->client->publish(this->topic + "/set", newValue);
+			this->plugin->openhat->logDebug(std::string(this->getID()) + ": Published value to: " + this->topic + ": " + newValue);
+		}
+	}  catch (mqtt::exception& ex) {
+		this->plugin->openhat->logError(std::string(this->getID()) + ": Error publishing state: " + this->topic + ": " + ex.what());
+	}
+}
 
-class FritzDECT200Temperature : public opdi::DialPort, public FritzPort {
-	friend class FritzBoxPlugin;
-protected:
-	FritzBoxPlugin* plugin;
-
-	int32_t temperature;
-
-	virtual void setTemperature(int32_t temperature);
-
-public:
-	FritzDECT200Temperature(FritzBoxPlugin* plugin, const std::string& id, const std::string& ain, int queryInterval);
-
-	virtual uint8_t doWork(uint8_t canSend) override;
-};
+void GenericPort::configure(Poco::Util::AbstractConfiguration::Ptr config) {
+	CustomPort::configure(config);
+	this->initialValue = config->getString("Value", "");
+}
 
 
-*/
 HG06337Switch::HG06337Switch(MQTTPlugin* plugin, const std::string& id, const std::string& topic) : 
-	opdi::DigitalPort(id.c_str(), OPDI_PORTDIRCAP_OUTPUT, 0), MQTTPort(plugin, id, topic), listener(id) {
+	opdi::DigitalPort(id.c_str(), OPDI_PORTDIRCAP_OUTPUT, 0), MQTTPort(plugin, id, topic) {
 	this->switchState = -1;	// unknown
 	this->valueSet = true;		// causes setError in doWork
+	this->initialLine = -1;
 	
 	this->mode = OPDI_DIGITAL_MODE_OUTPUT;
 	this->setIcon("powersocket");
@@ -328,6 +400,11 @@ void HG06337Switch::subscribe(mqtt::async_client *client) {
 		try {
 			this->plugin->openhat->logDebug(std::string(this->getID()) + ": Subscribing to topic: " + this->topic, this->logVerbosity);
 			client->subscribe(this->topic, this->plugin->QOS, nullptr, this->listener);
+			
+			if (this->initialLine > -1) {
+				this->setLine(this->initialLine);
+				this->initialLine = -1;
+			}
 		}  catch (mqtt::exception& ex) {
 			this->plugin->openhat->logError(std::string(this->getID()) + ": Error subscribing to topic " + this->topic + ": " + ex.what());
 		}
@@ -400,12 +477,22 @@ uint8_t HG06337Switch::doWork(uint8_t canSend) {
 void HG06337Switch::setLine(uint8_t line, ChangeSource changeSource) {
 	opdi::DigitalPort::setLine(line, changeSource);
 
+	if (this->plugin->client == nullptr)
+		return;
 	try {
+		std::string payload;
 		if (line == 0)
-			this->plugin->client->publish(this->topic + "/set", "{\"state\":\"OFF\"}");
+			payload = "{\"state\":\"OFF\"}";
 		else
 		if (line == 1)
-			this->plugin->client->publish(this->topic + "/set", "{\"state\":\"ON\"}");
+			payload = "{\"state\":\"ON\"}";
+
+		if (payload != "") {
+			this->plugin->client->publish(this->topic + "/set", payload);
+			this->plugin->openhat->logDebug(std::string(this->getID()) + ": Published value to: " + this->topic + ": " + payload);
+		} else
+			this->plugin->openhat->logDebug(std::string(this->getID()) + ": No payload to publish, line is " + this->plugin->openhat->to_string(line));
+		
 	}  catch (mqtt::exception& ex) {
 		this->plugin->openhat->logError(std::string(this->getID()) + ": Error publishing state: " + this->topic + ": " + ex.what());
 	}
@@ -417,6 +504,7 @@ void HG06337Switch::setSwitchState(int8_t switchState) {
 	this->switchState = switchState;
 	this->valueSet = true;
 }
+
 
 /*
 FritzDECT200Power::FritzDECT200Power(FritzBoxPlugin* plugin, const std::string& id, const std::string& ain, int queryInterval) : 
@@ -694,10 +782,23 @@ void MQTTPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const st
 		if (queryInterval < 1)
 			this->openhat->throwSettingException(deviceName + ": Please specify a QueryInterval greater than 1: " + this->openhat->to_string(queryInterval));
  */
-		if (deviceType == "HG06337") {
-			// get topic (required)
-			std::string topic = this->openhat->getConfigString(deviceConfig, deviceName, "Topic", "", true);
+		// get topic (required)
+		std::string topic = this->openhat->getConfigString(deviceConfig, deviceName, "Topic", "", true);
 
+		if (deviceType == "Generic") {
+			this->openhat->logVerbose(node + ": Setting up generic MQTT device port: " + deviceName, this->logVerbosity);
+
+			// setup the generic port instance and add it
+			GenericPort* genericPort = new GenericPort(this, deviceName, topic);
+			// set default group: MQTT's node's group
+			genericPort->setGroup(group);
+			// set default log verbosity
+			genericPort->logVerbosity = this->logVerbosity;
+			this->openhat->configureCustomPort(deviceConfig, genericPort);
+			this->openhat->addPort(genericPort);
+			this->myPorts.push_back(genericPort);
+		}
+		else if (deviceType == "HG06337") {
 			this->openhat->logVerbose(node + ": Setting up HG06337 device port: " + deviceName + "_Switch", this->logVerbosity);
 
 			if (parentConfig->hasProperty(deviceName + "_Switch.Type")) {
@@ -712,6 +813,13 @@ void MQTTPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const st
 				switchPort->setGroup(group);
 				// set default log verbosity
 				switchPort->logVerbosity = this->logVerbosity;
+				std::string portLine = portConfig->getString("Line", "");
+				if (portLine == "High") {
+					switchPort->initialLine = 1;
+				} else if (portLine == "Low") {
+					switchPort->initialLine = 0;
+				} else if (portLine != "")
+					this->openhat->throwSettingException("Unknown Line specified; expected 'Low' or 'High'", portLine);
 				// allow only basic settings to be changed
 				this->openhat->configurePort(portConfig, switchPort, 0);
 				this->openhat->addPort(switchPort);

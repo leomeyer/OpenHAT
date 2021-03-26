@@ -15,9 +15,12 @@
             <file>file:/home/leo/openhat/openhatd/plugins/WebServerPlugin/WebServerPlugin.cpp</file>
             <file>file:/home/leo/openhat/openhatd/src/OPDI_Ports.cpp</file>
             <file>file:/home/leo/openhat/openhatd/plugins/automation/FritzBoxPlugin/FritzBoxPlugin.cpp</file>
+            <file>file:/home/leo/openhat/opdi_core/code/c/common/opdi_port.h</file>
             <file>file:/home/leo/openhat/openhatd/src/LinuxOpenHAT.cpp</file>
             <file>file:/home/leo/openhat/openhatd/src/OPDI_Ports.h</file>
             <file>file:/home/leo/openhat/openhatd/src/Ports.cpp</file>
+            <file>file:/home/leo/openhat/openhatd/src/opdi_configspecs.h</file>
+            <file>file:/home/leo/openhat/opdi_core/code/c/common/opdi_config.h</file>
             <file>file:/home/leo/openhat/openhatd/plugins/FroniusPlugin/FroniusPlugin.cpp</file>
             <file>file:/home/leo/openhat/openhatd/src/AbstractOpenHAT.h</file>
             <file>file:/home/leo/openhat/openhatd/src/AbstractOpenHAT.cpp</file>

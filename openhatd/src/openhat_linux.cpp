@@ -13,6 +13,7 @@
 #include "opdi_constants.h"
 
 #include "LinuxOpenHAT.h"
+#include "opdi_protocol_constants.h"
 
 // the main OPDI instance is declared here
 openhat::AbstractOpenHAT* Opdi;

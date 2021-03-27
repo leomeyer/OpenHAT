@@ -856,6 +856,10 @@ void AbstractOpenHAT::configurePort(ConfigurationView::Ptr portConfig, opdi::Por
 	if (group != "") {
 		port->setGroup(group);
 	}
+	std::string typeGUID = this->getConfigString(portConfig, port->ID(), "TypeGUID", "", false);
+	if (typeGUID != "") {
+		port->setTypeGUID(typeGUID);
+	}
 
 	port->tags = this->getConfigString(portConfig, port->ID(), "Tags", "", false);
 

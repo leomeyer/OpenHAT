@@ -367,7 +367,7 @@ uint8_t GenericPort::doWork(uint8_t canSend) {
 }
 
 void GenericPort::setValue(const std::string& newValue, ChangeSource changeSource) {
-	opdi::CustomPort::setValue(newValue, changeSource);
+	// opdi::CustomPort::setValue(newValue, changeSource);
 	
 	try {
 		if (this->plugin->client != nullptr && this->plugin->client->is_connected()) {
@@ -475,7 +475,7 @@ uint8_t HG06337Switch::doWork(uint8_t canSend) {
 }
 
 void HG06337Switch::setLine(uint8_t line, ChangeSource changeSource) {
-	opdi::DigitalPort::setLine(line, changeSource);
+	// opdi::DigitalPort::setLine(line, changeSource);
 
 	if (this->plugin->client == nullptr)
 		return;

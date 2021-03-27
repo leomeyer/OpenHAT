@@ -140,7 +140,6 @@
       </toolsSet>
       <compileType>
         <cTool>
-          <developmentMode>0</developmentMode>
           <incDir>
             <pElem>../opdi_core/code/c/common</pElem>
             <pElem>../opdi_core/code/c/common/master</pElem>

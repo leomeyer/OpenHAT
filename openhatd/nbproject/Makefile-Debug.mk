@@ -174,17 +174,17 @@ ${OBJECTDIR}/_ext/e2dc17f3/opdi_aes.o: ../opdi_core/code/c/common/opdi_aes.cpp
 ${OBJECTDIR}/_ext/e2dc17f3/opdi_message.o: ../opdi_core/code/c/common/opdi_message.c
 	${MKDIR} -p ${OBJECTDIR}/_ext/e2dc17f3
 	${RM} "$@.d"
-	$(COMPILE.c) -Wall -I../opdi_core/code/c/common -I../opdi_core/code/c/common/master -I../opdi_core/code/c/platforms/linux -I../opdi_core/code/c/platforms -Isrc -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/_ext/e2dc17f3/opdi_message.o ../opdi_core/code/c/common/opdi_message.c
+	$(COMPILE.c) -g -Wall -I../opdi_core/code/c/common -I../opdi_core/code/c/common/master -I../opdi_core/code/c/platforms/linux -I../opdi_core/code/c/platforms -Isrc -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/_ext/e2dc17f3/opdi_message.o ../opdi_core/code/c/common/opdi_message.c
 
 ${OBJECTDIR}/_ext/e2dc17f3/opdi_port.o: ../opdi_core/code/c/common/opdi_port.c
 	${MKDIR} -p ${OBJECTDIR}/_ext/e2dc17f3
 	${RM} "$@.d"
-	$(COMPILE.c) -Wall -I../opdi_core/code/c/common -I../opdi_core/code/c/common/master -I../opdi_core/code/c/platforms/linux -I../opdi_core/code/c/platforms -Isrc -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/_ext/e2dc17f3/opdi_port.o ../opdi_core/code/c/common/opdi_port.c
+	$(COMPILE.c) -g -Wall -I../opdi_core/code/c/common -I../opdi_core/code/c/common/master -I../opdi_core/code/c/platforms/linux -I../opdi_core/code/c/platforms -Isrc -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/_ext/e2dc17f3/opdi_port.o ../opdi_core/code/c/common/opdi_port.c
 
 ${OBJECTDIR}/_ext/e2dc17f3/opdi_protocol.o: ../opdi_core/code/c/common/opdi_protocol.c
 	${MKDIR} -p ${OBJECTDIR}/_ext/e2dc17f3
 	${RM} "$@.d"
-	$(COMPILE.c) -Wall -I../opdi_core/code/c/common -I../opdi_core/code/c/common/master -I../opdi_core/code/c/platforms/linux -I../opdi_core/code/c/platforms -Isrc -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/_ext/e2dc17f3/opdi_protocol.o ../opdi_core/code/c/common/opdi_protocol.c
+	$(COMPILE.c) -g -Wall -I../opdi_core/code/c/common -I../opdi_core/code/c/common/master -I../opdi_core/code/c/platforms/linux -I../opdi_core/code/c/platforms -Isrc -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/_ext/e2dc17f3/opdi_protocol.o ../opdi_core/code/c/common/opdi_protocol.c
 
 ${OBJECTDIR}/_ext/e2dc17f3/opdi_rijndael.o: ../opdi_core/code/c/common/opdi_rijndael.cpp
 	${MKDIR} -p ${OBJECTDIR}/_ext/e2dc17f3
@@ -194,12 +194,12 @@ ${OBJECTDIR}/_ext/e2dc17f3/opdi_rijndael.o: ../opdi_core/code/c/common/opdi_rijn
 ${OBJECTDIR}/_ext/e2dc17f3/opdi_slave_protocol.o: ../opdi_core/code/c/common/opdi_slave_protocol.c
 	${MKDIR} -p ${OBJECTDIR}/_ext/e2dc17f3
 	${RM} "$@.d"
-	$(COMPILE.c) -Wall -I../opdi_core/code/c/common -I../opdi_core/code/c/common/master -I../opdi_core/code/c/platforms/linux -I../opdi_core/code/c/platforms -Isrc -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/_ext/e2dc17f3/opdi_slave_protocol.o ../opdi_core/code/c/common/opdi_slave_protocol.c
+	$(COMPILE.c) -g -Wall -I../opdi_core/code/c/common -I../opdi_core/code/c/common/master -I../opdi_core/code/c/platforms/linux -I../opdi_core/code/c/platforms -Isrc -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/_ext/e2dc17f3/opdi_slave_protocol.o ../opdi_core/code/c/common/opdi_slave_protocol.c
 
 ${OBJECTDIR}/_ext/e2dc17f3/opdi_strings.o: ../opdi_core/code/c/common/opdi_strings.c
 	${MKDIR} -p ${OBJECTDIR}/_ext/e2dc17f3
 	${RM} "$@.d"
-	$(COMPILE.c) -Wall -I../opdi_core/code/c/common -I../opdi_core/code/c/common/master -I../opdi_core/code/c/platforms/linux -I../opdi_core/code/c/platforms -Isrc -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/_ext/e2dc17f3/opdi_strings.o ../opdi_core/code/c/common/opdi_strings.c
+	$(COMPILE.c) -g -Wall -I../opdi_core/code/c/common -I../opdi_core/code/c/common/master -I../opdi_core/code/c/platforms/linux -I../opdi_core/code/c/platforms -Isrc -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/_ext/e2dc17f3/opdi_strings.o ../opdi_core/code/c/common/opdi_strings.c
 
 ${OBJECTDIR}/_ext/a50b0fff/fifo.o: ../opdi_core/code/c/libraries/libctb/src/fifo.cpp
 	${MKDIR} -p ${OBJECTDIR}/_ext/a50b0fff
@@ -244,7 +244,7 @@ ${OBJECTDIR}/_ext/a50b0fff/serportx.o: ../opdi_core/code/c/libraries/libctb/src/
 ${OBJECTDIR}/_ext/1522cf7d/opdi_platformfuncs.o: ../opdi_core/code/c/platforms/linux/opdi_platformfuncs.c
 	${MKDIR} -p ${OBJECTDIR}/_ext/1522cf7d
 	${RM} "$@.d"
-	$(COMPILE.c) -Wall -I../opdi_core/code/c/common -I../opdi_core/code/c/common/master -I../opdi_core/code/c/platforms/linux -I../opdi_core/code/c/platforms -Isrc -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/_ext/1522cf7d/opdi_platformfuncs.o ../opdi_core/code/c/platforms/linux/opdi_platformfuncs.c
+	$(COMPILE.c) -g -Wall -I../opdi_core/code/c/common -I../opdi_core/code/c/common/master -I../opdi_core/code/c/platforms/linux -I../opdi_core/code/c/platforms -Isrc -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/_ext/1522cf7d/opdi_platformfuncs.o ../opdi_core/code/c/platforms/linux/opdi_platformfuncs.c
 
 ${OBJECTDIR}/src/AbstractOpenHAT.o: src/AbstractOpenHAT.cpp
 	${MKDIR} -p ${OBJECTDIR}/src

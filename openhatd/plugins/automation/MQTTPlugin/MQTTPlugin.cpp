@@ -500,7 +500,7 @@ void EventPort::query(mqtt::async_client *client) {
 }
 
 void EventPort::handle_payload(std::string payload) {
-	this->plugin->openhat->logDebug(this->pid + ": Payload received: '" + payload + "'");
+	this->plugin->openhat->logDebug(this->pid + ": Payload received: '" + payload + "'", this->logVerbosity);
 	
 	Poco::Mutex::ScopedLock lock(this->mutex);
 	this->value = payload;

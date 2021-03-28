@@ -31,6 +31,8 @@
 // requires PAHO C libraries, see https://github.com/eclipse/paho.mqtt.cpp
 #include "mqtt/client.h"
 
+#define DEFAULT_QUERY_INTERVAL	30
+
 namespace {
 	
 class action_listener : public virtual mqtt::iaction_listener
@@ -69,7 +71,7 @@ public:
 		this->topic = topic;
 		this->valueSet = false;
 		this->lastQueryTime = 0;
-		this->queryInterval = 10;
+		this->queryInterval = DEFAULT_QUERY_INTERVAL;
 		this->timeoutCounter = 0;
 	};
 	
@@ -336,7 +338,7 @@ uint8_t GenericPort::doWork(uint8_t canSend) {
 	opdi::CustomPort::doWork(canSend);
 	
 	// time for refresh?
-	if (opdi_get_time_ms() - this->lastQueryTime > this->queryInterval * 1000) {
+	if ((this->queryInterval > 0) && (opdi_get_time_ms() - this->lastQueryTime > this->queryInterval * 1000)) {
 		this->plugin->queue.enqueueNotification(new ActionNotification(ActionNotification::QUERY, this));
 		this->lastQueryTime = opdi_get_time_ms();
 	}
@@ -444,7 +446,7 @@ uint8_t HG06337Switch::doWork(uint8_t canSend) {
 	opdi::DigitalPort::doWork(canSend);
 
 	// time for refresh?
-	if (opdi_get_time_ms() - this->lastQueryTime > this->queryInterval * 1000) {
+	if ((this->queryInterval > 0) && (opdi_get_time_ms() - this->lastQueryTime > this->queryInterval * 1000)) {
 		this->plugin->queue.enqueueNotification(new ActionNotification(ActionNotification::QUERY, this));
 		this->lastQueryTime = opdi_get_time_ms();
 	}
@@ -506,158 +508,6 @@ void HG06337Switch::setSwitchState(int8_t switchState) {
 }
 
 
-/*
-FritzDECT200Power::FritzDECT200Power(FritzBoxPlugin* plugin, const std::string& id, const std::string& ain, int queryInterval) : 
-	opdi::DialPort(id.c_str()), FritzPort(id, ain, queryInterval) {
-	this->plugin = plugin;
-	this->power = -1;	// unknown
-	this->lastQueryTime = 0;
-	this->valueSet = true;		// causes setError in doWork
-
-	this->minValue = 0;
-	this->maxValue = 2300000;	// measured in mW; 2300 W is maximum power load for the DECT200
-	this->step = 1;
-	this->position = 0;
-
-	this->setUnit("electricPower_mW");
-	this->setIcon("powermeter");
-
-	// port is readonly
-	this->setReadonly(true);
-}
-
-uint8_t FritzDECT200Power::doWork(uint8_t canSend) {
-	opdi::DialPort::doWork(canSend);
-
-	// time for refresh?
-	if (opdi_get_time_ms() - this->lastQueryTime > this->queryInterval * 1000) {
-		this->plugin->queue.enqueueNotification(new ActionNotification(ActionNotification::GETPOWER, this));
-		this->lastQueryTime = opdi_get_time_ms();
-	}
-
-	Poco::Mutex::ScopedLock lock(this->mutex);
-
-	// has a value been returned?
-	if (this->valueSet) {
-		// values < 0 signify an error
-		if (this->power > -1)
-			opdi::DialPort::setPosition(this->power);
-		else
-			this->setError(Error::VALUE_NOT_AVAILABLE);
-		this->valueSet = false;
-	}
-
-	return OPDI_STATUS_OK;
-}
-
-void FritzDECT200Power::setPower(int32_t power) {
-	Poco::Mutex::ScopedLock lock(this->mutex);
-
-	this->power = power;
-	this->valueSet = true;
-}
-
-FritzDECT200Energy::FritzDECT200Energy(FritzBoxPlugin* plugin, const std::string& id, const std::string& ain, int queryInterval) : 
-	opdi::DialPort(id.c_str()), FritzPort(id, ain, queryInterval) {
-	this->plugin = plugin;
-	this->energy = -1;	// unknown
-	this->lastQueryTime = 0;
-	this->valueSet = true;		// causes setError in doWork
-
-	this->minValue = 0;
-	this->maxValue = 2147483647;	// measured in Wh
-	this->step = 1;
-	this->position = 0;
-
-	this->setUnit("electricEnergy_Wh");
-	this->setIcon("energymeter");
-
-	// port is readonly
-	this->setReadonly(true);
-}
-
-uint8_t FritzDECT200Energy::doWork(uint8_t canSend) {
-	opdi::DialPort::doWork(canSend);
-
-	// time for refresh?
-	if (opdi_get_time_ms() - this->lastQueryTime > this->queryInterval * 1000) {
-		this->plugin->queue.enqueueNotification(new ActionNotification(ActionNotification::GETENERGY, this));
-		this->lastQueryTime = opdi_get_time_ms();
-	}
-
-	Poco::Mutex::ScopedLock lock(this->mutex);
-
-	// has a value been returned?
-	if (this->valueSet) {
-		// values < 0 signify an error
-		if (this->energy > -1)
-			opdi::DialPort::setPosition(this->energy);
-		else
-			this->setError(Error::VALUE_NOT_AVAILABLE);
-		this->valueSet = false;
-	}
-
-	return OPDI_STATUS_OK;
-}
-
-void FritzDECT200Energy::setEnergy(int32_t energy) {
-	Poco::Mutex::ScopedLock lock(this->mutex);
-
-	this->energy = energy;
-	this->valueSet = true;
-}
-
-FritzDECT200Temperature::FritzDECT200Temperature(FritzBoxPlugin* plugin, const std::string& id, const std::string& ain, int queryInterval) :
-	opdi::DialPort(id.c_str()), FritzPort(id, ain, queryInterval) {
-	this->plugin = plugin;
-	this->temperature = -9999;	// unknown
-	this->lastQueryTime = 0;
-	this->valueSet = true;		// causes setError in doWork
-
-	// value is measured in centidegrees Celsius
-	this->minValue = -1000;			// -100°C
-	this->maxValue = 1000;			// +100°C
-	this->step = 1;
-	this->position = 0;
-
-	this->setUnit("temperature_centiDegreesCelsius");
-	this->setIcon("thermometer_celsius");
-
-	// port is readonly
-	this->setReadonly(true);
-}
-
-uint8_t FritzDECT200Temperature::doWork(uint8_t canSend) {
-	opdi::DialPort::doWork(canSend);
-
-	// time for refresh?
-	if (opdi_get_time_ms() - this->lastQueryTime > this->queryInterval * 1000) {
-		this->plugin->queue.enqueueNotification(new ActionNotification(ActionNotification::GETTEMPERATURE, this));
-		this->lastQueryTime = opdi_get_time_ms();
-	}
-
-	Poco::Mutex::ScopedLock lock(this->mutex);
-
-	// has a value been returned?
-	if (this->valueSet) {
-		// values <= -9999 signifies an error
-		if (this->temperature > -9999)
-			opdi::DialPort::setPosition(this->temperature);
-		else
-			this->setError(Error::VALUE_NOT_AVAILABLE);
-		this->valueSet = false;
-	}
-
-	return OPDI_STATUS_OK;
-}
-
-void FritzDECT200Temperature::setTemperature(int32_t temperature) {
-	Poco::Mutex::ScopedLock lock(this->mutex);
-
-	this->temperature = temperature;
-	this->valueSet = true;
-}
-*/
 ////////////////////////////////////////////////////////
 // Plugin implementation
 ////////////////////////////////////////////////////////
@@ -777,19 +627,19 @@ void MQTTPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const st
 		// get device type (required)
 		std::string deviceType = this->openhat->getConfigString(deviceConfig, deviceName, "Type", "", true);
 
-/*
-		int queryInterval = deviceConfig->getInt("QueryInterval", 30);
-		if (queryInterval < 1)
-			this->openhat->throwSettingException(deviceName + ": Please specify a QueryInterval greater than 1: " + this->openhat->to_string(queryInterval));
- */
 		// get topic (required)
 		std::string topic = this->openhat->getConfigString(deviceConfig, deviceName, "Topic", "", true);
 
+		int queryInterval = deviceConfig->getInt("QueryInterval", DEFAULT_QUERY_INTERVAL);
+		if (queryInterval < 0)
+			this->openhat->throwSettingException(deviceName + ": Please specify a QueryInterval >= 0: " + this->openhat->to_string(queryInterval));
+		
 		if (deviceType == "Generic") {
 			this->openhat->logVerbose(node + ": Setting up generic MQTT device port: " + deviceName, this->logVerbosity);
-
 			// setup the generic port instance and add it
 			GenericPort* genericPort = new GenericPort(this, deviceName, topic);
+			
+			genericPort->queryInterval = queryInterval;
 			// set default group: MQTT's node's group
 			genericPort->setGroup(group);
 			// set default log verbosity
@@ -809,6 +659,7 @@ void MQTTPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const st
 					this->openhat->throwSettingException(node + ": HG06337 Switch device port must be of type 'DigitalPort'");
 				// setup the switch port instance and add it
 				HG06337Switch* switchPort = new HG06337Switch(this, deviceName + "_Switch", topic);
+				switchPort->queryInterval = queryInterval;
 				// set default group: MQTT's node's group
 				switchPort->setGroup(group);
 				// set default log verbosity
@@ -827,68 +678,9 @@ void MQTTPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const st
 			} else {
 				this->openhat->logVerbose(node + ": HG06337 device port: " + deviceName + "_Switch.Type not found, ignoring", this->logVerbosity);
 			}
-		}
-/*
-			if (parentConfig->hasProperty(deviceName + "_Power.Type")) {
-				this->openhat->logVerbose(node + ": Setting up FritzBoxPlugin device port: " + deviceName + "_Power", this->logVerbosity);
-				Poco::AutoPtr<openhat::ConfigurationView> portConfig = this->openhat->createConfigView(parentConfig, deviceName + "_Power");
-				// check type
-				if (portConfig->getString("Type") != "DialPort")
-					this->openhat->throwSettingException(node + ": FritzDECT200 Power device port must be of type 'DialPort'");
-				// setup the power port instance and add it
-				FritzDECT200Power* powerPort = new FritzDECT200Power(this, deviceName + "_Power", ain, queryInterval);
-				// set default group: FritzBox's node's group
-				powerPort->setGroup(group);
-				// set default log verbosity
-				powerPort->logVerbosity = this->logVerbosity;
-				// allow only basic settings to be changed
-				this->openhat->configurePort(portConfig, powerPort, 0);
-				this->openhat->addPort(powerPort);
-			} else {
-				this->openhat->logVerbose(node + ": FritzBoxPlugin device port: " + deviceName + "_Power.Type not found, ignoring", this->logVerbosity);
-			}
-
-			if (parentConfig->hasProperty(deviceName + "_Energy.Type")) {
-				this->openhat->logVerbose(node + ": Setting up FritzBoxPlugin device port: " + deviceName + "_Energy", this->logVerbosity);
-				Poco::AutoPtr<openhat::ConfigurationView> portConfig = this->openhat->createConfigView(parentConfig, deviceName + "_Energy");
-				// check type
-				if (portConfig->getString("Type") != "DialPort")
-					this->openhat->throwSettingException(node + ": FritzDECT200 Energy device port must be of type 'DialPort'");
-				// setup the energy port instance and add it
-				FritzDECT200Energy* energyPort = new FritzDECT200Energy(this, deviceName + "_Energy", ain, queryInterval);
-				// set default group: FritzBox's node's group
-				energyPort->setGroup(group);
-				// set default log verbosity
-				energyPort->logVerbosity = this->logVerbosity;
-				// allow only basic settings to be changed
-				this->openhat->configurePort(portConfig, energyPort, 0);
-				this->openhat->addPort(energyPort);
-			} else {
-				this->openhat->logVerbose(node + ": FritzBoxPlugin device port: " + deviceName + "_Energy.Type not found, ignoring", this->logVerbosity);
-			}
-
-			if (parentConfig->hasProperty(deviceName + "_Temperature.Type")) {
-				this->openhat->logVerbose(node + ": Setting up FritzBoxPlugin device port: " + deviceName + "_Temperature", this->logVerbosity);
-				Poco::AutoPtr<openhat::ConfigurationView> portConfig = this->openhat->createConfigView(parentConfig, deviceName + "_Temperature");
-				// check type
-				if (portConfig->getString("Type") != "DialPort")
-					this->openhat->throwSettingException(node + ": FritzDECT200 Temperature device port must be of type 'DialPort'");
-				// setup the energy port instance and add it
-				FritzDECT200Temperature* temperaturePort = new FritzDECT200Temperature(this, deviceName + "_Temperature", ain, queryInterval);
-				// set default group: FritzBox's node's group
-				temperaturePort->setGroup(group);
-				// set default log verbosity
-				temperaturePort->logVerbosity = this->logVerbosity;
-				// allow only basic settings to be changed
-				this->openhat->configurePort(portConfig, temperaturePort, 0);
-				this->openhat->addPort(temperaturePort);
-			} else {
-				this->openhat->logVerbose(node + ": FritzBoxPlugin device port: " + deviceName + "_Temperature.Type not found, ignoring", this->logVerbosity);
-			}
-
 		} else
 			this->openhat->throwSettingException(node + ": This plugin does not support the device type '" + deviceType + "'");
-*/
+
 		++nli;
 	}
 
@@ -1019,10 +811,11 @@ void MQTTPlugin::run(void) {
 							while (it != ite) {
 								this->openhat->logExtreme(nodeID + ": Subscribing port: " + (*it)->pid, this->logVerbosity);
 								(*it)->subscribe(client);
-								// post query notification
-								this->openhat->logExtreme(nodeID + ": Requesting query...", this->logVerbosity);
-								queue.enqueueNotification(new ActionNotification(ActionNotification::QUERY, *it));
-								this->openhat->logExtreme(nodeID + ": Done.", this->logVerbosity);
+								if ((*it)->queryInterval > 0) {
+									// post query notification
+									this->openhat->logExtreme(nodeID + ": Requesting query...", this->logVerbosity);
+									queue.enqueueNotification(new ActionNotification(ActionNotification::QUERY, *it));
+								}
 								++it;
 							}
 							break;

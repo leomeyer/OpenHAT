@@ -535,6 +535,7 @@ uint8_t EventPort::doWork(uint8_t canSend) {
 }
 
 void EventPort::configure(openhat::ConfigurationView::Ptr config) {
+	this->plugin->openhat->configureDigitalPort(config, this, false);
 	// enumerate outputs (in specified order)
 	this->plugin->openhat->logVerbose(this->ID() + ": Enumerating EventPort outputs: " + this->ID() + ".Outputs", this->logVerbosity);
 

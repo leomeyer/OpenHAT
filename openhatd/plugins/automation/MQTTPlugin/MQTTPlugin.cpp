@@ -23,7 +23,9 @@
 #include "Poco/NotificationQueue.h"
 #include "Poco/AutoPtr.h"
 #include "Poco/NumberParser.h"
+#include "Poco/RegularExpression.h"
 
+#include "OPDI_Ports.h"
 #include "AbstractOpenHAT.h"
 
 #include "TypeGUIDs.h"
@@ -268,6 +270,96 @@ public:
 	virtual void configure(Poco::Util::AbstractConfiguration::Ptr config) override;
 };
 
+class EventPort : public opdi::DigitalPort, public MQTTPort {
+	friend class MQTTPlugin;
+protected:
+	
+	struct Output {
+		std::string name;
+		std::string pattern;
+		std::string value;
+		std::string outputPortStr;
+		opdi::PortList outputPorts;
+		
+		uint8_t process(MQTTPlugin* plugin, std::string aValue) {
+			std::string newValue = aValue;
+			// pattern specified?
+			if (pattern != "") {
+				Poco::RegularExpression re(pattern);
+				if (!re.match(newValue))
+					return OPDI_STATUS_OK;
+				// perform substitution
+				re.subst(newValue, value);
+			} else
+				// use specified value directly
+				newValue = value;
+
+			// apply value to output ports
+			auto it = outputPorts.begin();
+			auto ite = outputPorts.end();
+			while (it != ite) {
+				auto port = *it;
+				
+				if (port->getType()[0] == OPDI_PORTTYPE_CUSTOM[0]) {
+					((opdi::CustomPort*)port)->setValue(newValue);
+				}
+				else
+				if (port->getType()[0] == OPDI_PORTTYPE_DIGITAL[0]) {
+					if (newValue == "0")
+						((opdi::DigitalPort*)port)->setLine(0);
+					else if (newValue == "1")
+						((opdi::DigitalPort*)port)->setLine(1);
+				}
+				else
+				if (port->getType()[0] == OPDI_PORTTYPE_ANALOG[0]) {
+					// analog port: relative value (0..1)
+					//value = ((opdi::AnalogPort*)port)->getRelativeValue();
+				}
+				else
+				if (port->getType()[0] == OPDI_PORTTYPE_DIAL[0]) {
+					// dial port: absolute value
+					char* pEnd;
+					int64_t position = strtoll(newValue.c_str(), &pEnd, 10);
+					((opdi::DialPort*)port)->setPosition(position);
+				}
+				else
+				if (port->getType()[0] == OPDI_PORTTYPE_SELECT[0]) {
+					// select port: current position number
+					char* pEnd;
+					uint16_t position = strtol(newValue.c_str(), &pEnd, 10);;
+					((opdi::SelectPort*)port)->setPosition(position);
+				}
+				else
+					// port type not supported
+					throw Poco::Exception("Port type not supported");
+
+				++it;
+			}
+			return OPDI_STATUS_OK;
+		}
+
+	};
+	
+	std::vector<Output> outputs;
+	
+	std::string value;
+
+public:
+	EventPort(MQTTPlugin* plugin, const std::string& id, const std::string& topic);
+	
+	virtual void subscribe(mqtt::async_client *client) override;
+	
+	virtual void query(mqtt::async_client *client) override;
+	
+	virtual void handle_payload(std::string payload) override;
+
+	virtual uint8_t doWork(uint8_t canSend) override;
+	
+	virtual void configure(openhat::ConfigurationView::Ptr config);
+
+	virtual void prepare() override;
+};
+
 
 class HG06337Switch : public opdi::DigitalPort, public MQTTPort {
 	friend class MQTTPlugin;
@@ -386,6 +478,139 @@ void GenericPort::configure(Poco::Util::AbstractConfiguration::Ptr config) {
 	this->initialValue = config->getString("Value", "");
 }
 
+
+EventPort::EventPort(MQTTPlugin* plugin, const std::string& id, const std::string& topic) : 
+	opdi::DigitalPort(id.c_str(), OPDI_PORTDIRCAP_OUTPUT, 0), MQTTPort(plugin, id, topic) {
+	// events are enabled by default
+	this->line = 1;
+	this->mode = OPDI_DIGITAL_MODE_OUTPUT;
+}
+
+void EventPort::subscribe(mqtt::async_client *client) {
+	if (client->is_connected())
+		try {
+			this->plugin->openhat->logDebug(std::string(this->getID()) + ": Subscribing to topic: " + this->topic, this->logVerbosity);
+			client->subscribe(this->topic, this->plugin->QOS, nullptr, this->listener);
+		}  catch (mqtt::exception& ex) {
+			this->plugin->openhat->logError(std::string(this->getID()) + ": Error subscribing to topic " + this->topic + ": " + ex.what());
+		}
+}
+
+void EventPort::query(mqtt::async_client *client) {
+}
+
+void EventPort::handle_payload(std::string payload) {
+	this->plugin->openhat->logDebug(this->pid + ": Payload received: '" + payload + "'");
+	
+	Poco::Mutex::ScopedLock lock(this->mutex);
+	this->value = payload;
+	this->valueSet = true;
+}
+
+uint8_t EventPort::doWork(uint8_t canSend) {
+	opdi::DigitalPort::doWork(canSend);
+
+	// must be active to react to events
+	if (this->getLine() != 1) {
+		this->valueSet = false;
+		return OPDI_STATUS_OK;
+	}
+	
+	// value received?
+	if (this->valueSet) {
+		// go through outputs, let them process the value
+		auto it = this->outputs.begin();
+		auto ite = this->outputs.end();
+		while (it != ite) {
+			uint8_t result = it->process(this->plugin, this->value);
+			if (result != OPDI_STATUS_OK)
+				return result;
+			++it;
+		}
+		
+		this->valueSet = false;
+	}
+	
+	return OPDI_STATUS_OK;
+}
+
+void EventPort::configure(openhat::ConfigurationView::Ptr config) {
+	// enumerate outputs (in specified order)
+	this->plugin->openhat->logVerbose(this->ID() + ": Enumerating EventPort outputs: " + this->ID() + ".Outputs", this->logVerbosity);
+
+	Poco::AutoPtr<openhat::ConfigurationView> nodes = this->plugin->openhat->createConfigView(config, "Outputs");
+	config->addUsedKey("Outputs");
+
+	// get ordered list of outputs
+	openhat::ConfigurationView::Keys outputKeys;
+	nodes->keys("", outputKeys);
+
+	typedef Poco::Tuple<int, std::string> Item;
+	typedef std::vector<Item> ItemList;
+	ItemList orderedItems;
+
+	// create ordered list of port keys (by priority)
+	for (auto it = outputKeys.begin(), ite = outputKeys.end(); it != ite; ++it) {
+
+		int itemNumber = nodes->getInt(*it, 0);
+		// check whether the item is active
+		if (itemNumber < 0)
+			continue;
+
+		// insert at the correct position to create a sorted list of items
+		auto nli = orderedItems.begin();
+		auto nlie = orderedItems.end();
+		while (nli != nlie) {
+			if (nli->get<0>() > itemNumber)
+				break;
+			++nli;
+		}
+		Item item(itemNumber, *it);
+		orderedItems.insert(nli, item);
+	}
+
+	if (orderedItems.size() == 0) {
+		this->plugin->openhat->logWarning("No outputs configured in " + this->ID() + ".Outputs; is this intended?");
+	}
+
+	// go through items, create outputs in specified order
+	auto nli = orderedItems.begin();
+	auto nlie = orderedItems.end();
+	while (nli != nlie) {
+		std::string outputName = nli->get<1>();
+
+		this->plugin->openhat->logVerbose(this->ID() + ": Setting up EventPort output: " + outputName, this->logVerbosity);
+
+		// get device section from the configuration>
+		Poco::AutoPtr<openhat::ConfigurationView> outputConfig = this->plugin->openhat->createConfigView(config, outputName);
+
+		Output output;
+		output.name = outputName;
+		// get output ports (required)
+		output.outputPortStr = this->plugin->openhat->getConfigString(outputConfig, outputName, "Ports", "", true);
+		output.pattern = this->plugin->openhat->getConfigString(outputConfig, outputName, "Pattern", "", false);
+		output.value =  this->plugin->openhat->getConfigString(outputConfig, outputName, "Value", "", false);
+
+		// test pattern if specified
+		if (output.pattern != "") {
+			Poco::RegularExpression re(output.pattern);
+		}
+		
+		this->outputs.push_back(output);
+		
+		++nli;
+	}
+}
+
+void EventPort::prepare() {
+	// go through outputs, resolve ports
+	auto it = this->outputs.begin();
+	auto ite = this->outputs.end();
+	while (it != ite) {
+		this->plugin->openhat->findPorts(it->name, "Ports", it->outputPortStr, it->outputPorts);
+		++it;
+	}
+}
 
 HG06337Switch::HG06337Switch(MQTTPlugin* plugin, const std::string& id, const std::string& topic) : 
 	opdi::DigitalPort(id.c_str(), OPDI_PORTDIRCAP_OUTPUT, 0), MQTTPort(plugin, id, topic) {
@@ -647,6 +872,20 @@ void MQTTPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const st
 			this->openhat->configureCustomPort(deviceConfig, genericPort);
 			this->openhat->addPort(genericPort);
 			this->myPorts.push_back(genericPort);
+		}
+		else if (deviceType == "Event") {
+			this->openhat->logVerbose(node + ": Setting up MQTT event port: " + deviceName, this->logVerbosity);
+			// setup the generic port instance and add it
+			EventPort* eventPort = new EventPort(this, deviceName, topic);
+			
+			eventPort->queryInterval = queryInterval;
+			// set default group: MQTT's node's group
+			eventPort->setGroup(group);
+			// set default log verbosity
+			eventPort->logVerbosity = this->logVerbosity;
+			eventPort->configure(deviceConfig);
+			this->openhat->addPort(eventPort);
+			this->myPorts.push_back(eventPort);
 		}
 		else if (deviceType == "HG06337") {
 			this->openhat->logVerbose(node + ": Setting up HG06337 device port: " + deviceName + "_Switch", this->logVerbosity);

@@ -82,7 +82,9 @@ bool ExpressionPort::prepareSymbols(bool /*duringSetup*/) {
 
 bool ExpressionPort::prepareVariables(bool duringSetup) {
 	this->portValues.clear();
+	// assume most port values are numeric
 	this->portValues.reserve(this->symbol_list.size());
+	this->portStrings.clear();
 
 	// go through dependent entities (variables) of the expression
 	for (std::size_t i = 0; i < this->symbol_list.size(); ++i)
@@ -107,29 +109,56 @@ bool ExpressionPort::prepareVariables(bool duringSetup) {
 			throw PortError(this->ID() + ": Expression variable did not resolve to an available port ID: " + symbol.first);
 		}
 
-		// calculate port value
-		try {
-			double value = openhat->getPortValue(port);
-			this->logExtreme("Resolved value of port " + port->ID() + " to: " + to_string(value));
-			this->portValues.push_back(value);
-		} catch (Poco::Exception& e) {
-			// error handling during setup is different; to avoid too many warnings (in the doWork method)
-			// we make a difference here
-			if (duringSetup) {
-				// emit a warning
-				this->logWarning("Failed to resolve value of port " + port->ID() + ": " + this->openhat->getExceptionMessage(e));
-				this->portValues.push_back(0.0f);
-			} else {
-				// warn in extreme logging mode only
-				this->logExtreme("Failed to resolve value of port " + port->ID() + ": " + this->openhat->getExceptionMessage(e));
-				// the expression cannot be evaluated if there is an error
-				return false;
+		// custom port?
+		if (port->getType()[0] == OPDI_PORTTYPE_CUSTOM[0]) {
+			// custom port: set text variable
+			try {
+				std::string value = ((opdi::CustomPort*)port)->getValue();
+				this->logExtreme("Resolved value of port " + port->ID() + " to: '" + value + "'");
+				this->portStrings.push_back(value);
+			} catch (Poco::Exception& e) {
+				// error handling during setup is different; to avoid too many warnings (in the doWork method)
+				// we make a difference here
+				if (duringSetup) {
+					// emit a warning
+					this->logWarning("Failed to resolve value of port " + port->ID() + ": " + this->openhat->getExceptionMessage(e));
+					this->portStrings.push_back("");
+				} else {
+					// warn in extreme logging mode only
+					this->logExtreme("Failed to resolve value of port " + port->ID() + ": " + this->openhat->getExceptionMessage(e));
+					// the expression cannot be evaluated if there is an error
+					return false;
+				}
 			}
-		}
 
-		// add reference to the port value (by port ID)
-		if (!this->symbol_table.add_variable(port->ID(), this->portValues[i]))
-			return false;
+			// add reference to the port value (by port ID)
+			if (!this->symbol_table.add_stringvar(port->ID(), this->portStrings[i]))
+				return false;
+		} else {
+			// numeric port value
+			try {
+				double value = openhat->getPortValue(port);
+				this->logExtreme("Resolved value of port " + port->ID() + " to: " + to_string(value));
+				this->portValues.push_back(value);
+			} catch (Poco::Exception& e) {
+				// error handling during setup is different; to avoid too many warnings (in the doWork method)
+				// we make a difference here
+				if (duringSetup) {
+					// emit a warning
+					this->logWarning("Failed to resolve value of port " + port->ID() + ": " + this->openhat->getExceptionMessage(e));
+					this->portValues.push_back(0.0f);
+				} else {
+					// warn in extreme logging mode only
+					this->logExtreme("Failed to resolve value of port " + port->ID() + ": " + this->openhat->getExceptionMessage(e));
+					// the expression cannot be evaluated if there is an error
+					return false;
+				}
+			}
+
+			// add reference to the port value (by port ID)
+			if (!this->symbol_table.add_variable(port->ID(), this->portValues[i]))
+				return false;
+		}
 	}
 
 	return true;

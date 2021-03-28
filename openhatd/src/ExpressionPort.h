@@ -89,7 +89,8 @@ protected:
 	openhat::AbstractOpenHAT* openhat;
 	std::string expressionStr;
 
-	std::vector<double> portValues;	// holds the values of the ports for the expression evaluation
+	std::vector<double> portValues;	// holds the numeric values of the ports for the expression evaluation
+	std::vector<std::string> portStrings;	// holds the string values of the ports for the expression evaluation
 
 	std::string outputPortStr;
 	opdi::PortList outputPorts;

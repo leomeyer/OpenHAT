@@ -246,37 +246,41 @@ void ExpressionPort::setOutputPorts(double value) {
 	}
 }
 
+void ExpressionPort::apply() {
+	// clear symbol table and values
+	this->symbol_table.clear();
+
+	this->prepareSymbols(false);
+
+	// prepareVariables will return false in case of errors
+	if (this->prepareVariables(false)) {
+
+		double value = expression.value();
+
+		this->logExtreme("Expression result: " + to_string(value));
+
+		this->setOutputPorts(value);
+	}
+	else {
+		// the variables could not be prepared, due to some error
+
+		// fallback value specified?
+		if (this->fallbackSpecified) {
+			double value = this->fallbackValue;
+
+			this->logExtreme("An error occurred, applying fallback value of: " + to_string(value));
+
+			this->setOutputPorts(value);
+		}
+	}
+}
+
 uint8_t ExpressionPort::doWork(uint8_t canSend)  {
 	opdi::DigitalPort::doWork(canSend);
 
 	if (this->line == 1) {
-		// clear symbol table and values
-		this->symbol_table.clear();
-
-		this->prepareSymbols(false);
-
-		// prepareVariables will return false in case of errors
-		if (this->prepareVariables(false)) {
-
-			double value = expression.value();
-
-			this->logExtreme("Expression result: " + to_string(value));
-
-			this->setOutputPorts(value);
-		}
-		else {
-			// the variables could not be prepared, due to some error
-
-			// fallback value specified?
-			if (this->fallbackSpecified) {
-				double value = this->fallbackValue;
-
-				this->logExtreme("An error occurred, applying fallback value of: " + to_string(value));
-
-				this->setOutputPorts(value);
-			}
-		}
-
+		this->apply();
+		
 		// maximum number of iterations specified and reached?
 		if ((this->numIterations > 0) && (--this->iterations <= 0)) {
 			// disable this expression

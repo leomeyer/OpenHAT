@@ -85,15 +85,11 @@ struct timestamp_func : public exprtk::ifunction<double>
 
 class ExpressionPort : public opdi::DigitalPort {
 protected:
-
 	openhat::AbstractOpenHAT* openhat;
-	std::string expressionStr;
 
 	std::vector<double> portValues;	// holds the numeric values of the ports for the expression evaluation
 	std::vector<std::string> portStrings;	// holds the string values of the ports for the expression evaluation
 
-	std::string outputPortStr;
-	opdi::PortList outputPorts;
 	int64_t numIterations;
 	double fallbackValue;
 	bool fallbackSpecified;
@@ -122,6 +118,10 @@ protected:
 	void setOutputPorts(double value);
 
 public:
+	std::string expressionStr;
+	std::string outputPortStr;
+	opdi::PortList outputPorts;
+
 	ExpressionPort(AbstractOpenHAT* openhat, const char* id);
 
 	virtual ~ExpressionPort();
@@ -131,6 +131,8 @@ public:
 	virtual void setLine(uint8_t line, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 
 	virtual void prepare() override;
+        
+        virtual void apply(void);
 };
 
 #endif // def OPENHAT_USE_EXPRTK

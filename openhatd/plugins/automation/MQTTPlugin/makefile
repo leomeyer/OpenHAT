@@ -27,7 +27,7 @@ SRC = $(TARGET).cpp $(APP_PATH)/Configuration.cpp
 CPPPATH = $(APP_PATH)
 
 # C++ wrapper files
-SRC += $(CPPPATH)/OPDI_Ports.cpp
+SRC += $(CPPPATH)/OPDI_Ports.cpp $(CPPPATH)/ExpressionPort.cpp
 
 # additional source files
 # SRC += 
@@ -56,7 +56,7 @@ CC = g++
 EXTRAINCDIRS = $(CPATH) $(CPPPATH) $(PPATHBASE) $(PPATH) $(POCOINCPATH) $(CONIOINCPATH) $(APP_PATH) .
 
 # Place -I options here
-CINCS =
+CINCS = -I $(APP_PATH)/../../libraries/exprtk
 
 # Defines
 CDEFINES = -Dlinux

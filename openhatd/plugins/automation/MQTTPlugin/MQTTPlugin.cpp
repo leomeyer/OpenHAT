@@ -27,6 +27,7 @@
 
 #include "OPDI_Ports.h"
 #include "AbstractOpenHAT.h"
+#include "ExpressionPort.h"
 
 #include "TypeGUIDs.h"
 
@@ -34,6 +35,7 @@
 #include "mqtt/client.h"
 
 #define DEFAULT_QUERY_INTERVAL	30
+#define DEFAULT_TIMEOUT			(2 * DEFAULT_QUERY_INTERVAL)
 
 namespace {
 	
@@ -60,6 +62,7 @@ protected:
 	std::string topic;
 	bool valueSet;
 	uint64_t lastQueryTime;
+	int32_t timeoutSeconds;
 	uint32_t queryInterval;
 	uint64_t timeoutCounter;
 	Poco::Mutex mutex;
@@ -274,73 +277,47 @@ class EventPort : public opdi::DigitalPort, public MQTTPort {
 	friend class MQTTPlugin;
 protected:
 	
-	struct Output {
+	class Output {
+	public:
 		std::string name;
 		std::string pattern;
 		std::string value;
 		std::string outputPortStr;
 		opdi::PortList outputPorts;
+		openhat::ExpressionPort exprPort;
 		
-		uint8_t process(MQTTPlugin* plugin, std::string aValue) {
+		Output(openhat::AbstractOpenHAT* openhat, std::string name): exprPort(openhat, (name + "_Expr").c_str()) {
+		}
+		
+		uint8_t process(EventPort* myPort, std::string aValue) {
 			std::string newValue = aValue;
-			// pattern specified?
-			if (pattern != "") {
-				Poco::RegularExpression re(pattern);
-				if (!re.match(newValue))
-					return OPDI_STATUS_OK;
-				// perform substitution
-				re.subst(newValue, value);
-			} else
-				// use specified value directly
-				newValue = value;
-
-			// apply value to output ports
-			auto it = outputPorts.begin();
-			auto ite = outputPorts.end();
-			while (it != ite) {
-				auto port = *it;
+			try {
+				// pattern specified?
+				if (pattern != "") {
+					Poco::RegularExpression re(pattern);
+					if (!re.match(newValue)) {
+						myPort->plugin->openhat->logDebug(myPort->ID() + 
+							": Event value '" + newValue + "', did not match the pattern '" + pattern + "'", myPort->logVerbosity);
+						return OPDI_STATUS_OK;
+					}
+					// perform substitution
+					re.subst(newValue, value);
+				} else
+					// use specified value directly
+					newValue = value;
 				
-				if (port->getType()[0] == OPDI_PORTTYPE_CUSTOM[0]) {
-					((opdi::CustomPort*)port)->setValue(newValue);
-				}
-				else
-				if (port->getType()[0] == OPDI_PORTTYPE_DIGITAL[0]) {
-					if (newValue == "0")
-						((opdi::DigitalPort*)port)->setLine(0);
-					else if (newValue == "1")
-						((opdi::DigitalPort*)port)->setLine(1);
-				}
-				else
-				if (port->getType()[0] == OPDI_PORTTYPE_ANALOG[0]) {
-					// analog port: relative value (0..1)
-					//value = ((opdi::AnalogPort*)port)->getRelativeValue();
-				}
-				else
-				if (port->getType()[0] == OPDI_PORTTYPE_DIAL[0]) {
-					// dial port: absolute value
-					char* pEnd;
-					int64_t position = strtoll(newValue.c_str(), &pEnd, 10);
-					((opdi::DialPort*)port)->setPosition(position);
-				}
-				else
-				if (port->getType()[0] == OPDI_PORTTYPE_SELECT[0]) {
-					// select port: current position number
-					char* pEnd;
-					uint16_t position = strtol(newValue.c_str(), &pEnd, 10);;
-					((opdi::SelectPort*)port)->setPosition(position);
-				}
-				else
-					// port type not supported
-					throw Poco::Exception("Port type not supported");
+				exprPort.expressionStr = newValue;
+				exprPort.prepare();
+				exprPort.apply();
 
-				++it;
+			} catch (const Poco::Exception& e) {
+				myPort->plugin->openhat->logError(myPort->ID() + ": Error processing event value '" + value + "', evaluated to '" + newValue + "': " + e.message());
 			}
 			return OPDI_STATUS_OK;
 		}
-
 	};
 	
-	std::vector<Output> outputs;
+	std::vector<Output*> outputs;
 	
 	std::string value;
 
@@ -439,7 +416,7 @@ uint8_t GenericPort::doWork(uint8_t canSend) {
 	// no error?
 	if (this->myValue != "") {
 		// error timeout reached without message?
-		if ((opdi_get_time_ms() - this->timeoutCounter) / 1000 > this->plugin->timeoutSeconds) {
+		if ((opdi_get_time_ms() - this->timeoutCounter) / 1000 > this->timeoutSeconds) {
 			// change to error state
 			this->myValue = "";
 			this->setError(Error::VALUE_NOT_AVAILABLE);
@@ -522,7 +499,7 @@ uint8_t EventPort::doWork(uint8_t canSend) {
 		auto it = this->outputs.begin();
 		auto ite = this->outputs.end();
 		while (it != ite) {
-			uint8_t result = it->process(this->plugin, this->value);
+			uint8_t result = (*it)->process(this, this->value);
 			if (result != OPDI_STATUS_OK)
 				return result;
 			++it;
@@ -585,16 +562,15 @@ void EventPort::configure(openhat::ConfigurationView::Ptr config) {
 		// get device section from the configuration>
 		Poco::AutoPtr<openhat::ConfigurationView> outputConfig = this->plugin->openhat->createConfigView(config, outputName);
 
-		Output output;
-		output.name = outputName;
+		Output* output = new Output(this->plugin->openhat, outputName);
 		// get output ports (required)
-		output.outputPortStr = this->plugin->openhat->getConfigString(outputConfig, outputName, "Ports", "", true);
-		output.pattern = this->plugin->openhat->getConfigString(outputConfig, outputName, "Pattern", "", false);
-		output.value =  this->plugin->openhat->getConfigString(outputConfig, outputName, "Value", "", false);
+		output->outputPortStr = this->plugin->openhat->getConfigString(outputConfig, outputName, "Ports", "", true);
+		output->pattern = this->plugin->openhat->getConfigString(outputConfig, outputName, "Pattern", "", false);
+		output->value =  this->plugin->openhat->getConfigString(outputConfig, outputName, "Value", "", false);
 
 		// test pattern if specified
-		if (output.pattern != "") {
-			Poco::RegularExpression re(output.pattern);
+		if (output->pattern != "") {
+			Poco::RegularExpression re(output->pattern);
 		}
 		
 		this->outputs.push_back(output);
@@ -608,7 +584,9 @@ void EventPort::prepare() {
 	auto it = this->outputs.begin();
 	auto ite = this->outputs.end();
 	while (it != ite) {
-		this->plugin->openhat->findPorts(it->name, "Ports", it->outputPortStr, it->outputPorts);
+		// will be mapped to ports in exprPort.prepare() when the value arrives
+		(*it)->exprPort.outputPortStr = (*it)->outputPortStr;
+//		this->plugin->openhat->findPorts((*it)->name, "Ports", (*it)->outputPortStr, (*it)->exprPort.outputPorts);
 		++it;
 	}
 }
@@ -681,7 +659,7 @@ uint8_t HG06337Switch::doWork(uint8_t canSend) {
 	// no error?
 	if (this->switchState > -1) {
 		// error timeout reached without message?
-		if ((opdi_get_time_ms() - this->timeoutCounter) / 1000 > this->plugin->timeoutSeconds) {
+		if ((opdi_get_time_ms() - this->timeoutCounter) / 1000 > this->timeoutSeconds) {
 			// change to error state
 			this->switchState = -1;
 			this->setError(Error::VALUE_NOT_AVAILABLE);
@@ -780,7 +758,7 @@ void MQTTPlugin::errorOccurred(const std::string& message) {
 void MQTTPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const std::string& node, openhat::ConfigurationView::Ptr nodeConfig, openhat::ConfigurationView::Ptr parentConfig, const std::string& /*driverPath*/) {
 	this->openhat = abstractOpenHAT;
 	this->nodeID = node;
-	this->timeoutSeconds = 30;	// time without received payloads until the devices go into error mode
+	this->timeoutSeconds = DEFAULT_TIMEOUT;	// time without received payloads until the devices go into error mode
 
 	this->errorCount = 0;
 
@@ -855,6 +833,8 @@ void MQTTPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const st
 
 		// get topic (required)
 		std::string topic = this->openhat->getConfigString(deviceConfig, deviceName, "Topic", "", true);
+		
+		int timeout = deviceConfig->getInt("Timeout", this->timeoutSeconds);
 
 		int queryInterval = deviceConfig->getInt("QueryInterval", DEFAULT_QUERY_INTERVAL);
 		if (queryInterval < 0)
@@ -864,7 +844,7 @@ void MQTTPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const st
 			this->openhat->logVerbose(node + ": Setting up generic MQTT device port: " + deviceName, this->logVerbosity);
 			// setup the generic port instance and add it
 			GenericPort* genericPort = new GenericPort(this, deviceName, topic);
-			
+			genericPort->timeoutSeconds = timeout;
 			genericPort->queryInterval = queryInterval;
 			// set default group: MQTT's node's group
 			genericPort->setGroup(group);
@@ -878,7 +858,7 @@ void MQTTPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const st
 			this->openhat->logVerbose(node + ": Setting up MQTT event port: " + deviceName, this->logVerbosity);
 			// setup the generic port instance and add it
 			EventPort* eventPort = new EventPort(this, deviceName, topic);
-			
+			eventPort->timeoutSeconds = timeout;
 			eventPort->queryInterval = queryInterval;
 			// set default group: MQTT's node's group
 			eventPort->setGroup(group);
@@ -899,6 +879,7 @@ void MQTTPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const st
 					this->openhat->throwSettingException(node + ": HG06337 Switch device port must be of type 'DigitalPort'");
 				// setup the switch port instance and add it
 				HG06337Switch* switchPort = new HG06337Switch(this, deviceName + "_Switch", topic);
+				switchPort->timeoutSeconds = timeout;
 				switchPort->queryInterval = queryInterval;
 				// set default group: MQTT's node's group
 				switchPort->setGroup(group);

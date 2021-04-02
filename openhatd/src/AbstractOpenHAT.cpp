@@ -2100,14 +2100,14 @@ uint8_t opdi_set_dial_port_position(opdi_Port* port, int64_t position) {
 
 #ifdef OPDI_USE_CUSTOM_PORTS
 
-uint8_t opdi_get_custom_port_value(opdi_Port* aPort, char* buffer) {
+uint8_t opdi_get_custom_port_value(opdi_Port* aPort, char* buffer, int maxlen) {
 	opdi::CustomPort* port = (opdi::CustomPort*)Opdi->findPort(aPort);
 	if (port == nullptr)
 		return OPDI_PORT_UNKNOWN;
 
 	try {
 		std::string value = port->getValue();
-		strcpy(buffer, value.c_str());
+		strncpy(buffer, value.c_str(), maxlen);
 	} catch (opdi::Port::ValueUnavailableException&) {
 		// TODO localize message
 		opdi_set_port_message("Value unavailable");

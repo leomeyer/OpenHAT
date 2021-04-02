@@ -364,7 +364,7 @@ public:
 GenericPort::GenericPort(MQTTPlugin* plugin, const std::string& id, const std::string& topic) : 
 	opdi::CustomPort(id, OPDI_CUSTOM_PORT_TYPEGUID), MQTTPort(plugin, id, topic) {
 	this->myValue = "";
-	this->valueSet = true;		// causes setError in doWork
+	this->valueSet = false;
 }
 
 void GenericPort::subscribe(mqtt::async_client *client) {
@@ -374,7 +374,9 @@ void GenericPort::subscribe(mqtt::async_client *client) {
 			client->subscribe(this->topic, this->plugin->QOS, nullptr, this->listener);
 			
 			if (this->initialValue != "") {
-				this->setValue(this->initialValue);
+				Poco::Mutex::ScopedLock lock(this->mutex);
+				this->myValue = this->initialValue;
+				this->valueSet = true;
 				this->initialValue = "";
 			}
 		}  catch (mqtt::exception& ex) {
@@ -394,6 +396,8 @@ void GenericPort::query(mqtt::async_client *client) {
 
 void GenericPort::handle_payload(std::string payload) {
 	this->plugin->openhat->logDebug(this->pid + ": Payload received: '" + payload + "'");
+
+	Poco::Mutex::ScopedLock lock(this->mutex);
 	this->myValue = payload;
 	this->valueSet = true;
 
@@ -405,6 +409,8 @@ void GenericPort::handle_payload(std::string payload) {
 
 uint8_t GenericPort::doWork(uint8_t canSend) {
 	opdi::CustomPort::doWork(canSend);
+	
+	this->logExtreme("Value: " + this->value);
 	
 	// time for refresh?
 	if ((this->queryInterval > 0) && (opdi_get_time_ms() - this->lastQueryTime > this->queryInterval * 1000)) {

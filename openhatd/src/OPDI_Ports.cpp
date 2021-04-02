@@ -1309,9 +1309,9 @@ void CustomPort::setValue(const std::string& newValue, ChangeSource changeSource
 		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
 	bool changed = (newValue != this->value);
 	if (changed) {
-		this->refreshRequired |= (this->refreshMode == RefreshMode::REFRESH_AUTO);
 		this->value = newValue;
-		this->logDebug(this->ID() + ": Value changed to: " + this->value + " by: " + this->getChangeSourceText(changeSource));
+		this->refreshRequired |= (this->refreshMode == RefreshMode::REFRESH_AUTO);
+		this->logDebug("Value changed to: " + this->value + " by: " + this->getChangeSourceText(changeSource));
 	}
 	this->error = Error::VALUE_OK;
 	if (persistent && (this->opdi != nullptr))

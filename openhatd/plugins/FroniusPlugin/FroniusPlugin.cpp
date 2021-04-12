@@ -54,7 +54,8 @@ public:
 	typedef Poco::AutoPtr<ActionNotification> Ptr;
 
 	enum ActionType {
-		GETPOWER
+		GETPOWER,
+		GETDAYENERGY
 	};
 
 	ActionType type;
@@ -106,6 +107,8 @@ public:
 
 	virtual void getCurrentPower(FroniusPort* port);
 
+	virtual void getDayEnergy(FroniusPort* port);
+	
 	void errorOccurred(const std::string& message);
 	
 	Poco::JSON::Object::Ptr GetObject(Poco::JSON::Object::Ptr jsonObject, const std::string& key);
@@ -144,7 +147,23 @@ public:
 	virtual uint8_t doWork(uint8_t canSend) override;
 };
 
+
+class DayEnergy : public opdi::DialPort, public FroniusPort {
+	friend class FroniusPlugin;
+protected:
+
+	int32_t energy;
+
+	virtual void setEnergy(int32_t energy);
+
+public:
+	DayEnergy(FroniusPlugin* plugin, const std::string& id, const std::string& parameters);
+
+	virtual uint8_t doWork(uint8_t canSend) override;
+};
+
 }	// end anonymous namespace
+
 
 CurrentSolarPower::CurrentSolarPower(FroniusPlugin* plugin, const std::string& id, const std::string& parameters) : 
 	opdi::DialPort(id.c_str()), FroniusPort(plugin, id, parameters) {
@@ -195,16 +214,17 @@ void CurrentSolarPower::setPower(int32_t power) {
 	this->power = power;
 	this->valueSet = true;
 }
-/*
-FritzDECT200Energy::FritzDECT200Energy(FritzBoxPlugin* plugin, const std::string& id, const std::string& ain, int queryInterval) : 
-	opdi::DialPort(id.c_str()), FritzPort(id, ain, queryInterval) {
+
+
+DayEnergy::DayEnergy(FroniusPlugin* plugin, const std::string& id, const std::string& parameters) : 
+	opdi::DialPort(id.c_str()), FroniusPort(plugin, id, parameters) {
 	this->plugin = plugin;
 	this->energy = -1;	// unknown
 	this->lastQueryTime = 0;
 	this->valueSet = true;		// causes setError in doWork
 
 	this->minValue = 0;
-	this->maxValue = 2147483647;	// measured in Wh
+	this->maxValue = 999999999;	// measured in Wh
 	this->step = 1;
 	this->position = 0;
 
@@ -215,16 +235,16 @@ FritzDECT200Energy::FritzDECT200Energy(FritzBoxPlugin* plugin, const std::string
 	this->setReadonly(true);
 }
 
-uint8_t FritzDECT200Energy::doWork(uint8_t canSend) {
+uint8_t DayEnergy::doWork(uint8_t canSend) {
 	opdi::DialPort::doWork(canSend);
 
 	// time for refresh?
 	if (opdi_get_time_ms() - this->lastQueryTime > this->queryInterval * 1000) {
-		this->plugin->queue.enqueueNotification(new ActionNotification(ActionNotification::GETENERGY, this));
+		this->plugin->queue.enqueueNotification(new ActionNotification(ActionNotification::GETDAYENERGY, this));
 		this->lastQueryTime = opdi_get_time_ms();
 	}
 
-	Poco::Mutex::ScopedLock lock(this->mutex);
+	Poco::Mutex::ScopedLock lock(this->plugin->mutex);
 
 	// has a value been returned?
 	if (this->valueSet) {
@@ -239,64 +259,13 @@ uint8_t FritzDECT200Energy::doWork(uint8_t canSend) {
 	return OPDI_STATUS_OK;
 }
 
-void FritzDECT200Energy::setEnergy(int32_t energy) {
-	Poco::Mutex::ScopedLock lock(this->mutex);
+void DayEnergy::setEnergy(int32_t energy) {
+	Poco::Mutex::ScopedLock lock(this->plugin->mutex);
 
 	this->energy = energy;
 	this->valueSet = true;
 }
 
-FritzDECT200Temperature::FritzDECT200Temperature(FritzBoxPlugin* plugin, const std::string& id, const std::string& ain, int queryInterval) :
-	opdi::DialPort(id.c_str()), FritzPort(id, ain, queryInterval) {
-	this->plugin = plugin;
-	this->temperature = -9999;	// unknown
-	this->lastQueryTime = 0;
-	this->valueSet = true;		// causes setError in doWork
-
-	// value is measured in centidegrees Celsius
-	this->minValue = -1000;			// -100°C
-	this->maxValue = 1000;			// +100°C
-	this->step = 1;
-	this->position = 0;
-
-	this->setUnit("temperature_centiDegreesCelsius");
-	this->setIcon("thermometer_celsius");
-
-	// port is readonly
-	this->setReadonly(true);
-}
-
-uint8_t FritzDECT200Temperature::doWork(uint8_t canSend) {
-	opdi::DialPort::doWork(canSend);
-
-	// time for refresh?
-	if (opdi_get_time_ms() - this->lastQueryTime > this->queryInterval * 1000) {
-		this->plugin->queue.enqueueNotification(new ActionNotification(ActionNotification::GETTEMPERATURE, this));
-		this->lastQueryTime = opdi_get_time_ms();
-	}
-
-	Poco::Mutex::ScopedLock lock(this->mutex);
-
-	// has a value been returned?
-	if (this->valueSet) {
-		// values <= -9999 signifies an error
-		if (this->temperature > -9999)
-			opdi::DialPort::setPosition(this->temperature);
-		else
-			this->setError(Error::VALUE_NOT_AVAILABLE);
-		this->valueSet = false;
-	}
-
-	return OPDI_STATUS_OK;
-}
-
-void FritzDECT200Temperature::setTemperature(int32_t temperature) {
-	Poco::Mutex::ScopedLock lock(this->mutex);
-
-	this->temperature = temperature;
-	this->valueSet = true;
-}
-*/
 ////////////////////////////////////////////////////////
 // Plugin implementation
 ////////////////////////////////////////////////////////
@@ -410,6 +379,41 @@ void FroniusPlugin::getCurrentPower(FroniusPort* port) {
 	} catch (Poco::Exception &e) {
 		this->errorOccurred(this->nodeID + ": Error parsing JSON: " + this->openhat->getExceptionMessage(e));
 		powerPort->setError(opdi::Port::Error::VALUE_NOT_AVAILABLE);
+	}
+}
+
+void FroniusPlugin::getDayEnergy(FroniusPort* port) {
+	// port must be a DayEnergy port
+	DayEnergy* energyPort = (DayEnergy*)port;
+
+	// query the inverter
+	std::string result = httpGet("/solar_api/v1/GetInverterRealtimeData.cgi?" + energyPort->parameters);
+	
+	// problem?
+	if (result.empty()) {
+		energyPort->setError(opdi::Port::Error::VALUE_NOT_AVAILABLE);
+		return;
+	}
+
+	// parse result JSON
+	try {
+		Poco::JSON::Parser parser;
+		Poco::Dynamic::Var loParsedJson = parser.parse(result);
+		Poco::Dynamic::Var jsonResult = parser.result();
+
+		Poco::JSON::Object::Ptr root = jsonResult.extract<Poco::JSON::Object::Ptr>();
+		Poco::JSON::Object::Ptr body = this->GetObject(root, "Body");
+		Poco::JSON::Object::Ptr data = this->GetObject(body, "Data");
+		Poco::JSON::Object::Ptr pac = this->GetObject(data, "DAY_ENERGY");
+		Poco::JSON::Object::Ptr values = this->GetObject(pac, "Values");
+		std::string value = this->GetString(values, "1");
+		// parse value
+		int energy = -1;
+		Poco::NumberParser::tryParse(value, energy);
+		energyPort->setEnergy(energy);	// watt hours
+	} catch (Poco::Exception &e) {
+		this->errorOccurred(this->nodeID + ": Error parsing JSON: " + this->openhat->getExceptionMessage(e));
+		energyPort->setError(opdi::Port::Error::VALUE_NOT_AVAILABLE);
 	}
 }
 
@@ -547,64 +551,31 @@ void FroniusPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const
 			} else {
 				this->openhat->logVerbose(node + ": Fronius Power device port: " + deviceName + "_Power.Type not found, ignoring", this->logVerbosity);
 			}
-/*
-			if (parentConfig->hasProperty(deviceName + "_Power.Type")) {
-				this->openhat->logVerbose(node + ": Setting up FritzBoxPlugin device port: " + deviceName + "_Power", this->logVerbosity);
-				Poco::AutoPtr<openhat::ConfigurationView> portConfig = this->openhat->createConfigView(parentConfig, deviceName + "_Power");
-				// check type
-				if (portConfig->getString("Type") != "DialPort")
-					this->openhat->throwSettingException(node + ": FritzDECT200 Power device port must be of type 'DialPort'");
-				// setup the power port instance and add it
-				FritzDECT200Power* powerPort = new FritzDECT200Power(this, deviceName + "_Power", ain, queryInterval);
-				// set default group: FritzBox's node's group
-				powerPort->setGroup(group);
-				// set default log verbosity
-				powerPort->logVerbosity = this->logVerbosity;
-				// allow only basic settings to be changed
-				this->openhat->configurePort(portConfig, powerPort, 0);
-				this->openhat->addPort(powerPort);
-			} else {
-				this->openhat->logVerbose(node + ": FritzBoxPlugin device port: " + deviceName + "_Power.Type not found, ignoring", this->logVerbosity);
-			}
 
-			if (parentConfig->hasProperty(deviceName + "_Energy.Type")) {
-				this->openhat->logVerbose(node + ": Setting up FritzBoxPlugin device port: " + deviceName + "_Energy", this->logVerbosity);
-				Poco::AutoPtr<openhat::ConfigurationView> portConfig = this->openhat->createConfigView(parentConfig, deviceName + "_Energy");
+			this->openhat->logVerbose(node + ": Setting up Fronius system device port: " + deviceName + "_Power", this->logVerbosity);
+
+			if (parentConfig->hasProperty(deviceName + "_DayEnergy.Type")) {
+				Poco::AutoPtr<openhat::ConfigurationView> portConfig = this->openhat->createConfigView(parentConfig, deviceName + "_DayEnergy");
 				// check type
 				if (portConfig->getString("Type") != "DialPort")
-					this->openhat->throwSettingException(node + ": FritzDECT200 Energy device port must be of type 'DialPort'");
-				// setup the energy port instance and add it
-				FritzDECT200Energy* energyPort = new FritzDECT200Energy(this, deviceName + "_Energy", ain, queryInterval);
-				// set default group: FritzBox's node's group
+					this->openhat->throwSettingException(node + ": Fronius DayEnergy device port must be of type 'DialPort'");
+				// setup the switch port instance and add it
+				DayEnergy* energyPort = new DayEnergy(this, deviceName + "_DayEnergy", "Scope=System");
+				// set default group: node's group
 				energyPort->setGroup(group);
 				// set default log verbosity
 				energyPort->logVerbosity = this->logVerbosity;
 				// allow only basic settings to be changed
 				this->openhat->configurePort(portConfig, energyPort, 0);
-				this->openhat->addPort(energyPort);
-			} else {
-				this->openhat->logVerbose(node + ": FritzBoxPlugin device port: " + deviceName + "_Energy.Type not found, ignoring", this->logVerbosity);
-			}
+				int queryInterval = portConfig->getInt("QueryInterval", 0);
+				if (queryInterval > 0)
+					energyPort->queryInterval = queryInterval;
 
-			if (parentConfig->hasProperty(deviceName + "_Temperature.Type")) {
-				this->openhat->logVerbose(node + ": Setting up FritzBoxPlugin device port: " + deviceName + "_Temperature", this->logVerbosity);
-				Poco::AutoPtr<openhat::ConfigurationView> portConfig = this->openhat->createConfigView(parentConfig, deviceName + "_Temperature");
-				// check type
-				if (portConfig->getString("Type") != "DialPort")
-					this->openhat->throwSettingException(node + ": FritzDECT200 Temperature device port must be of type 'DialPort'");
-				// setup the energy port instance and add it
-				FritzDECT200Temperature* temperaturePort = new FritzDECT200Temperature(this, deviceName + "_Temperature", ain, queryInterval);
-				// set default group: FritzBox's node's group
-				temperaturePort->setGroup(group);
-				// set default log verbosity
-				temperaturePort->logVerbosity = this->logVerbosity;
-				// allow only basic settings to be changed
-				this->openhat->configurePort(portConfig, temperaturePort, 0);
-				this->openhat->addPort(temperaturePort);
+				this->openhat->addPort(energyPort);
+				this->myPorts.push_back(energyPort);
 			} else {
-				this->openhat->logVerbose(node + ": FritzBoxPlugin device port: " + deviceName + "_Temperature.Type not found, ignoring", this->logVerbosity);
+				this->openhat->logVerbose(node + ": Fronius DayEnergy device port: " + deviceName + "_DayEnergy.Type not found, ignoring", this->logVerbosity);
 			}
-*/
 		} else
 			this->openhat->throwSettingException(node + ": This plugin does not support the device type '" + deviceType + "'");
 		
@@ -639,6 +610,7 @@ void FroniusPlugin::run(void) {
 					std::string action;
 					switch (workNf->type) {
 					case ActionNotification::GETPOWER: action = "GETPOWER"; break;
+					case ActionNotification::GETDAYENERGY: action = "GETDAYENERGY"; break;
 					}
 					FroniusPort* port = (FroniusPort*)workNf->port;
 					if (port == nullptr)
@@ -649,6 +621,9 @@ void FroniusPlugin::run(void) {
 					switch (workNf->type) {
 					case ActionNotification::GETPOWER:
 						this->getCurrentPower(port);
+						break;
+					case ActionNotification::GETDAYENERGY:
+						this->getDayEnergy(port);
 						break;
 					}
 				}

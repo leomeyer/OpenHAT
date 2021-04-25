@@ -24,6 +24,8 @@
 #include "Poco/AutoPtr.h"
 #include "Poco/NumberParser.h"
 #include "Poco/RegularExpression.h"
+#include <Poco/JSON/JSON.h>
+#include <Poco/JSON/Parser.h>
 
 #include "OPDI_Ports.h"
 #include "AbstractOpenHAT.h"
@@ -246,6 +248,10 @@ public:
 	virtual void setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const std::string& node, openhat::ConfigurationView::Ptr nodeConfig, openhat::ConfigurationView::Ptr parentConfig, const std::string& driverPath) override;
 	
 	virtual void terminate(void) override;
+	
+	Poco::JSON::Object::Ptr GetObject(Poco::JSON::Object::Ptr jsonObject, const std::string& key);
+
+	std::string GetString(Poco::JSON::Object::Ptr jsonObject, const std::string& key);
 };
 
 ////////////////////////////////////////////////////////////////////////
@@ -355,6 +361,48 @@ public:
 	virtual void handle_payload(std::string payload) override;
 
 	virtual void setLine(uint8_t line, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
+
+	virtual uint8_t doWork(uint8_t canSend) override;
+};
+
+
+class TasmotaSwitch : public opdi::DigitalPort, public MQTTPort {
+	friend class MQTTPlugin;
+protected:
+        std::string deviceID;
+	int8_t switchState;
+	int8_t initialLine;
+	virtual void setSwitchState(int8_t line);
+
+public:
+	TasmotaSwitch(MQTTPlugin* plugin, const std::string& id, const std::string& deviceID);
+	
+	virtual void subscribe(mqtt::async_client *client) override;
+	
+	virtual void query(mqtt::async_client *client) override;
+	
+	virtual void handle_payload(std::string payload) override;
+
+	virtual void setLine(uint8_t line, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
+
+	virtual uint8_t doWork(uint8_t canSend) override;
+};
+
+class TasmotaPower : public opdi::DialPort, public MQTTPort {
+	friend class MQTTPlugin;
+protected:
+        std::string deviceID;
+	int64_t newValue;
+	virtual void setValue(int64_t value);
+
+public:
+	TasmotaPower(MQTTPlugin* plugin, const std::string& id, const std::string& deviceID);
+	
+	virtual void subscribe(mqtt::async_client *client) override;
+	
+	virtual void query(mqtt::async_client *client) override;
+	
+	virtual void handle_payload(std::string payload) override;
 
 	virtual uint8_t doWork(uint8_t canSend) override;
 };
@@ -717,6 +765,233 @@ void HG06337Switch::setSwitchState(int8_t switchState) {
 	this->valueSet = true;
 }
 
+TasmotaSwitch::TasmotaSwitch(MQTTPlugin* plugin, const std::string& id, const std::string& deviceID) : 
+	opdi::DigitalPort(id.c_str(), OPDI_PORTDIRCAP_OUTPUT, 0), MQTTPort(plugin, id, std::string("stat/") + deviceID + "/POWER") {
+    this->deviceID = deviceID;
+    this->switchState = -1;	// unknown
+    this->valueSet = true;		// causes setError in doWork
+    this->initialLine = -1;
+	
+    this->mode = OPDI_DIGITAL_MODE_OUTPUT;
+    this->setIcon("powersocket");
+}
+
+void TasmotaSwitch::subscribe(mqtt::async_client *client) {
+	if (client->is_connected())
+		try {
+			this->plugin->openhat->logDebug(std::string(this->getID()) + ": Subscribing to topic: " + this->topic, this->logVerbosity);
+			client->subscribe(this->topic, this->plugin->QOS, nullptr, this->listener);
+			
+			if (this->initialLine > -1) {
+				this->setLine(this->initialLine);
+				this->initialLine = -1;
+			}
+		}  catch (mqtt::exception& ex) {
+			this->plugin->openhat->logError(std::string(this->getID()) + ": Error subscribing to topic " + this->topic + ": " + ex.what());
+		}
+}
+
+void TasmotaSwitch::query(mqtt::async_client *client) {
+	this->plugin->openhat->logDebug(this->pid + ": Querying state", this->logVerbosity);
+	if (client->is_connected())
+		try {
+			client->publish(std::string("cmnd/") + this->deviceID + "/power", std::string());
+		}  catch (mqtt::exception& ex) {
+			this->plugin->openhat->logError(std::string(this->getID()) + ": Error querying state: " + this->topic + ": " + ex.what());
+		}
+	}
+
+void TasmotaSwitch::handle_payload(std::string payload) {
+	this->plugin->openhat->logDebug(this->pid + ": Payload received: '" + payload + "'");
+	if (payload.find("OFF") != std::string::npos) {
+		this->setSwitchState(0);
+		this->valueSet = true;
+	} else
+	if (payload.find("ON") != std::string::npos) {
+		this->setSwitchState(1);
+		this->valueSet = true;
+	} else {
+		// error
+		this->setSwitchState(-1);
+		this->valueSet = true;
+	}
+	// reset query timer
+	this->lastQueryTime = opdi_get_time_ms();
+	// reset timeout counter
+	this->timeoutCounter = opdi_get_time_ms();
+}
+
+uint8_t TasmotaSwitch::doWork(uint8_t canSend) {
+	opdi::DigitalPort::doWork(canSend);
+
+	// time for refresh?
+	if ((this->queryInterval > 0) && (opdi_get_time_ms() - this->lastQueryTime > this->queryInterval * 1000)) {
+		this->plugin->queue.enqueueNotification(new ActionNotification(ActionNotification::QUERY, this));
+		this->lastQueryTime = opdi_get_time_ms();
+	}
+	
+	Poco::Mutex::ScopedLock lock(this->mutex);
+	// no error?
+	if (this->switchState > -1) {
+		// error timeout reached without message?
+		if ((opdi_get_time_ms() - this->timeoutCounter) / 1000 > this->timeoutSeconds) {
+			// change to error state
+			this->switchState = -1;
+			this->setError(Error::VALUE_NOT_AVAILABLE);
+		}
+	}
+
+	// has a value been returned?
+	if (this->valueSet) {
+		// values < 0 signify an error
+		if (this->switchState > -1)
+			// use base method to avoid triggering an action!
+			opdi::DigitalPort::setLine(this->switchState);
+		else
+			this->setError(Error::VALUE_NOT_AVAILABLE);
+		this->valueSet = false;
+	}
+
+	return OPDI_STATUS_OK;
+}
+
+void TasmotaSwitch::setLine(uint8_t line, ChangeSource changeSource) {
+	// opdi::DigitalPort::setLine(line, changeSource);
+
+	if (this->plugin->client == nullptr)
+		return;
+	try {
+		std::string payload;
+		if (line == 0)
+			payload = "OFF";
+		else
+		if (line == 1)
+			payload = "ON";
+
+		if (payload != "") {
+                    std::string topic = "cmnd/" + this->deviceID + "/power";
+                    this->plugin->client->publish(topic, payload);
+                    this->plugin->openhat->logDebug(std::string(this->getID()) + ": Published value to: " + topic + ": " + payload);
+		} else
+                    this->plugin->openhat->logDebug(std::string(this->getID()) + ": No payload to publish, line is " + this->plugin->openhat->to_string(line));
+		
+	}  catch (mqtt::exception& ex) {
+		this->plugin->openhat->logError(std::string(this->getID()) + ": Error publishing state: " + topic + ": " + ex.what());
+	}
+}
+
+void TasmotaSwitch::setSwitchState(int8_t switchState) {
+	Poco::Mutex::ScopedLock lock(this->mutex);
+
+	this->switchState = switchState;
+	this->valueSet = true;
+}
+
+
+TasmotaPower::TasmotaPower(MQTTPlugin* plugin, const std::string& id, const std::string& deviceID) : 
+	opdi::DialPort(id.c_str(), 0, 999999999999, 1), MQTTPort(plugin, id, std::string("stat/") + deviceID + "/STATUS8") {
+    this->deviceID = deviceID;
+    this->newValue = -1;
+    this->valueSet = true;		// causes setError in doWork
+	
+    this->setIcon("energymeter");
+    this->setUnit("electricPower_mW");
+}
+
+void TasmotaPower::subscribe(mqtt::async_client *client) {
+    if (client->is_connected())
+        try {
+            this->plugin->openhat->logDebug(std::string(this->getID()) + ": Subscribing to topic: " + this->topic, this->logVerbosity);
+            client->subscribe(this->topic, this->plugin->QOS, nullptr, this->listener);
+        }  catch (mqtt::exception& ex) {
+                this->plugin->openhat->logError(std::string(this->getID()) + ": Error subscribing to topic " + this->topic + ": " + ex.what());
+        }
+}
+
+void TasmotaPower::query(mqtt::async_client *client) {
+    this->plugin->openhat->logDebug(this->pid + ": Querying state", this->logVerbosity);
+    if (client->is_connected())
+        try {
+            std::string topic = std::string("cmnd/") + this->deviceID + "/status";
+            client->publish(topic, std::string("8"));
+        }  catch (mqtt::exception& ex) {
+            this->plugin->openhat->logError(std::string(this->getID()) + ": Error querying state: " + topic + ": " + ex.what());
+        }
+}
+
+void TasmotaPower::handle_payload(std::string payload) {
+    this->plugin->openhat->logDebug(this->pid + ": Payload received: '" + payload + "'");
+
+    if (payload.empty()) {
+        this->setValue(-1);
+        return;
+    }
+
+    // parse result JSON
+    try {
+            Poco::JSON::Parser parser;
+            Poco::Dynamic::Var loParsedJson = parser.parse(payload);
+            Poco::Dynamic::Var jsonResult = parser.result();
+
+            Poco::JSON::Object::Ptr root = jsonResult.extract<Poco::JSON::Object::Ptr>();
+            Poco::JSON::Object::Ptr body = this->plugin->GetObject(root, "StatusSNS");
+            Poco::JSON::Object::Ptr data = this->plugin->GetObject(body, "ENERGY");
+            std::string value = this->plugin->GetString(data, "Power");
+            // parse value
+            int power = -1;
+            Poco::NumberParser::tryParse(value, power);
+            this->setValue(power * 1000);	// milliwatts
+    } catch (Poco::Exception &e) {
+            this->plugin->errorOccurred(this->ID() + ": Error parsing JSON: " + this->plugin->openhat->getExceptionMessage(e));
+            this->setValue(-1);
+    }
+
+    // reset query timer
+    this->lastQueryTime = opdi_get_time_ms();
+    // reset timeout counter
+    this->timeoutCounter = opdi_get_time_ms();
+}
+
+uint8_t TasmotaPower::doWork(uint8_t canSend) {
+    opdi::DialPort::doWork(canSend);
+
+    // time for refresh?
+    if ((this->queryInterval > 0) && (opdi_get_time_ms() - this->lastQueryTime > this->queryInterval * 1000)) {
+        this->plugin->queue.enqueueNotification(new ActionNotification(ActionNotification::QUERY, this));
+        this->lastQueryTime = opdi_get_time_ms();
+    }
+
+    Poco::Mutex::ScopedLock lock(this->mutex);
+    // no error?
+    if (this->newValue > -1) {
+        // error timeout reached without message?
+        if ((opdi_get_time_ms() - this->timeoutCounter) / 1000 > this->timeoutSeconds) {
+            // change to error state
+            this->newValue = -1;
+            this->setError(Error::VALUE_NOT_AVAILABLE);
+        }
+    }
+
+    // has a value been returned?
+    if (this->valueSet) {
+        // values < 0 signify an error
+        if (this->newValue > -1)
+                // use base method to avoid triggering an action!
+                opdi::DialPort::setPosition(this->newValue);
+        else
+                this->setError(Error::VALUE_NOT_AVAILABLE);
+        this->valueSet = false;
+    }
+
+    return OPDI_STATUS_OK;
+}
+
+void TasmotaPower::setValue(int64_t value) {
+	Poco::Mutex::ScopedLock lock(this->mutex);
+
+	this->newValue = value;
+	this->valueSet = true;
+}
 
 ////////////////////////////////////////////////////////
 // Plugin implementation
@@ -837,9 +1112,6 @@ void MQTTPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const st
 		// get device type (required)
 		std::string deviceType = this->openhat->getConfigString(deviceConfig, deviceName, "Type", "", true);
 
-		// get topic (required)
-		std::string topic = this->openhat->getConfigString(deviceConfig, deviceName, "Topic", "", true);
-		
 		int timeout = deviceConfig->getInt("Timeout", this->timeoutSeconds);
 
 		int queryInterval = deviceConfig->getInt("QueryInterval", DEFAULT_QUERY_INTERVAL);
@@ -848,6 +1120,9 @@ void MQTTPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const st
 		
 		if (deviceType == "Generic") {
 			this->openhat->logVerbose(node + ": Setting up generic MQTT device port: " + deviceName, this->logVerbosity);
+                        // get topic (required)
+                        std::string topic = this->openhat->getConfigString(deviceConfig, deviceName, "Topic", "", true);
+
 			// setup the generic port instance and add it
 			GenericPort* genericPort = new GenericPort(this, deviceName, topic);
 			genericPort->timeoutSeconds = timeout;
@@ -862,6 +1137,9 @@ void MQTTPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const st
 		}
 		else if (deviceType == "Event") {
 			this->openhat->logVerbose(node + ": Setting up MQTT event port: " + deviceName, this->logVerbosity);
+                        // get topic (required)
+                        std::string topic = this->openhat->getConfigString(deviceConfig, deviceName, "Topic", "", true);
+
 			// setup the generic port instance and add it
 			EventPort* eventPort = new EventPort(this, deviceName, topic);
 			eventPort->timeoutSeconds = timeout;
@@ -876,6 +1154,8 @@ void MQTTPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const st
 		}
 		else if (deviceType == "HG06337") {
 			this->openhat->logVerbose(node + ": Setting up HG06337 device port: " + deviceName + "_Switch", this->logVerbosity);
+                        // get topic (required)
+                        std::string topic = this->openhat->getConfigString(deviceConfig, deviceName, "Topic", "", true);
 
 			if (parentConfig->hasProperty(deviceName + "_Switch.Type")) {
 				this->openhat->logVerbose(node + ": Setting up HG06337 device port: " + deviceName + "_Switch", this->logVerbosity);
@@ -905,8 +1185,65 @@ void MQTTPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const st
 			} else {
 				this->openhat->logVerbose(node + ": HG06337 device port: " + deviceName + "_Switch.Type not found, ignoring", this->logVerbosity);
 			}
-		} else
-			this->openhat->throwSettingException(node + ": This plugin does not support the device type '" + deviceType + "'");
+		}
+		else if (deviceType == "GosundTasmota") {
+			this->openhat->logVerbose(node + ": Setting up GosundTasmota device port: " + deviceName + "_Switch", this->logVerbosity);
+                        // get device ID (required)
+                        std::string deviceID = this->openhat->getConfigString(deviceConfig, deviceName, "DeviceID", "", true);
+
+			if (parentConfig->hasProperty(deviceName + "_Switch.Type")) {
+				this->openhat->logVerbose(node + ": Setting up GosundTasmota device port: " + deviceName + "_Switch", this->logVerbosity);
+				Poco::AutoPtr<openhat::ConfigurationView> portConfig = this->openhat->createConfigView(parentConfig, deviceName + "_Switch");
+				// check type
+				if (portConfig->getString("Type") != "DigitalPort")
+					this->openhat->throwSettingException(node + ": GosundTasmota Switch device port must be of type 'DigitalPort'");
+				// setup the switch port instance and add it
+				TasmotaSwitch* switchPort = new TasmotaSwitch(this, deviceName + "_Switch", deviceID);
+				switchPort->timeoutSeconds = timeout;
+				switchPort->queryInterval = queryInterval;
+				// set default group: MQTT's node's group
+				switchPort->setGroup(group);
+				// set default log verbosity
+				switchPort->logVerbosity = this->logVerbosity;
+				std::string portLine = portConfig->getString("Line", "");
+				if (portLine == "High") {
+					switchPort->initialLine = 1;
+				} else if (portLine == "Low") {
+					switchPort->initialLine = 0;
+				} else if (portLine != "")
+					this->openhat->throwSettingException("Unknown Line specified; expected 'Low' or 'High'", portLine);
+				// allow only basic settings to be changed
+				this->openhat->configurePort(portConfig, switchPort, 0);
+				this->openhat->addPort(switchPort);
+				this->myPorts.push_back(switchPort);
+			} else {
+				this->openhat->logVerbose(node + ": GosundTasmota device port: " + deviceName + "_Switch.Type not found, ignoring", this->logVerbosity);
+			}
+                        
+			if (parentConfig->hasProperty(deviceName + "_Power.Type")) {
+				this->openhat->logVerbose(node + ": Setting up GosundTasmota device port: " + deviceName + "_Power", this->logVerbosity);
+				Poco::AutoPtr<openhat::ConfigurationView> portConfig = this->openhat->createConfigView(parentConfig, deviceName + "_Power");
+				// check type
+				if (portConfig->getString("Type") != "DialPort")
+					this->openhat->throwSettingException(node + ": GosundTasmota Power device port must be of type 'DialPort'");
+				// setup the switch port instance and add it
+				TasmotaPower* powerPort = new TasmotaPower(this, deviceName + "_Power", deviceID);
+				powerPort->timeoutSeconds = timeout;
+				powerPort->queryInterval = queryInterval;
+				// set default group: MQTT's node's group
+				powerPort->setGroup(group);
+				// set default log verbosity
+				powerPort->logVerbosity = this->logVerbosity;
+				// allow only basic settings to be changed
+				this->openhat->configurePort(portConfig, powerPort, 0);
+				this->openhat->addPort(powerPort);
+				this->myPorts.push_back(powerPort);
+			} else {
+				this->openhat->logVerbose(node + ": GosundTasmota device port: " + deviceName + "_Power.Type not found, ignoring", this->logVerbosity);
+			}
+                }
+                else
+                    this->openhat->throwSettingException(node + ": This plugin does not support the device type '" + deviceType + "'");
 
 		++nli;
 	}
@@ -1078,6 +1415,29 @@ void MQTTPlugin::terminate() {
 //	while (this->workThread.isRunning())
 //		Poco::Thread::current()->yield();
 }
+
+Poco::JSON::Object::Ptr MQTTPlugin::GetObject(Poco::JSON::Object::Ptr jsonObject, const std::string& key) {
+	Poco::JSON::Object::Ptr result = jsonObject->getObject(key);
+	if (result == nullptr)
+		throw Poco::Exception("JSON value not found: " + key);
+    return result;
+}
+
+std::string MQTTPlugin::GetString(Poco::JSON::Object::Ptr jsonObject, const std::string& key) {
+    Poco::Dynamic::Var loVariable;
+    std::string lsReturn;
+
+    // Get the member Variable
+    //
+    loVariable = jsonObject->get(key);
+
+    // Get the Value from the Variable
+    //
+    lsReturn = loVariable.convert<std::string>();
+
+    return lsReturn;
+}
+
 
 // plugin instance factory function
 

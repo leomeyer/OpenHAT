@@ -56,7 +56,7 @@ CC = g++
 EXTRAINCDIRS = $(CPATH) $(CPPPATH) $(PPATHBASE) $(PPATH) $(POCOINCPATH) $(CONIOINCPATH) $(APP_PATH) .
 
 # Place -I options here
-CINCS = -I $(APP_PATH)/../../libraries/exprtk
+CINCS = -I $(APP_PATH)/../../libraries/exprtk -I $(APP_PATH)/../../libraries/paho.mqtt.c/src -I $(APP_PATH)/../../libraries/paho.mqtt.cpp/src
 
 # Defines
 CDEFINES = -Dlinux

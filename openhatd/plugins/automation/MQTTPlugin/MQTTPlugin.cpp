@@ -893,6 +893,7 @@ TasmotaPower::TasmotaPower(MQTTPlugin* plugin, const std::string& id, const std:
     this->deviceID = deviceID;
     this->newValue = -1;
     this->valueSet = true;		// causes setError in doWork
+	this->readonly = true;
 	
     this->setIcon("energymeter");
     this->setUnit("electricPower_mW");
@@ -1312,22 +1313,30 @@ void MQTTPlugin::run(void) {
 			}
 			if (this->client == nullptr) {
 				// sleep and try again
+#ifdef _WIN32
+				Sleep(10000);
+#else
                 struct timespec aSleep;
                 struct timespec aRem;
 				aSleep.tv_sec = 10;
 				aSleep.tv_nsec = 0;
 				nanosleep(&aSleep, &aRem);
+#endif
 			} else {
 				// wait until connection established or timeout up
 				uint64_t aTime = opdi_get_time_ms();
 				while ((opdi_get_time_ms() - aTime < this->timeoutSeconds * 1000)
 						&& !this->client->is_connected()) {
 					this->openhat->logExtreme(this->nodeID + ": Waiting for connection...", this->logVerbosity);
+#ifdef _WIN32
+					Sleep(1);
+#else
 					struct timespec aSleep;
 					struct timespec aRem;
 					aSleep.tv_sec = 0;
 					aSleep.tv_nsec = 1000000;
 					nanosleep(&aSleep, &aRem);
+#endif
 				}
 				
 				// still not connected?

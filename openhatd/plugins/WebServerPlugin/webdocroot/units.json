@@ -27,7 +27,7 @@
       },
       {
         "-name": "electricEnergy_Wh_in_kWh",
-        "#text": "layout=dial_port_row_noslider;icon=energymeter;formatString=%.3f Wh;denominator=10000000"
+        "#text": "layout=dial_port_row_noslider;icon=energymeter;formatString=%.3f Wh;denominator=1000"
       },
       {
         "-name": "electricEnergy_100nWh",

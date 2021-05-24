@@ -18,13 +18,13 @@
     <ClCompile Include="WindowPlugin.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\Configuration.cpp">
+    <ClCompile Include="..\..\..\opdi_core\code\c\platforms\win32\opdi_platformfuncs.c">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\OPDI_Ports.cpp">
+    <ClCompile Include="..\..\src\Configuration.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\opdi_core\code\c\platforms\win32\opdi_platformfuncs.c">
+    <ClCompile Include="..\..\src\OPDI_Ports.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>

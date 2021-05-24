@@ -7,7 +7,7 @@ PLATFORM = linux
 # Relative path to the openhat application directory.
 # All other paths are calculated relative to this path, so if you create a plugin anywhere it should be enough
 # just to adjust this path.
-APP_PATH = ../../../src
+APP_PATH = ../../src
 
 OPDI_CORE_PATH = $(APP_PATH)/../../opdi_core
 

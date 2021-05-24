@@ -38,9 +38,9 @@ pages:
             - General:
                 - Web Server Plugin: plugins/webserver_plugin.md 
             - Automation:
-                - FRITZ!Box Plugin: plugins/automation/fritzbox_plugin.md
-                - Weather Plugin: plugins/automation/weather_plugin.md
-                - Window Plugin: plugins/automation/window_plugin.md
+                - FRITZ!Box Plugin: plugins/fritzbox_plugin.md
+                - Weather Plugin: plugins/weather_plugin.md
+                - Window Plugin: plugins/window_plugin.md
             - Raspberry Pi:
                 - Gertboard Plugin: plugins/rpi/gertboard/gertboard_plugin.md
                 - RemoteSwitch Plugin: plugins/rpi/remoteswitch_plugin.md

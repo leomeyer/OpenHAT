@@ -9,16 +9,16 @@
 
 #include "../rpi.h"
 
-#include "LinuxOpenHAT.h"
+#include "AbstractOpenHAT.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // RemoteSwitch: Plugin for remote power outlet control
 ///////////////////////////////////////////////////////////////////////////////
 
-class RemoteSwitchPlugin : public IOpenHATPlugin, public IOpenHATConnectionListener {
+class RemoteSwitchPlugin : public IOpenHATPlugin, public openhat::IConnectionListener {
 
 protected:
-	AbstractOpenHAT* openhat;
+	openhat::AbstractOpenHAT* openhat;
 	std::string nodeID;
 
 	int gpioPin;
@@ -26,7 +26,9 @@ protected:
 	RCSwitch rcSwitch;
 
 public:
-	virtual void setupPlugin(AbstractOpenHAT* openhat, std::string node, Poco::Util::AbstractConfiguration::Ptr nodeConfig, openhat::ConfigurationView::Ptr parentConfig, const std::string& driverPath);
+	virtual void setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, 
+		openhat::ConfigurationView::Ptr nodeConfig, openhat::ConfigurationView::Ptr parentConfig, 
+		const std::string& driverPath);
 
 	virtual void masterConnected(void) override;
 	virtual void masterDisconnected(void) override;
@@ -39,21 +41,22 @@ public:
 // thus we don't know what's really going on with the device.
 ///////////////////////////////////////////////////////////////////////////////
 
-class RemoteSwitchPort : public OPDI_SelectPort, protected OpenHAT_PortFunctions {
+class RemoteSwitchPort : public opdi::SelectPort {
 protected:
 	RCSwitch* rcSwitch;
-
+	openhat::AbstractOpenHAT* openhat;
 	std::string systemCode;
 	int unitCode;
 
 public:
-	RemoteSwitchPort(AbstractOpenHAT* openhat, const char* ID, RCSwitch* rcSwitch, std::string systemCode, int unitCode);
+	RemoteSwitchPort(openhat::AbstractOpenHAT* openhat, const char* ID, RCSwitch* rcSwitch, std::string systemCode, int unitCode);
 	virtual ~RemoteSwitchPort(void);
-	virtual void setPosition(uint16_t position) override;
-	virtual void getState(uint16_t* position) override;
+	virtual void setPosition(uint16_t position, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT) override;
+	virtual void getState(uint16_t* position) const override;
 };
 
-RemoteSwitchPort::RemoteSwitchPort(AbstractOpenHAT* openhat, const char* ID, RCSwitch* rcSwitch, std::string systemCode, int unitCode) : OPDI_SelectPort(ID) {
+RemoteSwitchPort::RemoteSwitchPort(openhat::AbstractOpenHAT* openhat, const char* ID, RCSwitch* rcSwitch, std::string systemCode, int unitCode) 
+	: opdi::SelectPort(ID) {
 	this->openhat = openhat;
 	this->rcSwitch = rcSwitch;
 	this->systemCode = systemCode;
@@ -67,8 +70,8 @@ RemoteSwitchPort::~RemoteSwitchPort(void) {
 	// release resources; configure as floating input
 }
 
-void RemoteSwitchPort::setPosition(uint16_t position)  {
-	OPDI_SelectPort::setPosition(position);
+void RemoteSwitchPort::setPosition(uint16_t position, ChangeSource changeSource)  {
+	opdi::SelectPort::setPosition(position);
 
 	if (position == 0) {
 		this->logDebug(this->ID() + ": Switching off");
@@ -79,9 +82,9 @@ void RemoteSwitchPort::setPosition(uint16_t position)  {
 	}
 }
 
-void RemoteSwitchPort::getState(uint16_t* position) {
+void RemoteSwitchPort::getState(uint16_t* position) const {
 	// the position is always unknown
-	throw AccessDenied("Cannot read a RemoteSwitch");
+	throw AccessDeniedException("Cannot read a RemoteSwitch");
 }
 
 
@@ -89,7 +92,8 @@ void RemoteSwitchPort::getState(uint16_t* position) {
 // RemoteSwitchPlugin
 ///////////////////////////////////////////////////////////////////////////////
 
-void RemoteSwitchPlugin::setupPlugin(AbstractOpenHAT* openhat, std::string node, Poco::Util::AbstractConfiguration::Ptr nodeConfig, openhat::ConfigurationView::Ptr parentConfig, const std::string& driverPath) {
+void RemoteSwitchPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, 
+		openhat::ConfigurationView::Ptr nodeConfig, openhat::ConfigurationView::Ptr parentConfig, const std::string& driverPath) {
 	this->openhat = openhat;
 	this->nodeID = node;
 
@@ -113,7 +117,7 @@ void RemoteSwitchPlugin::setupPlugin(AbstractOpenHAT* openhat, std::string node,
 	// enumerate keys of the plugin's nodes (in specified order)
 	this->openhat->logVerbose("Enumerating RemoteSwitch nodes: " + node + ".Nodes");
 
-	Poco::Util::AbstractConfiguration* nodes = this->openhat->createConfigView(parentConfig, node + ".Nodes");
+	openhat::ConfigurationView::Ptr nodes = this->openhat->createConfigView(parentConfig, node + ".Nodes");
 
 	// store main node's group (will become the default of ports)
 	std::string group = nodeConfig->getString("Group", "");
@@ -157,14 +161,14 @@ void RemoteSwitchPlugin::setupPlugin(AbstractOpenHAT* openhat, std::string node,
 		this->openhat->logVerbose("Setting up RemoteSwitchPlugin port for node: " + nodeName);
 
 		// get port section from the configuration
-		Poco::Util::AbstractConfiguration* portConfig = this->openhat->createConfigView(parentConfig, nodeName);
+		openhat::ConfigurationView::Ptr portConfig = this->openhat->createConfigView(parentConfig, nodeName);
 
 		// get port type (required)
-		std::string portType = openhat->getConfigString(portConfig, "Type", "", true);
+		std::string portType = openhat->getConfigString(portConfig, node, "Type", "", true);
 
 		if (portType == "RemoteSwitch") {
 			// read system code (DIP switch)
-			std::string systemCode = openhat->getConfigString(portConfig, "SystemCode", "", true);
+			std::string systemCode = openhat->getConfigString(portConfig, node, "SystemCode", "", true);
 			// validate; must be a string of type xxxxx with x = [1, 0]
 			Poco::RegularExpression re("^[01][01][01][01][01]$");
 			if (!re.match(systemCode))
@@ -200,7 +204,7 @@ void RemoteSwitchPlugin::masterDisconnected() {
 // plugin factory function
 extern "C" IOpenHATPlugin* GetPluginInstance(int majorVersion, int minorVersion, int patchVersion) {
 	// check whether the version is supported
-	if ((majorVersion != OPENHAT_MAJOR_VERSION) || (minorVersion != OPENHAT_MINOR_VERSION))
+	if ((majorVersion != openhat::OPENHAT_MAJOR_VERSION) || (minorVersion != openhat::OPENHAT_MINOR_VERSION))
 		throw Poco::Exception("This plugin requires OpenHAT version "
 			OPDI_QUOTE(openhat::OPENHAT_MAJOR_VERSION) "." OPDI_QUOTE(openhat::OPENHAT_MINOR_VERSION));
 

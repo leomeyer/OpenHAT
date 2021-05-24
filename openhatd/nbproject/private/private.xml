@@ -9,7 +9,7 @@
         <group>
             <file>file:/home/leo/openhat/openhatd/src/OPDI.h</file>
             <file>file:/home/leo/openhat/openhatd/plugins/FroniusPlugin/FroniusPlugin.cpp</file>
-            <file>file:/home/leo/openhat/openhatd/plugins/automation/MQTTPlugin/MQTTPlugin.cpp</file>
+            <file>file:/home/leo/openhat/openhatd/plugins/MQTTPlugin/MQTTPlugin.cpp</file>
             <file>file:/home/leo/openhat/openhatd/src/OPDI.cpp</file>
             <file>file:/home/leo/openhat/openhatd/testconfigs/linux_test.ini</file>
             <file>file:/home/leo/openhat/openhatd/src/OPDI_Ports.h</file>

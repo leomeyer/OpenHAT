@@ -1,5 +1,7 @@
 Debug/
 Release/
+build/
+build-rpi/
 .vs/
 *.so*
 /openhatd-docs*

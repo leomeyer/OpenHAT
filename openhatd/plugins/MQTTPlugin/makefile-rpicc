@@ -7,7 +7,7 @@ PLATFORM = linux
 # Relative path to the openhat application directory.
 # All other paths are calculated relative to this path, so if you create a plugin anywhere it should be enough
 # just to adjust this path.
-APP_PATH = ../../../src
+APP_PATH = ../../src
 
 OPDI_CORE_PATH = $(APP_PATH)/../../opdi_core
 
@@ -43,7 +43,7 @@ POCOLIBPATH = $(OPDI_CORE_PATH)/code/c/libraries/POCO/lib/Linux/ARM
 POCOLIBS = $(POCOLIBPATH)/libPocoUtil.a $(POCOLIBPATH)/libPocoNet.a $(POCOLIBPATH)/libPocoXML.a $(POCOLIBPATH)/libPocoJSON.a $(POCOLIBPATH)/libPocoFoundation.a
 
 # Additional library path
-LIBPATH = -L ../../../../libraries/paho.mqtt.c/build/src -L ../../../../libraries/paho.mqtt.cpp/build/src
+LIBPATH = -L $(APP_PATH)/../../libraries/paho.mqtt.c/build-rpi/src -L $(APP_PATH)/../../libraries/paho.mqtt.cpp/build-rpi/src
 
 # Additional libraries
 LIBS = -lpaho-mqttpp3 -lpaho-mqtt3a -lpthread
@@ -56,7 +56,7 @@ CC = arm-linux-gnueabihf-g++
 EXTRAINCDIRS = $(CPATH) $(CPPPATH) $(PPATHBASE) $(PPATH) $(POCOINCPATH) $(CONIOINCPATH) $(APP_PATH) .
 
 # Place -I options here
-CINCS = -I ../../../../libraries/paho.mqtt.c/src -I ../../../../libraries/paho.mqtt.cpp/src -I $(APP_PATH)/../../libraries/exprtk
+CINCS = -I $(APP_PATH)/../../libraries/paho.mqtt.c/src -I $(APP_PATH)/../../libraries/paho.mqtt.cpp/src -I $(APP_PATH)/../../libraries/exprtk
 
 # Defines
 CDEFINES = -Dlinux

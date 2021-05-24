@@ -1,5 +1,5 @@
 # Target file name (without extension).
-TARGET = rpi_gertboard
+TARGET = gertboard
 
 # OPDI platform specifier
 PLATFORM = linux

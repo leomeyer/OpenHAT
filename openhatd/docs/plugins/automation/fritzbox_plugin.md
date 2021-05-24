@@ -121,4 +121,4 @@ Default settings:
 
 ### Example configuration
 
-{!plugins/automation/FritzBoxPlugin/example.ini!}
+{!plugins/FritzBoxPlugin/example.ini!}

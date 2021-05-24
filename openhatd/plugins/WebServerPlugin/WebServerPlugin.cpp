@@ -7,7 +7,7 @@
 
 #include "AbstractOpenHAT.h"
 
-#include <mongoose.h>
+#include "mongoose.h"
 
 #ifdef _WINDOWS
 #include <windows.h>

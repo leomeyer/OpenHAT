@@ -12,12 +12,12 @@ install:
 - export PATH=/opt/cross-pi-gcc/bin:$PATH
 # build Paco MQTT libraries
 - pushd libraries/paho.mqtt.c
-- cmake -Bbuild -H. -DPAHO_BUILD_STATIC=ON -DPAHO_BUILD_SHARED=OFF -DCMAKE_C_COMPILER=arm-linux-gnueabihf-gcc
-- cmake --build build/
+- cmake -Bbuild-rpi -H. -DPAHO_BUILD_STATIC=ON -DPAHO_BUILD_SHARED=OFF -DCMAKE_C_COMPILER=arm-linux-gnueabihf-gcc
+- cmake --build build-rpi/
 - popd
 - pushd libraries/paho.mqtt.cpp
-- cmake -Bbuild -H. -DPAHO_BUILD_STATIC=ON -DPAHO_BUILD_SHARED=OFF -DPAHO_MQTT_C_LIBRARIES=../paho.mqtt.c/build/src -DPAHO_MQTT_C_INCLUDE_DIRS=../paho.mqtt.c/src -DCMAKE_CXX_COMPILER=arm-linux-gnueabihf-g++
-- cmake --build build/
+- cmake -Bbuild-rpi -H. -DPAHO_BUILD_STATIC=ON -DPAHO_BUILD_SHARED=OFF -DPAHO_MQTT_C_LIBRARIES=../paho.mqtt.c/build-rpi/src -DPAHO_MQTT_C_INCLUDE_DIRS=../paho.mqtt.c/src -DCMAKE_CXX_COMPILER=arm-linux-gnueabihf-g++
+- cmake --build build-rpi/
 - popd
 # setup and build POCO
 - cp -r opdi_core/code/c/libraries/POCO_patches/* opdi_core/code/c/libraries/POCO/

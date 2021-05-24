@@ -103,6 +103,7 @@
     <None Include="..\testconfigs\win_test.ini" />
     <None Include="exectest.bat" />
     <None Include="fileinputtest.txt" />
+    <None Include="mining.ini" />
     <None Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>

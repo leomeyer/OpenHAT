@@ -5,6 +5,7 @@
 #include <winsock2.h>
 
 #include "Poco/Stopwatch.h"
+#include "Poco/Format.h"
 
 #include "opdi_platformtypes.h"
 #include "opdi_config.h"
@@ -30,6 +31,35 @@ std::wstring utf8_decode(const std::string &str)
 	std::wstring wstrTo(size_needed, 0);
 	MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), &wstrTo[0], size_needed);
 	return wstrTo;
+}
+
+// Create a string with last error message
+std::string GetLastErrorStdStr()
+{
+	DWORD error = GetLastError();
+	if (error)
+	{
+		LPVOID lpMsgBuf;
+		DWORD bufLen = FormatMessageW(
+			FORMAT_MESSAGE_ALLOCATE_BUFFER |
+			FORMAT_MESSAGE_FROM_SYSTEM |
+			FORMAT_MESSAGE_IGNORE_INSERTS,
+			NULL,
+			error,
+			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+			(LPTSTR)&lpMsgBuf,
+			0, NULL);
+		if (bufLen)
+		{
+			LPCSTR lpMsgStr = (LPCSTR)lpMsgBuf;
+			std::string result(lpMsgStr, lpMsgStr + bufLen);
+
+			LocalFree(lpMsgBuf);
+
+			return result;
+		}
+	}
+	return std::string();
 }
 
 namespace openhat {
@@ -336,7 +366,7 @@ IOpenHATPlugin* WindowsOpenHAT::getPlugin(const std::string& driver) {
 	HINSTANCE dllHandle = LoadLibraryW(utf8_decode(lDriver).c_str());
 
 	if (!dllHandle) {
-		throw Poco::FileException("Could not load the plugin DLL", lDriver);
+		throw Poco::FileException("Could not load the plugin DLL (Code " + Poco::format("%lu", GetLastError()) + "): " + GetLastErrorStdStr(), lDriver);
 	}
 
 	GetOpenHATPluginInstance_t getPluginInstance = reinterpret_cast<GetOpenHATPluginInstance_t>(::GetProcAddress(dllHandle, "GetPluginInstance"));

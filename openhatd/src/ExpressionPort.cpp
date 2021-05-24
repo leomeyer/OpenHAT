@@ -132,7 +132,7 @@ bool ExpressionPort::prepareVariables(bool duringSetup) {
 			}
 
 			// add reference to the port value (by port ID)
-			if (!this->symbol_table.add_stringvar(port->ID(), this->portStrings[i]))
+			if (!this->symbol_table.add_stringvar(port->ID(), this->portStrings[this->portStrings.size() - 1]))
 				return false;
 		} else {
 			// numeric port value
@@ -156,7 +156,7 @@ bool ExpressionPort::prepareVariables(bool duringSetup) {
 			}
 
 			// add reference to the port value (by port ID)
-			if (!this->symbol_table.add_variable(port->ID(), this->portValues[i]))
+			if (!this->symbol_table.add_variable(port->ID(), this->portValues[this->portValues.size() - 1]))
 				return false;
 		}
 	}

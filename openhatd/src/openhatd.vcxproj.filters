@@ -79,6 +79,9 @@
     <None Include="..\testconfigs\win_test.ini">
       <Filter>Ressourcendateien\testconfigs</Filter>
     </None>
+    <None Include="mining.ini">
+      <Filter>Ressourcendateien\testconfigs</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">

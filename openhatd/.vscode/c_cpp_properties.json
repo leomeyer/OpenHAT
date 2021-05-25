@@ -2,8 +2,10 @@
     "configurations": [
         {
             "name": "Linux",
-            "compileCommands": "build/compile_commands.json",
-            "configurationProvider": "go2sh.cmake-integration"
+            "configurationProvider": "go2sh.cmake-integration",
+            "includePath": [
+                "../libraries/exprtk"
+            ]
         }
     ],
     "version": 4

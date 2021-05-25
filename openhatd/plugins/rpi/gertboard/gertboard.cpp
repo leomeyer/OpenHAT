@@ -8,9 +8,11 @@
 
 #include "Poco/Tuple.h"
 
+extern "C" {
 #include "gb_common.h"
 #include "gb_spi.h"
 #include "gb_pwm.h"
+}
 
 #include "../rpi.h"
 

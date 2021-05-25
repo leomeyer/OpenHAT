@@ -6,8 +6,6 @@ arch: i686
 language: cpp
 
 install:
-# test upload host
-- ping -c 3 $RELEASE_UPLOAD_HOST
 # install cross compiler
 - wget https://github.com/Pro/raspi-toolchain/releases/latest/download/raspi-toolchain.tar.gz
 - sudo tar xfz raspi-toolchain.tar.gz --strip-components=1 -C /opt
@@ -26,11 +24,7 @@ install:
 - pushd opdi_core/code/c/libraries/POCO
 - cat VERSION
 - ./build_poco_rpi.sh
-#- ./build_poco_i386.sh
-#- ./build_poco.sh
 - popd
-#- sudo pip install mkdocs
-#- sudo pip install markdown-include
 
 addons:
   apt:
@@ -39,29 +33,12 @@ addons:
     packages:
     - gcc
     - g++
-#    - gcc-multilib
-#    - g++-multilib
-#    - linux-libc-dev:i386
-#    - libssl-dev:i386
-    - sshpass
-#    - python-pip
-#    - doxygen
-#    - graphviz
 
 script: 
-- export SSHPASS=$RELEASE_UPLOAD_PASSWORD 
-#- mkdocs build
-#- tar czf OpenHAT-docs.tar.gz OpenHAT-docs/
-#- md5sum OpenHAT-docs.tar.gz > OpenHAT-docs.tar.gz.md5
-#- sshpass -e scp -P $RELEASE_UPLOAD_PORT -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no OpenHAT-docs.tar.gz* $RELEASE_UPLOAD_USER@$RELEASE_UPLOAD_HOST:~/doc
 - export CXX=g++
 - export CC=g++
 - export PATH=/opt/cross-pi-gcc/bin:$PATH
 - make -C openhatd/src/ -f makefile-rpicc release
-#- make -C openhatd/src/ -f makefile-i386 release CC=$CC
-#- make -C openhatd/src/ release CC=$CC
-#- make -C openhatd/src/ tests && 
-- sshpass -e scp -P $RELEASE_UPLOAD_PORT -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no /home/travis/build/leomeyer/OpenHAT/openhatd/src/*.tar.gz* $RELEASE_UPLOAD_USER@$RELEASE_UPLOAD_HOST:~
 
 notifications:
   email:

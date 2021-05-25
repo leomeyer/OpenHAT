@@ -23,9 +23,8 @@ Linux
     paho.mqtt.c> cmake -Bbuild -H. -DPAHO_WITH_SSL=OFF -DPAHO_BUILD_STATIC=ON -DPAHO_ENABLE_TESTING=OFF
     paho.mqtt.c> cmake --build build
 
-    paho.mqtt.cpp> mkdir build && cd build
-    paho.mqtt.cpp> cmake -DPAHO_MQTT_C_LIBRARIES=../../paho.mqtt.c/build/src -DPAHO_MQTT_C_INCLUDE_DIRS=../../paho.mqtt.c/src -DPAHO_BUILD_STATIC=TRUE -DPAHO_BUILD_SHARED=FALSE ../
-    paho.mqtt.cpp> make
+    paho.mqtt.cpp> cmake -Bbuild -DPAHO_MQTT_C_LIBRARIES=../../paho.mqtt.c/build/src -DPAHO_MQTT_C_INCLUDE_DIRS=../paho.mqtt.c/src -DPAHO_BUILD_STATIC=TRUE -DPAHO_BUILD_SHARED=FALSE
+    paho.mqtt.cpp> cmake --build build/
 
 
 Cross-compiling for Raspberry Pi

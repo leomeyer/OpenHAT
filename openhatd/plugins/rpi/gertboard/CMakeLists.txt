@@ -8,8 +8,13 @@ set(GERTBOARD ${OPENHAT_LIBARIES}/rpi/gertboard)
 
 include(../../CMakeLists.inc)
 
+target_compile_options(${PROJECT_NAME} 
+    PRIVATE 
+    "-Wno-pointer-sign" "-Wno-unused-but-set-variable"
+    )
+
 target_sources(${PROJECT_NAME}
-    PUBLIC
+    PRIVATE
         ${GERTBOARD}/gb_pwm.c
         ${GERTBOARD}/gb_spi.c
         ${GERTBOARD}/gb_common.c

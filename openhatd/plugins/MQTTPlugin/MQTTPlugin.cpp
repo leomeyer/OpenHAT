@@ -191,11 +191,11 @@ protected:
 		// distribute to the correct port(s)
 		auto it = this->myPorts.begin();
 		auto ite = this->myPorts.end();
-		bool handled = false;
+//		bool handled = false;
 		while (it != ite) {
 			if ((*it)->topic == msg->get_topic()) {
 				(*it)->handle_payload(msg->to_string());
-				handled = true;
+//				handled = true;
 			}
 			++it;
 		}

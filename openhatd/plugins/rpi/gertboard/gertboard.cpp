@@ -8,11 +8,15 @@
 
 #include "Poco/Tuple.h"
 
+#ifdef CMAKE_BUILD
 extern "C" {
+#endif
 #include "gb_common.h"
 #include "gb_spi.h"
 #include "gb_pwm.h"
+#ifdef CMAKE_BUILD
 }
+#endif
 
 #include "../rpi.h"
 

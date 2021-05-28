@@ -65,7 +65,7 @@ CDEFINES = -Dlinux
 # Compiler flags.
 CFLAGS = -fpermissive $(CDEFS) $(CINCS) -L $(POCOLIBPATH) $(CDEFINES)
 CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS)) -O2 -std=c++11 -static-libstdc++
-CFLAGS += -Wl,-z,defs
+CFLAGS += -Wl,-z,defs -Wno-pointer-sign -Wno-unused-but-set-variable
 
 OBJECTS = $(SRC)
 

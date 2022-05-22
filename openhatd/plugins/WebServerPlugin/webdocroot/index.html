@@ -1223,14 +1223,14 @@ function buildPortView(group) {
     // create port UI elements
     for (var i = 0; i < device.ports.length; i++) {
         var portObject = createPort(device.ports[i])
-        // group specified?
-        if (typeof group != "undefined") {
-            // check whether the port is in the group or its parents
-            if (!isPortInGroup(portObject, group))
-                continue;
-        }
-
         if (portObject != null) {
+			// group specified?
+			if (typeof group != "undefined") {
+				// check whether the port is in the group or its parents
+				if (!isPortInGroup(portObject, group))
+					continue;
+			}
+
             ports.push(portObject);
 
             var widget = portObject.createWidget();

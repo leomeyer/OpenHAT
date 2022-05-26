@@ -13,7 +13,8 @@ endif()
 add_subdirectory(WeatherPlugin)
 add_subdirectory(WebServerPlugin)
 add_subdirectory(WindowPlugin)
+add_subdirectory(ArducomPlugin)
 
 add_custom_target(${PROJECT_NAME}
     DEPENDS FritzBoxPlugin FroniusPlugin linux_test MQTTPlugin WeatherPlugin 
-            WebServerPlugin WindowPlugin gertboard) # RemoteSwitch
+            WebServerPlugin WindowPlugin gertboard ArducomPlugin) # RemoteSwitch

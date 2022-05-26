@@ -788,7 +788,7 @@ void AbstractOpenHAT::configurePort(ConfigurationView::Ptr portConfig, opdi::Por
 	// ports can be persistent
 	port->setPersistent(portConfig->getBool("Persistent", port->isPersistent()));
 
-    uint8_t portPriority = portConfig->getUInt("Priority", this->defaultPortPriority);
+    uint32_t portPriority = portConfig->getUInt("Priority", this->defaultPortPriority);
 	if (portPriority > 255)
 		this->throwSettingException(port->ID() + "Priority must not exceed 255", to_string(portPriority));
 	port->setPriority(portPriority);

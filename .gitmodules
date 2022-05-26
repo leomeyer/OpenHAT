@@ -30,3 +30,6 @@
 [submodule "libraries/paho.mqtt.c"]
 	path = libraries/paho.mqtt.c
 	url = https://github.com/eclipse/paho.mqtt.c.git
+[submodule "libraries/Arducom"]
+	path = libraries/Arducom
+	url = https://github.com/leomeyer/Arducom.git

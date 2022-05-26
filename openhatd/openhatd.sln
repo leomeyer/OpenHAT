@@ -29,6 +29,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FroniusPlugin", "plugins\Fr
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MQTTPlugin", "plugins\MQTTPlugin\MQTTPlugin.vcxproj", "{2918FCB5-6FF1-4AC1-B6B4-D931CB647E41}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ArducomPlugin", "plugins\ArducomPlugin\ArducomPlugin.vcxproj", "{570F92C5-6975-470A-ADB0-0B3359451387}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -99,6 +101,12 @@ Global
 		{2918FCB5-6FF1-4AC1-B6B4-D931CB647E41}.Release|Win32.ActiveCfg = Release|Win32
 		{2918FCB5-6FF1-4AC1-B6B4-D931CB647E41}.Release|Win32.Build.0 = Release|Win32
 		{2918FCB5-6FF1-4AC1-B6B4-D931CB647E41}.Release|x64.ActiveCfg = Release|Win32
+		{570F92C5-6975-470A-ADB0-0B3359451387}.Debug|Win32.ActiveCfg = Debug|Win32
+		{570F92C5-6975-470A-ADB0-0B3359451387}.Debug|Win32.Build.0 = Debug|Win32
+		{570F92C5-6975-470A-ADB0-0B3359451387}.Debug|x64.ActiveCfg = Debug|Win32
+		{570F92C5-6975-470A-ADB0-0B3359451387}.Release|Win32.ActiveCfg = Release|Win32
+		{570F92C5-6975-470A-ADB0-0B3359451387}.Release|Win32.Build.0 = Release|Win32
+		{570F92C5-6975-470A-ADB0-0B3359451387}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -111,6 +119,7 @@ Global
 		{DADABACD-C0D5-4F75-8490-0A43D377F911} = {8A7D0650-FA10-4924-A3D7-AB010C379C7B}
 		{94D062E3-58C2-4EAA-9E06-19A0CA2FA35B} = {8A7D0650-FA10-4924-A3D7-AB010C379C7B}
 		{2918FCB5-6FF1-4AC1-B6B4-D931CB647E41} = {8A7D0650-FA10-4924-A3D7-AB010C379C7B}
+		{570F92C5-6975-470A-ADB0-0B3359451387} = {8A7D0650-FA10-4924-A3D7-AB010C379C7B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {69B58062-0C45-4704-B994-A6597E9DA723}

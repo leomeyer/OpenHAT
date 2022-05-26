@@ -20,8 +20,10 @@ CPATH = $(OPDI_CORE_PATH)/code/c/common
 PPATHBASE = $(OPDI_CORE_PATH)/code/c/platforms
 PPATH = $(PPATHBASE)/$(PLATFORM)
 
+ARDUCOM_PATH = $(APP_PATH)/../../libraries/Arducom/src/master
+
 # List source files of the plugin here.
-SRC = $(TARGET).cpp $(APP_PATH)/Configuration.cpp
+SRC = $(TARGET).cpp $(APP_PATH)/Configuration.cpp $(ARDUCOM_PATH)/ArducomMaster.cpp $(ARDUCOM_PATH)/ArducomMasterSerial.cpp $(ARDUCOM_PATH)/ArducomMasterTCPIP.cpp $(ARDUCOM_PATH)/ArducomMasterI2C.cpp
 
 # C++ wrapper
 CPPPATH = $(APP_PATH)
@@ -43,10 +45,10 @@ POCOLIBPATH = $(OPDI_CORE_PATH)/code/c/libraries/POCO/lib/Linux/ARM
 POCOLIBS = $(POCOLIBPATH)/libPocoUtil.a $(POCOLIBPATH)/libPocoNet.a $(POCOLIBPATH)/libPocoXML.a $(POCOLIBPATH)/libPocoJSON.a $(POCOLIBPATH)/libPocoFoundation.a
 
 # Additional library path
-LIBPATH = -L $(APP_PATH)/../../libraries/paho.mqtt.c/build-rpi/src -L $(APP_PATH)/../../libraries/paho.mqtt.cpp/build-rpi/src
+LIBPATH =
 
 # Additional libraries
-LIBS = -lpaho-mqttpp3 -lpaho-mqtt3a -lpthread
+LIBS = -lpthread
 
 # The compiler to be used.
 CC = arm-linux-gnueabihf-g++
@@ -56,7 +58,7 @@ CC = arm-linux-gnueabihf-g++
 EXTRAINCDIRS = $(CPATH) $(CPPPATH) $(PPATHBASE) $(PPATH) $(POCOINCPATH) $(CONIOINCPATH) $(APP_PATH) .
 
 # Place -I options here
-CINCS = -I $(APP_PATH)/../../libraries/paho.mqtt.c/src -I $(APP_PATH)/../../libraries/paho.mqtt.cpp/src -I $(APP_PATH)/../../libraries/exprtk
+CINCS = -I $(ARDUCOM_PATH) -I $(APP_PATH)/../../libraries/exprtk
 
 # Defines
 CDEFINES = -Dlinux

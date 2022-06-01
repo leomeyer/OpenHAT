@@ -23,8 +23,8 @@
 #include "ArducomMasterI2C.h"
 #endif
 
-#define DEFAULT_QUERY_INTERVAL	30
-#define DEFAULT_TIMEOUT			5
+#define DEFAULT_QUERY_INTERVAL	5
+#define DEFAULT_TIMEOUT			3
 #define DEFAULT_RETRIES			3
 
 namespace {
@@ -64,7 +64,7 @@ public:
 		writeReturnsValue = false;
 	};
 	
-	virtual void query(ArducomMaster *arducom) = 0;
+	virtual void query(ArducomMaster *arducom);
 };
 
 class DigitalArducomPort : ArducomPort, opdi::DigitalPort {
@@ -123,6 +123,7 @@ public:
 	Poco::NotificationQueue queue;
 	Poco::Thread workThread;
 	
+	ArducomBaseParameters parameters;
 	ArducomMasterTransport *transport;
 	ArducomMaster *arducom;
 	
@@ -293,6 +294,10 @@ public:
 */
 
 }	// end anonymous namespace
+
+void ArducomPort::query(ArducomMaster* arducom) {
+//	arducom->execute()
+}
 
 /*
 GenericPort::GenericPort(ArducomPlugin* plugin, const std::string& id, const std::string& topic) :
@@ -912,18 +917,22 @@ void ArducomPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const
 	this->errorCount = 0;
 
 	// get Arducom connection details
-	this->type = this->openhat->getConfigString(nodeConfig, node, "Type", "", true);
-	this->device = this->openhat->getConfigString(nodeConfig, node, "Device", "", true);
-	this->address = nodeConfig->getInt("Address");
-	this->baudrate = nodeConfig->getInt("Baudrate", ARDUCOM_DEFAULT_BAUDRATE);
-	this->retries = nodeConfig->getInt("Retries", DEFAULT_RETRIES);
-	this->initDelay = nodeConfig->getInt("InitDelay", 0);
-	this->timeoutSeconds = nodeConfig->getInt("Timeout", this->timeoutSeconds);
-
 	// initialize the parameters
-	ArducomBaseParameters params;
-	params.transportType = type;
-	
+	parameters.transportType = this->openhat->getConfigString(nodeConfig, node, "Transport", "", false);
+	parameters.device = this->openhat->getConfigString(nodeConfig, node, "Device", "", true);
+	parameters.deviceAddress = nodeConfig->getInt("Address", 0);
+	parameters.baudrate = nodeConfig->getInt("Baudrate", ARDUCOM_DEFAULT_BAUDRATE);
+	parameters.retries = nodeConfig->getInt("Retries", DEFAULT_RETRIES);
+	parameters.initDelayMs = nodeConfig->getInt("InitDelayMs", 0);
+	parameters.timeoutMs = nodeConfig->getInt("Timeout", this->timeoutSeconds) * 1000;
+
+	try {
+		// validate parameters
+		this->transport = parameters.validate();
+	}
+	catch (std::exception& e) {
+		this->openhat->throwSettingException(node + ": Error initializing Arducom transport: " + e.what());
+	}
 	this->arducom = nullptr;
 	this->terminateRequested = false;
 
@@ -979,19 +988,19 @@ void ArducomPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const
 
 		this->openhat->logVerbose(node + ": Setting up Arducom port: " + portName, this->logVerbosity);
 
-		// get device section from the configuration>
-		Poco::AutoPtr<openhat::ConfigurationView> deviceConfig = this->openhat->createConfigView(parentConfig, portName);
+		// get port section from the configuration>
+		Poco::AutoPtr<openhat::ConfigurationView> portConfig = this->openhat->createConfigView(parentConfig, portName);
 
-		// get device type (required)
-		std::string deviceType = this->openhat->getConfigString(deviceConfig, portName, "Type", "", true);
+		// get port type (required)
+		std::string portType = this->openhat->getConfigString(portConfig, portName, "Type", "", true);
 
-		int timeout = deviceConfig->getInt("Timeout", this->timeoutSeconds);
+		int timeout = portConfig->getInt("Timeout", this->timeoutSeconds);
 
-		int queryInterval = deviceConfig->getInt("QueryInterval", DEFAULT_QUERY_INTERVAL);
+		int queryInterval = portConfig->getInt("QueryInterval", DEFAULT_QUERY_INTERVAL);
 		if (queryInterval < 0)
 			this->openhat->throwSettingException(portName + ": Please specify a QueryInterval >= 0: " + this->openhat->to_string(queryInterval));
 /*
-		if (deviceType == "Generic") {
+		if (portType == "Generic") {
 			this->openhat->logVerbose(node + ": Setting up generic Arducom device port: " + portName, this->logVerbosity);
                         // get topic (required)
                         std::string topic = this->openhat->getConfigString(deviceConfig, deviceName, "Topic", "", true);

@@ -22,14 +22,14 @@
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -109,7 +109,9 @@
     <ClCompile Include="..\..\..\libraries\Arducom\src\master\ArducomMasterSerialWin.cpp" />
     <ClCompile Include="..\..\..\libraries\Arducom\src\master\ArducomMasterTCPIP.cpp" />
     <ClCompile Include="..\..\src\Configuration.cpp" />
-    <ClCompile Include="..\..\src\ExpressionPort.cpp" />
+    <ClCompile Include="..\..\src\ExpressionPort.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="..\..\src\OPDI_Ports.cpp" />
     <ClCompile Include="ArducomPlugin.cpp" />
   </ItemGroup>

@@ -1541,6 +1541,10 @@ uint8_t AbstractOpenHAT::refresh(opdi::Port** ports) {
 }
 
 void AbstractOpenHAT::savePersistentConfig() {
+	// do not persist during initial configuration
+	if (!isPrepared())
+		return;
+
 	if (this->persistentConfig == nullptr)
 		return;
 
@@ -1549,6 +1553,10 @@ void AbstractOpenHAT::savePersistentConfig() {
 }
 
 void AbstractOpenHAT::persist(opdi::Port* port) {
+	// do not persist during initial configuration
+	if (!isPrepared())
+		return;
+
 	if (this->persistentConfig == nullptr) {
 		this->logWarning(std::string("Unable to persist state for port ") + port->ID() + ": No configuration file specified; use 'PersistentConfig' in the General configuration section");
 		return;

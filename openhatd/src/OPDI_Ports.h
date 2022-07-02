@@ -90,7 +90,7 @@ protected:
 	void* ptr;
 	bool hidden;
 	bool readonly;
-        uint8_t priority;
+	uint8_t priority;
 
 	/// LogVerbosity setting. This setting usually overrides the main program's log verbosity.
 	///

@@ -258,6 +258,36 @@ public:
 // Plugin ports
 ////////////////////////////////////////////////////////////////////////
 
+class DigitalPort : public opdi::DigitalPort, public MQTTPort {
+	friend class MQTTPlugin;
+protected:
+	std::string value;
+	bool ignoreSetLine;
+
+	std::string setTopic;
+	std::string inputValueLow;
+	std::string inputValueHigh;
+	std::string outputValueLow;
+	std::string outputValueHigh;
+
+public:
+	DigitalPort(MQTTPlugin* plugin, const std::string& id, const std::string& topic);
+
+	virtual void subscribe(mqtt::async_client* client) override;
+
+	virtual void query(mqtt::async_client* client) override;
+
+	virtual void handle_payload(std::string payload) override;
+
+	virtual uint8_t doWork(uint8_t canSend) override;
+
+	virtual void configure(openhat::ConfigurationView::Ptr config);
+
+	virtual void prepare() override;
+
+	virtual void setLine(uint8_t line, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT) override;
+};
+
 class GenericPort : public opdi::CustomPort, public MQTTPort {
 	friend class MQTTPlugin;
 protected:
@@ -408,6 +438,102 @@ public:
 };
 
 }	// end anonymous namespace
+
+////////////////////////////////////////////////////////////////////////
+// Plugin port implementations
+////////////////////////////////////////////////////////////////////////
+
+DigitalPort::DigitalPort(MQTTPlugin* plugin, const std::string& id, const std::string& topic) :
+	opdi::DigitalPort(id.c_str(), OPDI_PORTDIRCAP_BIDI, 0), MQTTPort(plugin, id, topic) {
+	// default mode is "output"
+	this->mode = 3;
+	this->refreshMode = RefreshMode::REFRESH_AUTO;
+}
+
+void DigitalPort::subscribe(mqtt::async_client* client) {
+	if (client->is_connected())
+		try {
+			this->plugin->openhat->logDebug(std::string(this->getID()) + ": Subscribing to topic: " + this->topic, this->logVerbosity);
+			client->subscribe(this->topic, this->plugin->QOS, nullptr, this->listener);
+		}
+		catch (mqtt::exception& ex) {
+			this->plugin->openhat->logError(std::string(this->getID()) + ": Error subscribing to topic " + this->topic + ": " + ex.what());
+		}
+}
+
+void DigitalPort::query(mqtt::async_client* client) {
+}
+
+void DigitalPort::handle_payload(std::string payload) {
+	this->plugin->openhat->logDebug(this->pid + ": Payload received: '" + payload + "'", this->logVerbosity);
+
+	Poco::Mutex::ScopedLock lock(this->mutex);
+	this->value = payload;
+	this->valueSet = true;
+}
+
+uint8_t DigitalPort::doWork(uint8_t canSend) {
+	opdi::DigitalPort::doWork(canSend);
+
+	// value received?
+	if (this->valueSet) {
+		try {
+			this->ignoreSetLine = true;
+			// compare received value
+			if (this->value == this->inputValueLow)
+				this->setLine(0);
+			else if (this->value == this->inputValueHigh)
+				this->setLine(1);
+			else {
+				this->plugin->openhat->logWarning(this->pid + ": Unspecified value received: '" + value + "'");
+				this->setError(opdi::Port::Error::VALUE_NOT_AVAILABLE);
+			}
+		}
+		catch (std::exception& e) {
+			this->plugin->openhat->logError(this->pid + ": Error setting line value: " + e.what());
+		}
+		this->ignoreSetLine = false;
+		this->valueSet = false;
+	}
+
+	return OPDI_STATUS_OK;
+}
+
+void DigitalPort::configure(openhat::ConfigurationView::Ptr config) {
+	this->plugin->openhat->configureDigitalPort(config, this, false);
+
+	this->setTopic = config->getString("SetTopic", "");
+
+	// configure as input if there is no set topic
+	if (this->setTopic == "") {
+		this->setMode(0);
+		this->setDirCaps(OPDI_PORTDIRCAP_INPUT);
+	}
+
+	this->inputValueLow = config->getString("InputValueLow");
+	this->inputValueHigh = config->getString("InputValueHigh");
+	this->outputValueLow = config->getString("OutputValueLow", "");
+	this->outputValueHigh = config->getString("OutputValueHigh", "");
+}
+
+void DigitalPort::prepare() {
+}
+
+void DigitalPort::setLine(uint8_t line, ChangeSource changeSource) {
+	opdi::DigitalPort::setLine(line, changeSource);
+
+	if (this->ignoreSetLine || (this->error != Error::VALUE_OK))
+		return;
+
+	// publish state if specified
+	if ((this->line == 0) && (this->setTopic != "") && (this->outputValueLow != "")) {
+		this->plugin->publish(this->setTopic, this->outputValueLow);
+	}
+	else if ((this->line == 1) && (this->setTopic != "") && (this->outputValueHigh != "")) {
+		this->plugin->publish(this->setTopic, this->outputValueHigh);
+	}
+}
+
 
 GenericPort::GenericPort(MQTTPlugin* plugin, const std::string& id, const std::string& topic) : 
 	opdi::CustomPort(id, OPDI_CUSTOM_PORT_TYPEGUID), MQTTPort(plugin, id, topic) {
@@ -1014,7 +1140,7 @@ unsigned int msb32(unsigned int x)
 void MQTTPlugin::publish(const std::string& topic, const std::string& payload) {
 	this->openhat->logVerbose(this->nodeID + ": Sending message to '" + topic + "': '" + payload + "'", this->logVerbosity);
 
-	//this->client->publish(mqtt::message(topic, payload, QOS, false));
+	this->client->publish(topic, payload, QOS, false);
 }
 
 void MQTTPlugin::errorOccurred(const std::string& message) {
@@ -1119,10 +1245,28 @@ void MQTTPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const st
 		if (queryInterval < 0)
 			this->openhat->throwSettingException(deviceName + ": Please specify a QueryInterval >= 0: " + this->openhat->to_string(queryInterval));
 		
-		if (deviceType == "Generic") {
+		if (deviceType == "DigitalPort") {
+			this->openhat->logVerbose(node + ": Setting up generic MQTT digital port: " + deviceName, this->logVerbosity);
+			// get topic (required)
+			std::string topic = this->openhat->getConfigString(deviceConfig, deviceName, "Topic", "", true);
+
+			// setup the port instance and add it
+			DigitalPort* digitalPort = new DigitalPort(this, deviceName, topic);
+			digitalPort->timeoutSeconds = timeout;
+			digitalPort->queryInterval = queryInterval;
+			// set default group: MQTT's node's group
+			digitalPort->setGroup(group);
+			// set default log verbosity
+			digitalPort->logVerbosity = this->logVerbosity;
+			this->openhat->configureDigitalPort(deviceConfig, digitalPort);
+			digitalPort->configure(deviceConfig);
+			this->openhat->addPort(digitalPort);
+			this->myPorts.push_back(digitalPort);
+		}
+		else if (deviceType == "Generic") {
 			this->openhat->logVerbose(node + ": Setting up generic MQTT device port: " + deviceName, this->logVerbosity);
-                        // get topic (required)
-                        std::string topic = this->openhat->getConfigString(deviceConfig, deviceName, "Topic", "", true);
+            // get topic (required)
+            std::string topic = this->openhat->getConfigString(deviceConfig, deviceName, "Topic", "", true);
 
 			// setup the generic port instance and add it
 			GenericPort* genericPort = new GenericPort(this, deviceName, topic);
@@ -1138,8 +1282,8 @@ void MQTTPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const st
 		}
 		else if (deviceType == "Event") {
 			this->openhat->logVerbose(node + ": Setting up MQTT event port: " + deviceName, this->logVerbosity);
-                        // get topic (required)
-                        std::string topic = this->openhat->getConfigString(deviceConfig, deviceName, "Topic", "", true);
+            // get topic (required)
+            std::string topic = this->openhat->getConfigString(deviceConfig, deviceName, "Topic", "", true);
 
 			// setup the generic port instance and add it
 			EventPort* eventPort = new EventPort(this, deviceName, topic);
@@ -1155,8 +1299,8 @@ void MQTTPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const st
 		}
 		else if (deviceType == "HG06337") {
 			this->openhat->logVerbose(node + ": Setting up HG06337 device port: " + deviceName + "_Switch", this->logVerbosity);
-                        // get topic (required)
-                        std::string topic = this->openhat->getConfigString(deviceConfig, deviceName, "Topic", "", true);
+            // get topic (required)
+            std::string topic = this->openhat->getConfigString(deviceConfig, deviceName, "Topic", "", true);
 
 			if (parentConfig->hasProperty(deviceName + "_Switch.Type")) {
 				this->openhat->logVerbose(node + ": Setting up HG06337 device port: " + deviceName + "_Switch", this->logVerbosity);
@@ -1189,8 +1333,8 @@ void MQTTPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const st
 		}
 		else if (deviceType == "GosundTasmota") {
 			this->openhat->logVerbose(node + ": Setting up GosundTasmota device port: " + deviceName + "_Switch", this->logVerbosity);
-                        // get device ID (required)
-                        std::string deviceID = this->openhat->getConfigString(deviceConfig, deviceName, "DeviceID", "", true);
+            // get device ID (required)
+            std::string deviceID = this->openhat->getConfigString(deviceConfig, deviceName, "DeviceID", "", true);
 
 			if (parentConfig->hasProperty(deviceName + "_Switch.Type")) {
 				this->openhat->logVerbose(node + ": Setting up GosundTasmota device port: " + deviceName + "_Switch", this->logVerbosity);
@@ -1242,14 +1386,12 @@ void MQTTPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const st
 			} else {
 				this->openhat->logVerbose(node + ": GosundTasmota device port: " + deviceName + "_Power.Type not found, ignoring", this->logVerbosity);
 			}
-                }
-                else
-                    this->openhat->throwSettingException(node + ": This plugin does not support the device type '" + deviceType + "'");
+        }
+        else
+            this->openhat->throwSettingException(node + ": This plugin does not support the device type '" + deviceType + "'");
 
 		++nli;
 	}
-
-	// this->openhat->addConnectionListener(this);
 
 	this->workThread.setName(node + " work thread");
 	this->workThread.start(*this);

@@ -115,7 +115,7 @@ protected:
 	typedef std::vector<IOpenHATPlugin*> PluginList;
 	PluginList pluginList;
         
-        uint8_t defaultPortPriority;
+	uint8_t defaultPortPriority;
 
 	// internal status monitoring variables
 	static const int maxSecondStats = 1100;

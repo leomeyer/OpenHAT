@@ -54,12 +54,28 @@
         "#text": "layout=dial_port_row_noslider;icon=thermometer_celsius;label=Temperature (°C);formatString=%d °C"
       },
       {
+        "-name": "temperature_deciDegreesCelsius",
+        "#text": "temperature_dDegC_in_DegC=0"
+      },
+      {
+        "-name": "temperature_dDegC_in_DegC",
+        "#text": "layout=dial_port_row_noslider;icon=thermometer_celsius;label=Temperature (°C);formatString=%.1f °C;denominator=10"
+      },
+      {
         "-name": "temperature_centiDegreesCelsius",
         "#text": "temperature_cDegC_in_DegC=0"
       },
       {
         "-name": "temperature_cDegC_in_DegC",
-        "#text": "layout=dial_port_row_noslider;icon=thermometer_celsius;label=Temperature (°C);formatString=%.1f °C;denominator=10"
+        "#text": "layout=dial_port_row_noslider;icon=thermometer_celsius;label=Temperature (°C);formatString=%.2f °C;denominator=100"
+      },
+      {
+        "-name": "temperature_centiDegreesCelsiusSettable",
+        "#text": "temperature_cDegC_in_DegCSettable=0"
+      },
+      {
+        "-name": "temperature_cDegC_in_DegCSettable",
+        "#text": "layout=dial_port_row_noslider;icon=thermometer_celsius;label=Temperature (°C);formatString=%.2f °C;denominator=100"
       },
       {
         "-name": "humidity_percent",
@@ -69,6 +85,15 @@
         "-name": "humidity_percent_in_percent",
         "-formatted": "false",
         "#text": "layout=dial_port_row_noslider;icon=humidity_percent;label=Humidity (%);formatString=%d %%;"
+      },
+      {
+        "-name": "humidity_centiPercent",
+        "#text": "humidity_cPercent_in_percent=0"
+      },
+      {
+        "-name": "humidity_cPercent_in_percent",
+        "-formatted": "false",
+        "#text": "layout=dial_port_row_noslider;icon=humidity_percent;label=Humidity (%);formatString=%.2f %%;denominator=100"
       },
       {
         "-name": "pressure_mbar",

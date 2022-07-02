@@ -367,13 +367,13 @@ FritzDECT200Temperature::FritzDECT200Temperature(FritzBoxPlugin* plugin, const s
 	this->lastQueryTime = 0;
 	this->valueSet = true;		// causes setError in doWork
 
-	// value is measured in centidegrees Celsius
+	// value is measured in decidegrees Celsius
 	this->minValue = -1000;			// -100°C
 	this->maxValue = 1000;			// +100°C
 	this->step = 1;
 	this->position = 0;
 
-	this->setUnit("temperature_centiDegreesCelsius");
+	this->setUnit("temperature_deciDegreesCelsius");
 	this->setIcon("thermometer_celsius");
 
 	// port is readonly

@@ -190,7 +190,7 @@ void Port::setDirCaps(const char* dirCaps) {
 	this->caps[0] = dirCaps[0];
 	this->caps[1] = '\0';
 
-	// label changed; update internal data
+	// dirCaps changed; update internal data
 	if (this->opdi != nullptr)
 		this->opdi->updatePortData(this);
 }

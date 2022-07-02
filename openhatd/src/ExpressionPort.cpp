@@ -246,7 +246,7 @@ void ExpressionPort::setOutputPorts(double value) {
 	}
 }
 
-void ExpressionPort::apply() {
+double ExpressionPort::apply() {
 	// clear symbol table and values
 	this->symbol_table.clear();
 
@@ -260,6 +260,8 @@ void ExpressionPort::apply() {
 		this->logExtreme("Expression result: " + to_string(value));
 
 		this->setOutputPorts(value);
+
+		return value;
 	}
 	else {
 		// the variables could not be prepared, due to some error
@@ -271,8 +273,12 @@ void ExpressionPort::apply() {
 			this->logExtreme("An error occurred, applying fallback value of: " + to_string(value));
 
 			this->setOutputPorts(value);
+
+			return value;
 		}
 	}
+
+	return NAN;
 }
 
 uint8_t ExpressionPort::doWork(uint8_t canSend)  {

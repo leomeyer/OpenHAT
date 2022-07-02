@@ -132,7 +132,7 @@ public:
 
 	virtual void prepare() override;
         
-        virtual void apply(void);
+    virtual double apply(void);
 };
 
 #endif // def OPENHAT_USE_EXPRTK

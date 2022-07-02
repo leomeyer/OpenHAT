@@ -262,7 +262,6 @@ class DigitalPort : public opdi::DigitalPort, public MQTTPort {
 	friend class MQTTPlugin;
 protected:
 	std::string value;
-	bool ignoreSetLine;
 
 	std::string setTopic;
 	std::string inputValueLow;
@@ -283,10 +282,44 @@ public:
 
 	virtual void configure(openhat::ConfigurationView::Ptr config);
 
-	virtual void prepare() override;
-
 	virtual void setLine(uint8_t line, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT) override;
 };
+
+class DialPort : public opdi::DialPort, public MQTTPort {
+	friend class MQTTPlugin;
+protected:
+	int64_t newValue;
+	bool ignoreSetValue;
+
+	std::string setTopic;
+	std::string inputPattern;
+	std::string inputExpression;
+	std::string outputPattern;
+	std::string outputExpression;
+
+	openhat::ExpressionPort* inputExpr;
+	Poco::RegularExpression* inputRegex;
+	openhat::ExpressionPort* outputExpr;
+	Poco::RegularExpression* outputRegex;
+
+	virtual std::string extractFirstGroup(std::string& expr, Poco::RegularExpression* regex, std::string& str);
+
+public:
+	DialPort(MQTTPlugin* plugin, const std::string& id, const std::string& topic);
+
+	virtual void subscribe(mqtt::async_client* client) override;
+
+	virtual void query(mqtt::async_client* client) override;
+
+	virtual void handle_payload(std::string payload) override;
+
+	virtual uint8_t doWork(uint8_t canSend) override;
+
+	virtual void configure(openhat::ConfigurationView::Ptr config);
+
+	virtual void setPosition(int64_t position, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT);
+};
+
 
 class GenericPort : public opdi::CustomPort, public MQTTPort {
 	friend class MQTTPlugin;
@@ -448,6 +481,7 @@ DigitalPort::DigitalPort(MQTTPlugin* plugin, const std::string& id, const std::s
 	// default mode is "output"
 	this->mode = 3;
 	this->refreshMode = RefreshMode::REFRESH_AUTO;
+	this->valueSet = true;		// causes error in doWork
 }
 
 void DigitalPort::subscribe(mqtt::async_client* client) {
@@ -475,24 +509,25 @@ void DigitalPort::handle_payload(std::string payload) {
 uint8_t DigitalPort::doWork(uint8_t canSend) {
 	opdi::DigitalPort::doWork(canSend);
 
+	Poco::Mutex::ScopedLock lock(this->mutex);
+
 	// value received?
 	if (this->valueSet) {
 		try {
-			this->ignoreSetLine = true;
 			// compare received value
 			if (this->value == this->inputValueLow)
-				this->setLine(0);
+				opdi::DigitalPort::setLine(0);
 			else if (this->value == this->inputValueHigh)
-				this->setLine(1);
+				opdi::DigitalPort::setLine(1);
 			else {
-				this->plugin->openhat->logWarning(this->pid + ": Unspecified value received: '" + value + "'");
+				if (value != "")	// ignore initial error
+					this->plugin->openhat->logWarning(this->pid + ": Unspecified value received: '" + value + "'");
 				this->setError(opdi::Port::Error::VALUE_NOT_AVAILABLE);
 			}
 		}
 		catch (std::exception& e) {
 			this->plugin->openhat->logError(this->pid + ": Error setting line value: " + e.what());
 		}
-		this->ignoreSetLine = false;
 		this->valueSet = false;
 	}
 
@@ -516,13 +551,10 @@ void DigitalPort::configure(openhat::ConfigurationView::Ptr config) {
 	this->outputValueHigh = config->getString("OutputValueHigh", "");
 }
 
-void DigitalPort::prepare() {
-}
-
 void DigitalPort::setLine(uint8_t line, ChangeSource changeSource) {
 	opdi::DigitalPort::setLine(line, changeSource);
 
-	if (this->ignoreSetLine || (this->error != Error::VALUE_OK))
+	if (this->error != Error::VALUE_OK)
 		return;
 
 	// publish state if specified
@@ -533,6 +565,199 @@ void DigitalPort::setLine(uint8_t line, ChangeSource changeSource) {
 		this->plugin->publish(this->setTopic, this->outputValueHigh);
 	}
 }
+
+
+DialPort::DialPort(MQTTPlugin* plugin, const std::string& id, const std::string& topic) :
+	opdi::DialPort(id.c_str(), -999999999999, 999999999999, 1), MQTTPort(plugin, id, topic) {
+	this->newValue = this->minValue - 1;
+	this->valueSet = true;		// causes setError in doWork
+	this->inputRegex = nullptr;
+	this->inputExpr = nullptr;
+	this->outputRegex = nullptr;
+	this->outputExpr = nullptr;
+}
+
+std::string DialPort::extractFirstGroup(std::string& expr, Poco::RegularExpression* regex, std::string& str) {
+	std::vector<std::string> strings;
+	try {
+		regex->split(str, strings, 0);
+	}
+	catch (Poco::RegularExpressionException& ree) {
+		this->plugin->openhat->logError(this->pid + ": Error evaluating regular expression '" + expr + "': " + ree.what());
+		return std::string();
+	}
+	if (strings.size() == 0)
+		return std::string();
+	return strings[0];
+}
+
+void DialPort::configure(openhat::ConfigurationView::Ptr config) {
+	this->plugin->openhat->configureDialPort(config, this, false);
+
+	this->setTopic = config->getString("SetTopic", "");
+
+	// configure as input if there is no set topic
+	if (this->setTopic == "") {
+		this->setReadonly(true);
+		this->setDirCaps(OPDI_PORTDIRCAP_INPUT);
+	}
+
+	this->inputPattern = config->getString("InputPattern", "");
+	if (this->inputPattern.empty())
+		this->inputPattern = "(.*)";
+	this->inputExpression = config->getString("InputExpression", "");
+	if (this->inputExpression.empty())
+		this->inputExpression = "$value";
+	this->outputPattern = config->getString("OutputPattern", "");
+	if (this->outputPattern.empty())
+		this->outputPattern = "$value";
+	this->outputExpression = config->getString("OutputExpression", "");
+	if (this->outputExpression.empty())
+		this->outputExpression = "$value";
+
+	this->inputRegex = new Poco::RegularExpression(this->inputPattern);
+	this->inputExpr = new openhat::ExpressionPort(this->plugin->openhat, (this->pid + "_inputExpr").c_str());
+	this->outputRegex = new Poco::RegularExpression("\\$value");
+	this->outputExpr = new openhat::ExpressionPort(this->plugin->openhat, (this->pid + "_outputExpr").c_str());
+}
+
+void DialPort::subscribe(mqtt::async_client* client) {
+	if (client->is_connected())
+		try {
+		this->plugin->openhat->logDebug(std::string(this->getID()) + ": Subscribing to topic: " + this->topic, this->logVerbosity);
+		client->subscribe(this->topic, this->plugin->QOS, nullptr, this->listener);
+	}
+	catch (mqtt::exception& ex) {
+		this->plugin->openhat->logError(std::string(this->getID()) + ": Error subscribing to topic " + this->topic + ": " + ex.what());
+	}
+}
+
+void DialPort::query(mqtt::async_client* client) {
+}
+
+std::size_t replace_all(std::string& inout, std::string what, std::string with)
+{
+	std::size_t count{};
+	for (std::string::size_type pos{};
+		inout.npos != (pos = inout.find(what.data(), pos, what.length()));
+		pos += with.length(), ++count) {
+		inout.replace(pos, what.length(), with.data(), with.length());
+	}
+	return count;
+}
+
+void DialPort::handle_payload(std::string payload) {
+	this->plugin->openhat->logDebug(this->pid + ": Payload received: '" + payload + "'");
+
+	Poco::Mutex::ScopedLock lock(this->mutex);
+
+	if (payload.empty()) {
+		this->newValue = this->minValue - 1;
+		this->valueSet = true;
+		return;
+	}
+
+	// extract value from input pattern
+	std::string input = this->extractFirstGroup(this->inputPattern, this->inputRegex, payload);
+	// no value or not matched?
+	if (input.empty()) {
+		this->plugin->openhat->logWarning(this->pid + ": Payload does not match input pattern: '" + payload + "'");
+		// set to error state
+		this->newValue = this->minValue - 1;
+		this->valueSet = true;
+		return;
+	}
+
+	// replace $value in input expression with the extracted string
+	std::string expr = this->inputExpression;
+	if (replace_all(expr, "$value", input) == 0) {
+		this->plugin->openhat->logWarning(this->pid + ": Could not replace placeholder '$value' in input expression: '" + this->inputExpression + "'");
+		// set to error state
+		this->newValue = this->minValue - 1;
+		this->valueSet = true;
+		return;
+	}
+
+	// apply input expression to value
+	this->inputExpr->expressionStr = expr;
+	this->inputExpr->prepare();
+	double value = this->inputExpr->apply();
+	if (value == NAN) {
+		this->plugin->openhat->logWarning(this->pid + ": Expression evaluated to NAN: '" + expr + "'");
+		// set to error state
+		this->newValue = this->minValue - 1;
+		this->valueSet = true;
+		return;
+	}
+
+	this->newValue = value;
+	this->valueSet = true;
+
+	// reset timeout counter
+	this->timeoutCounter = opdi_get_time_ms();
+}
+
+uint8_t DialPort::doWork(uint8_t canSend) {
+	opdi::DialPort::doWork(canSend);
+
+	Poco::Mutex::ScopedLock lock(this->mutex);
+
+	if (this->valueSet) {
+		try {
+			// values < minValue signify an error
+			if (this->newValue < this->minValue) {
+				// change to error state
+				this->setError(Error::VALUE_NOT_AVAILABLE);
+			}
+			else {
+				// use base method to avoid triggering an action!
+				opdi::DialPort::setPosition(this->newValue);
+			}
+		}
+		catch (std::exception& e) {
+			this->plugin->openhat->logError(this->pid + ": Error setting line value: " + e.what());
+		}
+		this->valueSet = false;
+	}
+
+	return OPDI_STATUS_OK;
+}
+
+void DialPort::setPosition(int64_t value, ChangeSource changeSource) {
+	opdi::DialPort::setPosition(value, changeSource);
+
+	if (this->error != Error::VALUE_OK)
+		return;
+
+	// replace $value in output expression with the position
+	std::string expr = this->outputExpression;
+	if (replace_all(expr, "$value", Poco::NumberFormatter::format(this->position)) == 0) {
+		this->plugin->openhat->logWarning(this->pid + ": Could not replace placeholder '$value' in output expression: '" + this->outputExpression + "'");
+		return;
+	}
+
+	// apply output expression
+	this->outputExpr->expressionStr = expr;
+	this->outputExpr->prepare();
+	double dValue = this->outputExpr->apply();
+	if (dValue == NAN) {
+		this->plugin->openhat->logWarning(this->pid + ": Expression evaluated to NAN: '" + expr + "'");
+		return;
+	}
+
+	std::string sValue = Poco::NumberFormatter::format(dValue);
+	std::string output = this->outputPattern;
+	if (this->outputRegex->subst(output, sValue, Poco::RegularExpression::RE_GLOBAL) == 0) {
+		this->plugin->openhat->logWarning(this->pid + ": Could not replace placeholder '$value' in output pattern: '" + this->outputPattern + "'");
+		return;
+	}
+
+	// publish state if specified
+	if ((this->setTopic != "") && (sValue != "")) {
+		this->plugin->publish(this->setTopic, sValue);
+	}
+}
+
 
 
 GenericPort::GenericPort(MQTTPlugin* plugin, const std::string& id, const std::string& topic) : 
@@ -760,6 +985,8 @@ void EventPort::configure(openhat::ConfigurationView::Ptr config) {
 }
 
 void EventPort::prepare() {
+	opdi::DigitalPort::prepare();
+
 	// go through outputs, resolve ports
 	auto it = this->outputs.begin();
 	auto ite = this->outputs.end();
@@ -1262,6 +1489,24 @@ void MQTTPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const st
 			digitalPort->configure(deviceConfig);
 			this->openhat->addPort(digitalPort);
 			this->myPorts.push_back(digitalPort);
+		}
+		else if (deviceType == "DialPort") {
+			this->openhat->logVerbose(node + ": Setting up generic MQTT dial port: " + deviceName, this->logVerbosity);
+			// get topic (required)
+			std::string topic = this->openhat->getConfigString(deviceConfig, deviceName, "Topic", "", true);
+
+			// setup the port instance and add it
+			DialPort* dialPort = new DialPort(this, deviceName, topic);
+			dialPort->timeoutSeconds = timeout;
+			dialPort->queryInterval = queryInterval;
+			// set default group: MQTT's node's group
+			dialPort->setGroup(group);
+			// set default log verbosity
+			dialPort->logVerbosity = this->logVerbosity;
+			this->openhat->configureDialPort(deviceConfig, dialPort);
+			dialPort->configure(deviceConfig);
+			this->openhat->addPort(dialPort);
+			this->myPorts.push_back(dialPort);
 		}
 		else if (deviceType == "Generic") {
 			this->openhat->logVerbose(node + ": Setting up generic MQTT device port: " + deviceName, this->logVerbosity);

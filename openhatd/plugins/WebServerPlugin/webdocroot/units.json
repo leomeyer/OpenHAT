@@ -22,6 +22,14 @@
         "#text": "layout=dial_port_row_noslider;icon=powermeter;label=Electric Power (W);formatString=%.2f W;denominator=100"
       },
       {
+        "-name": "electricPower_mWPerTime",
+        "#text": "electricPower_mW_in_W_per_time=0"
+      },
+      {
+        "-name": "electricPower_mW_in_W_per_time",
+        "#text": "layout=dial_port_row_noslider;icon=powermeter;label=Electric Power;formatString=%.3f W;denominator=1000"
+      },
+      {
         "-name": "electricEnergy_Wh",
         "#text": "electricEnergy_Wh_in_kWh=0"
       },

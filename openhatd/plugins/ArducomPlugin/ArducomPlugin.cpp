@@ -250,6 +250,8 @@ namespace {
 					throw Poco::InvalidArgumentException(this->pid + ": WriteType must be one of: Byte, Int16, Int32, Int64, Float");
 				}
 
+				this->writeReturnsValue = config->getBool("WriteReturnsValue", false);
+
 				this->outputExpression = config->getString("OutputExpression", "");
 				if (this->outputExpression.empty())
 					this->outputExpression = "$value";

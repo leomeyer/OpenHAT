@@ -15,7 +15,7 @@ add_subdirectory(plugins)
 add_subdirectory(src)
 
 add_custom_target(release
-    DEPENDS openhatd OpenHAT-Plugins)
+    DEPENDS OpenHAT-Plugins openhatd)
 
 add_custom_command(TARGET release
     COMMAND ../release.sh "${OPENHAT_TARGET}-${OPENHAT_VERSION}"

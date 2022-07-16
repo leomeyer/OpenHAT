@@ -85,7 +85,7 @@ protected:
 public:
 	DigitalGertboardPort(openhat::AbstractOpenHAT* openhat, const char* ID, int pin);
 	virtual ~DigitalGertboardPort(void);
-	virtual void setLine(uint8_t line, ChangeSource changeSource = ChangeSource::CHANGESOURCE_INT) override;
+	virtual bool setLine(uint8_t line, ChangeSource changeSource = ChangeSource::CHANGESOURCE_INT) override;
 	virtual void setMode(uint8_t mode, ChangeSource changeSource = ChangeSource::CHANGESOURCE_INT) override;
 	virtual void getState(uint8_t* mode, uint8_t* line) const override;
 };
@@ -151,7 +151,7 @@ protected:
 	virtual uint8_t queryState(void);
 public:
 	GertboardButton(openhat::AbstractOpenHAT* openhat, const char* ID, int pin);
-	virtual void setLine(uint8_t line, ChangeSource changeSource = ChangeSource::CHANGESOURCE_INT) override;
+	virtual bool setLine(uint8_t line, ChangeSource changeSource = ChangeSource::CHANGESOURCE_INT) override;
 	virtual void setMode(uint8_t mode, ChangeSource changeSource = ChangeSource::CHANGESOURCE_INT) override;
 	virtual void getState(uint8_t* mode, uint8_t* line) const override;
 };
@@ -170,7 +170,7 @@ protected:
 public:
 	GertboardPWM(openhat::AbstractOpenHAT* openhat, const int pin, const char* ID, bool inverse);
 	virtual ~GertboardPWM(void);
-	virtual void setPosition(int64_t position, ChangeSource changeSource = ChangeSource::CHANGESOURCE_INT) override;
+	virtual bool setPosition(int64_t position, ChangeSource changeSource = ChangeSource::CHANGESOURCE_INT) override;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -231,7 +231,7 @@ protected:
 public:
 	DigitalExpansionPort(openhat::AbstractOpenHAT* openhat, GertboardPlugin* gbPlugin, const char* ID, int pin);
 	virtual ~DigitalExpansionPort(void);
-	virtual void setLine(uint8_t line, ChangeSource changeSource = ChangeSource::CHANGESOURCE_INT) override;
+	virtual bool setLine(uint8_t line, ChangeSource changeSource = ChangeSource::CHANGESOURCE_INT) override;
 	virtual void setMode(uint8_t mode, ChangeSource changeSource = ChangeSource::CHANGESOURCE_INT) override;
 	virtual void getState(uint8_t* mode, uint8_t* line) const override;
 };
@@ -261,14 +261,15 @@ DigitalGertboardPort::~DigitalGertboardPort(void) {
 	GPIO_PULLCLK0 = 0;
 }
 
-void DigitalGertboardPort::setLine(uint8_t line, ChangeSource /*changeSource*/) {
-	opdi::DigitalPort::setLine(line);
+bool DigitalGertboardPort::setLine(uint8_t line, ChangeSource /*changeSource*/) {
+	bool changed = opdi::DigitalPort::setLine(line);
 
 	if (line == 0) {
 		GPIO_CLR0 = (1 << this->pin);
 	} else {
 		GPIO_SET0 = (1 << this->pin);
 	}
+	return changed;
 }
 
 void DigitalGertboardPort::setMode(uint8_t mode, ChangeSource /*changeSource*/) {
@@ -494,8 +495,9 @@ uint8_t GertboardButton::queryState(void) {
 	return result;
 }
 
-void GertboardButton::setLine(uint8_t line, ChangeSource /*changeSource*/) {
+bool GertboardButton::setLine(uint8_t line, ChangeSource /*changeSource*/) {
 	openhat->logNormal("Warning: Gertboard Button has no output to be changed, ignoring");
+	return false;
 }
 
 void GertboardButton::setMode(uint8_t mode, ChangeSource /*changeSource*/) {
@@ -533,12 +535,14 @@ GertboardPWM::~GertboardPWM(void) {
 	pwm_off();
 }
 
-void GertboardPWM::setPosition(int64_t position, ChangeSource /*changeSource*/) {
+bool GertboardPWM::setPosition(int64_t position, ChangeSource /*changeSource*/) {
 	// calculate nearest position according to step
-	opdi::DialPort::setPosition(position);
+	bool changed = opdi::DialPort::setPosition(position);
 
 	// set PWM value; inverse polarity if specified
 	force_pwm0(this->position, PWM0_ENABLE | (this->inverse ? PWM0_REVPOLAR : 0));
+
+	return changed;
 }
 
 
@@ -554,8 +558,8 @@ DigitalExpansionPort::DigitalExpansionPort(openhat::AbstractOpenHAT* openhat, Ge
 DigitalExpansionPort::~DigitalExpansionPort(void) {
 }
 
-void DigitalExpansionPort::setLine(uint8_t line, ChangeSource /*changeSource*/) {
-	opdi::DigitalPort::setLine(line);
+bool DigitalExpansionPort::setLine(uint8_t line, ChangeSource /*changeSource*/) {
+	bool changed =opdi::DigitalPort::setLine(line);
 
 	uint8_t code = this->pin;
 
@@ -592,6 +596,8 @@ void DigitalExpansionPort::setLine(uint8_t line, ChangeSource /*changeSource*/) 
 	uint8_t returnCode = this->gbPlugin->receiveExpansionPortCode();
 	if ((returnCode & PORTMASK) != (code & PORTMASK))
 		throw PortError("Expansion port communication failure");
+
+	return changed;
 }
 
 void DigitalExpansionPort::setMode(uint8_t mode, ChangeSource /*changeSource*/) {

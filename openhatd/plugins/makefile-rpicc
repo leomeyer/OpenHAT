@@ -1,4 +1,5 @@
-SUBDIRS = linux_test WindowPlugin FritzBoxPlugin WeatherPlugin MQTTPlugin rpi/gertboard WebServerPlugin FroniusPlugin ArducomPlugin
+SUBDIRS = linux_test WindowPlugin FritzBoxPlugin WeatherPlugin MQTTPlugin rpi/gertboard WebServerPlugin FroniusPlugin
+#ArducomPlugin
 #rpi/RemoteSwitch 
 
 .PHONY: subdirs $(SUBDIRS)

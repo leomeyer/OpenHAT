@@ -7,7 +7,6 @@
 #endif
 
 #include "Poco/Exception.h"
-#include "Poco/Tuple.h"
 #include "Poco/Timestamp.h"
 #include "Poco/Timezone.h"
 #include "Poco/DateTimeFormatter.h"
@@ -966,9 +965,7 @@ void AbstractOpenHAT::configureSelectPort(ConfigurationView::Ptr portConfig, Con
 		ConfigurationView::Keys labelKeys;
 		portLabels->keys("", labelKeys);
 
-		typedef Poco::Tuple<int, std::string> Label;
-		typedef std::vector<Label> LabelList;
-		LabelList orderedLabels;
+		opdi::SelectPort::LabelList orderedLabels;
 
 		// create ordered list of labels (by priority)
 		for (auto it = labelKeys.begin(), ite = labelKeys.end(); it != ite; ++it) {
@@ -985,25 +982,15 @@ void AbstractOpenHAT::configureSelectPort(ConfigurationView::Ptr portConfig, Con
 					break;
 				++nli;
 			}
-			Label label(labelNumber, *it);
+			opdi::SelectPort::Label label(labelNumber, *it);
 			orderedLabels.insert(nli, label);
 		}
 
 		if (orderedLabels.size() == 0)
 			this->throwSettingException("The Select port " + std::string(port->ID()) + " requires at least one label in its config section", std::string(port->ID()) + ".Label");
 
-		// go through items, create ordered list of char* items
-		std::vector<const char*> charLabels;
-		auto nli = orderedLabels.begin();
-		auto nlie = orderedLabels.end();
-		while (nli != nlie) {
-			charLabels.push_back(nli->get<1>().c_str());
-			++nli;
-		}
-		charLabels.push_back(nullptr);
-
 		// set port labels
-		port->setLabels(&charLabels[0]);
+		port->setLabels(orderedLabels);
 	}
 
 	Poco::AutoPtr<Poco::Util::AbstractConfiguration> stateConfig = this->getConfigForState(portConfig, port->ID());
@@ -1423,7 +1410,7 @@ uint8_t AbstractOpenHAT::doWork(uint8_t canSend, uint8_t* sleepTimeMs) {
 		this->logError(std::string("Unhandled exception while housekeeping: ") + this->getExceptionMessage(pe));
 		result = OPDI_STATUS_OK;	// not critical
 	} catch (std::exception &e) {
-		this->logError(std::string("Unhandled exception while housekeeping: ") + e.what());
+		this->logError(std::string("Unhandled exception while housekeeping: ") + this->getExceptionMessage(e));
 		result = OPDI_DEVICE_ERROR;	// critical, exit
 	} catch (...) {
 		this->logError(std::string("Unknown error while housekeeping"));
@@ -1699,6 +1686,19 @@ std::string AbstractOpenHAT::getExceptionMessage(const Poco::Exception& e) {
 		+ (typeName.empty() ? "" : " (" + typeName + ")");
 }
 
+std::string AbstractOpenHAT::getExceptionMessage(const std::exception& e) {
+	std::stringstream ss;
+	ss << e.what();
+	try {
+		std::rethrow_if_nested(e);
+	}
+	catch (const std::exception& nested) {
+		ss << ": ";
+		ss << getExceptionMessage(nested);
+	}
+	return ss.str();
+}
+
 void AbstractOpenHAT::logConfigKeyAccess(const std::string& message) {
 	if (this->lastConfigKeyAccessMessage == message)
 		return;
@@ -1707,6 +1707,7 @@ void AbstractOpenHAT::logConfigKeyAccess(const std::string& message) {
 }
 
 }		// namespace openhat
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // The following functions implement the glue code between C and C++.

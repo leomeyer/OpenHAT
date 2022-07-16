@@ -128,7 +128,7 @@ public:
 
 	virtual void configure(ConfigurationView::Ptr config);
 
-	virtual void setLine(uint8_t line, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
+	virtual bool setLine(uint8_t line, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 
 	virtual void prepare() override;
         

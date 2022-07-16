@@ -141,7 +141,7 @@ protected:
 public:
 	WindowPort(openhat::AbstractOpenHAT* openhat, const char* id);
 
-	virtual void setPosition(uint16_t position, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
+	virtual bool setPosition(uint16_t position, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 	
 	virtual void getState(uint16_t* position) const override;
 };
@@ -196,7 +196,7 @@ WindowPort::WindowPort(openhat::AbstractOpenHAT* openhat, const char* id) : opdi
 	this->openTimer = 0;
 }
 
-void WindowPort::setPosition(uint16_t position, ChangeSource changeSource) {
+bool WindowPort::setPosition(uint16_t position, ChangeSource changeSource) {
 	// recovery from error state is always possible
 	if ((this->currentState == ERR) || this->position != position) {
 		// prohibit disabling the automatic mode by setting the position to the current state
@@ -224,7 +224,9 @@ void WindowPort::setPosition(uint16_t position, ChangeSource changeSource) {
 			break;
 		}
 		this->logVerbose(info + "; current state is: " + this->getStateText(this->currentState) + this->getMotorStateText());
+		return true;
 	}
+	return false;
 }
 
 void WindowPort::getState(uint16_t* position) const {

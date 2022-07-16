@@ -176,11 +176,13 @@ int TimerPort::ScheduleComponent::getMaximum(void) {
 }
 
 
-void TimerPort::ManualSchedulePort::setPosition(int64_t position, ChangeSource changeSource) {
-	DialPort::setPosition(position, changeSource);
+bool TimerPort::ManualSchedulePort::setPosition(int64_t position, ChangeSource changeSource) {
+	if (!DialPort::setPosition(position, changeSource))
+		return false;
 
 	// notify timer port: schedule has changed
 	this->timerPort->recalculateSchedules();
+	return true;
 }
 
 
@@ -822,10 +824,10 @@ void TimerPort::recalculateSchedules(Schedule* /*activatingSchedule*/) {
 	this->refreshRequired = true;
 }
 
-void TimerPort::setLine(uint8_t line, ChangeSource changeSource) {
+bool TimerPort::setLine(uint8_t line, ChangeSource changeSource) {
 	bool wasLow = (this->line == 0);
 
-	DigitalPort::setLine(line, changeSource);
+	bool changed = DigitalPort::setLine(line, changeSource);
 
 	// set to Low?
 	if (this->line == 0) {
@@ -844,6 +846,7 @@ void TimerPort::setLine(uint8_t line, ChangeSource changeSource) {
 	}
 
 	this->refreshRequired = true;
+	return changed;
 }
 
 std::string TimerPort::getExtendedState(bool withHistory) const {

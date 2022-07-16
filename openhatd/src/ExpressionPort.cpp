@@ -52,8 +52,11 @@ void ExpressionPort::configure(ConfigurationView::Ptr config) {
 	}
 }
 
-void ExpressionPort::setLine(uint8_t line, ChangeSource changeSource) {
-	opdi::DigitalPort::setLine(line, changeSource);
+bool ExpressionPort::setLine(uint8_t line, ChangeSource changeSource) {
+	bool changed = opdi::DigitalPort::setLine(line, changeSource);
+
+	if (!changed)
+		return false;
 
 	// if the line has been set to High, start the iterations
 	if (line == 1) {
@@ -68,6 +71,7 @@ void ExpressionPort::setLine(uint8_t line, ChangeSource changeSource) {
 			this->setOutputPorts(this->deactivationValue);
 		}
 	}
+	return true;
 }
 
 bool ExpressionPort::prepareSymbols(bool /*duringSetup*/) {

@@ -294,9 +294,9 @@ public:
 
 	virtual uint8_t doWork(uint8_t canSend) override;
 
-	virtual void configure(openhat::ConfigurationView::Ptr config);
+	virtual void configure(openhat::ConfigurationView::Ptr config) override;
 
-	virtual void setLine(uint8_t line, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT) override;
+	virtual bool setLine(uint8_t line, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT) override;
 };
 
 class DialPort : public opdi::DialPort, public MQTTPort {
@@ -320,9 +320,9 @@ public:
 
 	virtual uint8_t doWork(uint8_t canSend) override;
 
-	virtual void configure(openhat::ConfigurationView::Ptr config);
+	virtual void configure(openhat::ConfigurationView::Ptr config) override;
 
-	virtual void setPosition(int64_t position, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT);
+	virtual bool setPosition(int64_t position, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT) override;
 };
 
 
@@ -348,7 +348,7 @@ public:
 
 	virtual void configure(openhat::ConfigurationView::Ptr config, openhat::ConfigurationView::Ptr parentConfig);
 
-	virtual void setPosition(uint16_t value, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT);
+	virtual bool setPosition(uint16_t value, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT) override;
 };
 
 
@@ -368,7 +368,7 @@ public:
 
 	virtual uint8_t doWork(uint8_t canSend) override;
 	
-	virtual void setValue(const std::string& value, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT) override;
+	virtual bool setValue(const std::string& value, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT) override;
 	
 	virtual void configure(Poco::Util::AbstractConfiguration::Ptr config) override;
 };
@@ -454,7 +454,7 @@ public:
 	
 	virtual void handle_payload(std::string payload) override;
 
-	virtual void setLine(uint8_t line, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
+	virtual bool setLine(uint8_t line, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 
 	virtual uint8_t doWork(uint8_t canSend) override;
 };
@@ -477,7 +477,7 @@ public:
 	
 	virtual void handle_payload(std::string payload) override;
 
-	virtual void setLine(uint8_t line, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
+	virtual bool setLine(uint8_t line, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 
 	virtual uint8_t doWork(uint8_t canSend) override;
 };
@@ -631,19 +631,22 @@ void DigitalPort::configure(openhat::ConfigurationView::Ptr config) {
 	this->outputValueHigh = config->getString("OutputValueHigh", "");
 }
 
-void DigitalPort::setLine(uint8_t line, ChangeSource changeSource) {
-	opdi::DigitalPort::setLine(line, changeSource);
+bool DigitalPort::setLine(uint8_t line, ChangeSource changeSource) {
+	bool changed = opdi::DigitalPort::setLine(line, changeSource);
 
 	if (this->error != Error::VALUE_OK)
-		return;
+		return changed;
 
-	// publish state if specified
-	if ((this->line == 0) && (this->setTopic != "") && (this->outputValueLow != "")) {
-		this->plugin->publish(this->setTopic, this->outputValueLow);
+	if (changed) {
+		// publish state if specified
+		if ((this->line == 0) && (this->setTopic != "") && (this->outputValueLow != "")) {
+			this->plugin->publish(this->setTopic, this->outputValueLow);
+		}
+		else if ((this->line == 1) && (this->setTopic != "") && (this->outputValueHigh != "")) {
+			this->plugin->publish(this->setTopic, this->outputValueHigh);
+		}
 	}
-	else if ((this->line == 1) && (this->setTopic != "") && (this->outputValueHigh != "")) {
-		this->plugin->publish(this->setTopic, this->outputValueHigh);
-	}
+	return changed;
 }
 
 
@@ -765,17 +768,20 @@ uint8_t DialPort::doWork(uint8_t canSend) {
 	return OPDI_STATUS_OK;
 }
 
-void DialPort::setPosition(int64_t value, ChangeSource changeSource) {
-	opdi::DialPort::setPosition(value, changeSource);
+bool DialPort::setPosition(int64_t value, ChangeSource changeSource) {
+	bool changed = opdi::DialPort::setPosition(value, changeSource);
 
 	if (this->error != Error::VALUE_OK)
-		return;
+		return changed;
+
+	if (!changed)
+		return false;
 
 	// replace $value in output expression with the position
 	std::string expr = this->outputExpression;
 	if (replace_all(expr, "$value", Poco::NumberFormatter::format(this->position)) == 0) {
 		this->plugin->openhat->logWarning(this->pid + ": Could not replace placeholder '$value' in output expression: '" + this->outputExpression + "'");
-		return;
+		return true;
 	}
 
 	// apply output expression
@@ -784,20 +790,22 @@ void DialPort::setPosition(int64_t value, ChangeSource changeSource) {
 	double dValue = this->outputExpr->apply();
 	if (dValue == NAN) {
 		this->plugin->openhat->logWarning(this->pid + ": Expression evaluated to NAN: '" + expr + "'");
-		return;
+		return true;
 	}
 
 	std::string sValue = Poco::NumberFormatter::format(dValue);
 	std::string output = this->outputPattern;
 	if (this->outputRegex->subst(output, sValue, Poco::RegularExpression::RE_GLOBAL) == 0) {
 		this->plugin->openhat->logWarning(this->pid + ": Could not replace placeholder '$value' in output pattern: '" + this->outputPattern + "'");
-		return;
+		return true;
 	}
 
 	// publish state if specified
 	if ((this->setTopic != "") && (sValue != "")) {
 		this->plugin->publish(this->setTopic, output);
 	}
+
+	return true;
 }
 
 
@@ -914,27 +922,31 @@ uint8_t SelectPort::doWork(uint8_t canSend) {
 	return OPDI_STATUS_OK;
 }
 
-void SelectPort::setPosition(uint16_t value, ChangeSource changeSource) {
-	opdi::SelectPort::setPosition(value, changeSource);
+bool SelectPort::setPosition(uint16_t value, ChangeSource changeSource) {
+	bool changed = opdi::SelectPort::setPosition(value, changeSource);
 
 	if (this->error != Error::VALUE_OK)
-		return;
+		return changed;
+
+	if (!changed)
+		return false;
 
 	if (this->outputValues.size() < this->position + 1) {
 		this->plugin->openhat->logWarning(this->pid + ": Not enough values in output map (position: " + this->plugin->openhat->to_string(this->position));
-		return;
+		return true;
 	}
 	std::string sValue = this->outputValues[this->position];
 	std::string output = this->outputPattern;
 	if (this->outputRegex->subst(output, sValue, Poco::RegularExpression::RE_GLOBAL) == 0) {
 		this->plugin->openhat->logWarning(this->pid + ": Could not replace placeholder '$value' in output pattern: '" + this->outputPattern + "'");
-		return;
+		return true;
 	}
 
 	// publish state if specified
 	if ((this->setTopic != "") && (sValue != "")) {
 		this->plugin->publish(this->setTopic, output);
 	}
+	return true;
 }
 
 
@@ -1022,8 +1034,8 @@ uint8_t GenericPort::doWork(uint8_t canSend) {
 	return OPDI_STATUS_OK;
 }
 
-void GenericPort::setValue(const std::string& newValue, ChangeSource changeSource) {
-	// opdi::CustomPort::setValue(newValue, changeSource);
+bool GenericPort::setValue(const std::string& newValue, ChangeSource changeSource) {
+	bool changed = opdi::CustomPort::setValue(newValue, changeSource);
 	
 	try {
 		if (this->plugin->client != nullptr && this->plugin->client->is_connected()) {
@@ -1033,6 +1045,8 @@ void GenericPort::setValue(const std::string& newValue, ChangeSource changeSourc
 	}  catch (mqtt::exception& ex) {
 		this->plugin->openhat->logError(std::string(this->getID()) + ": Error publishing state: " + this->topic + ": " + ex.what());
 	}
+
+	return true;
 }
 
 void GenericPort::configure(Poco::Util::AbstractConfiguration::Ptr config) {
@@ -1267,11 +1281,15 @@ uint8_t HG06337Switch::doWork(uint8_t canSend) {
 	return OPDI_STATUS_OK;
 }
 
-void HG06337Switch::setLine(uint8_t line, ChangeSource changeSource) {
-	// opdi::DigitalPort::setLine(line, changeSource);
+bool HG06337Switch::setLine(uint8_t line, ChangeSource changeSource) {
+	bool changed = opdi::DigitalPort::setLine(line, changeSource);
 
 	if (this->plugin->client == nullptr)
-		return;
+		return changed;
+
+	if (!changed)
+		return false;
+
 	try {
 		std::string payload;
 		if (line == 0)
@@ -1289,6 +1307,7 @@ void HG06337Switch::setLine(uint8_t line, ChangeSource changeSource) {
 	}  catch (mqtt::exception& ex) {
 		this->plugin->openhat->logError(std::string(this->getID()) + ": Error publishing state: " + this->topic + ": " + ex.what());
 	}
+	return true;
 }
 
 void HG06337Switch::setSwitchState(int8_t switchState) {
@@ -1388,11 +1407,14 @@ uint8_t TasmotaSwitch::doWork(uint8_t canSend) {
 	return OPDI_STATUS_OK;
 }
 
-void TasmotaSwitch::setLine(uint8_t line, ChangeSource changeSource) {
-	// opdi::DigitalPort::setLine(line, changeSource);
+bool TasmotaSwitch::setLine(uint8_t line, ChangeSource changeSource) {
+	bool changed = opdi::DigitalPort::setLine(line, changeSource);
 
 	if (this->plugin->client == nullptr)
-		return;
+		return changed;
+	if (!changed)
+		return false;
+
 	try {
 		std::string payload;
 		if (line == 0)
@@ -1411,6 +1433,7 @@ void TasmotaSwitch::setLine(uint8_t line, ChangeSource changeSource) {
 	}  catch (mqtt::exception& ex) {
 		this->plugin->openhat->logError(std::string(this->getID()) + ": Error publishing state: " + topic + ": " + ex.what());
 	}
+	return true;
 }
 
 void TasmotaSwitch::setSwitchState(int8_t switchState) {
@@ -1653,7 +1676,7 @@ void MQTTPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const st
 			this->openhat->throwSettingException(deviceName + ": Please specify a QueryInterval >= 0: " + this->openhat->to_string(queryInterval));
 		
 		if (deviceType == "DigitalPort") {
-			this->openhat->logVerbose(node + ": Setting up generic MQTT digital port: " + deviceName, this->logVerbosity);
+			this->openhat->logVerbose(node + ": Setting up MQTT digital port: " + deviceName, this->logVerbosity);
 			// get topic (required)
 			std::string topic = this->openhat->getConfigString(deviceConfig, deviceName, "Topic", "", true);
 
@@ -1670,7 +1693,7 @@ void MQTTPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const st
 			this->myPorts.push_back(digitalPort);
 		}
 		else if (deviceType == "DialPort") {
-			this->openhat->logVerbose(node + ": Setting up generic MQTT dial port: " + deviceName, this->logVerbosity);
+			this->openhat->logVerbose(node + ": Setting up MQTT dial port: " + deviceName, this->logVerbosity);
 			// get topic (required)
 			std::string topic = this->openhat->getConfigString(deviceConfig, deviceName, "Topic", "", true);
 
@@ -1687,7 +1710,7 @@ void MQTTPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const st
 			this->myPorts.push_back(dialPort);
 		}
 		else if (deviceType == "SelectPort") {
-			this->openhat->logVerbose(node + ": Setting up generic MQTT select port: " + deviceName, this->logVerbosity);
+			this->openhat->logVerbose(node + ": Setting up MQTT select port: " + deviceName, this->logVerbosity);
 			// get topic (required)
 			std::string topic = this->openhat->getConfigString(deviceConfig, deviceName, "Topic", "", true);
 
@@ -1704,7 +1727,7 @@ void MQTTPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const st
 			this->myPorts.push_back(selectPort);
 		}
 		else if (deviceType == "Generic") {
-			this->openhat->logVerbose(node + ": Setting up generic MQTT device port: " + deviceName, this->logVerbosity);
+			this->openhat->logVerbose(node + ": Setting up generic MQTT port: " + deviceName, this->logVerbosity);
             // get topic (required)
             std::string topic = this->openhat->getConfigString(deviceConfig, deviceName, "Topic", "", true);
 

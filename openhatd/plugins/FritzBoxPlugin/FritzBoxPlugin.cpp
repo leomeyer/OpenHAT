@@ -155,7 +155,7 @@ protected:
 public:
 	FritzDECT200Switch(FritzBoxPlugin* plugin, const std::string& id, const std::string& ain, int queryInterval);
 
-	virtual void setLine(uint8_t line, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
+	virtual bool setLine(uint8_t line, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 
 	virtual uint8_t doWork(uint8_t canSend) override;
 };
@@ -243,14 +243,19 @@ uint8_t FritzDECT200Switch::doWork(uint8_t canSend) {
 	return OPDI_STATUS_OK;
 }
 
-void FritzDECT200Switch::setLine(uint8_t line, ChangeSource changeSource) {
-	opdi::DigitalPort::setLine(line, changeSource);
+bool FritzDECT200Switch::setLine(uint8_t line, ChangeSource changeSource) {
+	bool changed = opdi::DigitalPort::setLine(line, changeSource);
+
+	if (!changed)
+		return false;
 
 	if (line == 0)
 		this->plugin->queue.enqueueNotification(new ActionNotification(ActionNotification::SETSWITCHSTATELOW, this));
 	else
 	if (line == 1)
 		this->plugin->queue.enqueueNotification(new ActionNotification(ActionNotification::SETSWITCHSTATEHIGH, this));
+
+	return true;
 }
 
 void FritzDECT200Switch::setSwitchState(int8_t switchState) {

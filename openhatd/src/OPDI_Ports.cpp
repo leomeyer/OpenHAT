@@ -801,22 +801,24 @@ void DigitalPort::setMode(uint8_t mode, ChangeSource changeSource) {
 	}
 }
 
-void DigitalPort::setLine(uint8_t line, ChangeSource changeSource) {
+bool DigitalPort::setLine(uint8_t line, ChangeSource changeSource) {
 	if (line > 1)
 		throw PortError(this->ID() + ": Digital port line value not supported: " + this->to_string((int)line));
-	if (this->error != Error::VALUE_OK)
-		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
 	bool changed = (line != this->line);
+	if (this->error != Error::VALUE_OK) {
+		this->error = Error::VALUE_OK;
+		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
+		changed = true;
+	}
 	if (changed) {
 		this->refreshRequired |= (this->refreshMode == RefreshMode::REFRESH_AUTO);
 		this->line = line;
 		this->logDebug("DigitalPort Line changed to: " + this->to_string((int)this->line) + " by: " + this->getChangeSourceText(changeSource));
-	}
-	this->error = Error::VALUE_OK;
-	if (persistent && (this->opdi != nullptr))
-		this->opdi->persist(this);
-	if (changed)
+		if (persistent && (this->opdi != nullptr))
+			this->opdi->persist(this);
 		this->handleStateChange(changeSource);
+	}
+	return changed;
 }
 
 uint8_t DigitalPort::getLine(void) const {
@@ -947,19 +949,20 @@ void AnalogPort::setReference(uint8_t reference, ChangeSource changeSource) {
 void AnalogPort::setAbsoluteValue(int32_t value, ChangeSource changeSource) {
 	// restrict value to possible range
 	int32_t newValue = this->validateValue(value);
-	if (this->error != Error::VALUE_OK)
-		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
 	bool changed = (newValue != this->value);
+	if (this->error != Error::VALUE_OK) {
+		this->error = Error::VALUE_OK;
+		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
+		changed = true;
+	}
 	if (changed) {
 		this->refreshRequired |= (this->refreshMode == RefreshMode::REFRESH_AUTO);
 		this->value = newValue;
 		this->logDebug("AnalogPort Value changed to: " + this->to_string((int)this->value) + " by: " + this->getChangeSourceText(changeSource));
-	}
-	this->error = Error::VALUE_OK;
-	if (persistent && (this->opdi != nullptr))
-		this->opdi->persist(this);
-	if (changed)
+		if (persistent && (this->opdi != nullptr))
+			this->opdi->persist(this);
 		this->handleStateChange(changeSource);
+	}
 }
 
 void AnalogPort::getState(uint8_t* mode, uint8_t* resolution, uint8_t* reference, int32_t* value) const {
@@ -1064,6 +1067,37 @@ void SelectPort::freeItems() {
 		this->labels = nullptr;
 	}
 }
+void SelectPort::setLabels(LabelList& orderedLabels) {
+	this->orderedLabels = orderedLabels;
+
+	// go through items, create ordered list of char* items
+	std::vector<const char*> charLabels;
+	auto nli = orderedLabels.begin();
+	auto nlie = orderedLabels.end();
+	while (nli != nlie) {
+		charLabels.push_back(nli->get<1>().c_str());
+		++nli;
+	}
+	charLabels.push_back(nullptr);
+
+	// set port labels
+	setLabels(&charLabels[0]);
+}
+
+uint16_t SelectPort::getPositionByLabelOrderID(int orderID) {
+	auto nli = orderedLabels.begin();
+	auto nlie = orderedLabels.end();
+	uint16_t pos = 0;
+	// find label with the specified orderID
+	while (nli != nlie) {
+		if (nli->get<0>() == orderID)
+			return pos;
+		++nli;
+		++pos;
+	}
+	// not found
+	throw Poco::InvalidArgumentException("Specified OrderID does not match any SelectPort label: " + this->opdi->to_string(orderID));
+}
 
 void SelectPort::setLabels(const char** labels) {
 	this->freeItems();
@@ -1097,22 +1131,24 @@ void SelectPort::setLabels(const char** labels) {
 	this->count = itemCount - 1;
 }
 
-void SelectPort::setPosition(uint16_t position, ChangeSource changeSource) {
+bool SelectPort::setPosition(uint16_t position, ChangeSource changeSource) {
 	if (position > this->count)
 		throw PortError(this->ID() + ": Position must not exceed the number of items: " + to_string((int)this->count));
-	if (this->error != Error::VALUE_OK)
-		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
 	bool changed = (position != this->position);
+	if (this->error != Error::VALUE_OK) {
+		this->error = Error::VALUE_OK;
+		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
+		changed = true;
+	}
 	if (changed) {
 		this->refreshRequired |= (this->refreshMode == RefreshMode::REFRESH_AUTO);
 		this->position = position;
 		this->logDebug("SelectPort Position changed to: " + this->to_string(this->position) + " by: " + this->getChangeSourceText(changeSource));
-	}
-	this->error = Error::VALUE_OK;
-	if (persistent && (this->opdi != nullptr))
-		this->opdi->persist(this);
-	if (changed)
+		if (persistent && (this->opdi != nullptr))
+			this->opdi->persist(this);
 		this->handleStateChange(changeSource);
+	}
+	return changed;
 }
 
 uint16_t SelectPort::getPosition(void) const {
@@ -1223,26 +1259,28 @@ void DialPort::setStep(uint64_t step) {
 	this->setPosition(this->position);
 }
 
-void DialPort::setPosition(int64_t position, ChangeSource changeSource) {
+bool DialPort::setPosition(int64_t position, ChangeSource changeSource) {
 	if (position < this->minValue)
 		throw PortError(this->ID() + ": Position must not be less than the minimum: " + to_string(this->minValue));
 	if (position > this->maxValue)
 		throw PortError(this->ID() + ": Position must not be greater than the maximum: " + to_string(this->maxValue));
 	// correct position to next possible step
 	int64_t newPosition = ((position - this->minValue) / this->step) * this->step + this->minValue;
-	if (this->error != Error::VALUE_OK)
-		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
 	bool changed = (newPosition != this->position);
+	if (this->error != Error::VALUE_OK) {
+		this->error = Error::VALUE_OK;
+		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
+		changed = true;
+	}
 	if (changed) {
 		this->refreshRequired |= (this->refreshMode == RefreshMode::REFRESH_AUTO);
 		this->position = position;
 		this->logDebug("DialPort Position changed to: " + this->to_string(this->position) + " by: " + this->getChangeSourceText(changeSource));
-	}
-	this->error = Error::VALUE_OK;
-	if (persistent && (this->opdi != nullptr))
-		this->opdi->persist(this);
-	if (changed)
+		if (persistent && (this->opdi != nullptr))
+			this->opdi->persist(this);
 		this->handleStateChange(changeSource);
+	}
+	return changed;
 }
 
 int64_t DialPort::getPosition(void) const {
@@ -1304,20 +1342,22 @@ void CustomPort::configure(Poco::Util::AbstractConfiguration::Ptr portConfig) {
 
 }
 
-void CustomPort::setValue(const std::string& newValue, ChangeSource changeSource) {
-	if (this->error != Error::VALUE_OK)
-		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
+bool CustomPort::setValue(const std::string& newValue, ChangeSource changeSource) {
 	bool changed = (newValue != this->value);
+	if (this->error != Error::VALUE_OK) {
+		this->error = Error::VALUE_OK;
+		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
+		changed = true;
+	}
 	if (changed) {
 		this->value = newValue;
 		this->refreshRequired |= (this->refreshMode == RefreshMode::REFRESH_AUTO);
 		this->logDebug("Value changed to: " + this->value + " by: " + this->getChangeSourceText(changeSource));
-	}
-	this->error = Error::VALUE_OK;
-	if (persistent && (this->opdi != nullptr))
-		this->opdi->persist(this);
-	if (changed)
+		if (persistent && (this->opdi != nullptr))
+			this->opdi->persist(this);
 		this->handleStateChange(changeSource);
+	}
+	return changed;
 }
 
 std::string CustomPort::getValue(void) const {

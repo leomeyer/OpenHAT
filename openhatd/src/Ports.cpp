@@ -99,7 +99,7 @@ void LogicPort::configure(ConfigurationView::Ptr config) {
 	this->inverseOutputPortStr = config->getString("InverseOutputPorts", "");
 }
 
-void LogicPort::setLine(uint8_t /*line*/, ChangeSource /*changeSource*/) {
+bool LogicPort::setLine(uint8_t /*line*/, ChangeSource /*changeSource*/) {
 	throw PortError(this->ID() + ": The line of a LogicPort cannot be set directly");
 }
 
@@ -436,8 +436,8 @@ void SelectorPort::configure(ConfigurationView::Ptr config) {
 		this->openhat->throwSettingException(this->ID() + ": Unsupported ErrorState; expected 'Low' or 'High': " + errState);
 }
 
-void SelectorPort::setLine(uint8_t line, ChangeSource changeSource) {
-	opdi::DigitalPort::setLine(line, changeSource);
+bool SelectorPort::setLine(uint8_t line, ChangeSource changeSource) {
+	bool changed = opdi::DigitalPort::setLine(line, changeSource);
 	if (this->line == 1) {
 		this->logDebug("Setting Port '" + this->selectPort->ID() + "' to position " + to_string(this->position));
 		// set the specified select port to the specified position
@@ -451,6 +451,7 @@ void SelectorPort::setLine(uint8_t line, ChangeSource changeSource) {
 		(*it)->setLine(line);
 		++it;
 	}
+	return changed;
 }
 
 void SelectorPort::prepare() {
@@ -869,7 +870,7 @@ void FaderPort::configure(ConfigurationView::Ptr config) {
 	this->openhat->configurePort(config, this, 0);
 }
 
-void FaderPort::setLine(uint8_t line, ChangeSource changeSource) {
+bool FaderPort::setLine(uint8_t line, ChangeSource changeSource) {
 	uint8_t oldline = this->line;
 	if ((oldline == 0) && (line == 1)) {
 		// store current values on start (might be resolved by ValueResolvers, and we don't want them to change during fading
@@ -882,14 +883,15 @@ void FaderPort::setLine(uint8_t line, ChangeSource changeSource) {
 		if (this->durationMs < 5) {
 			this->logDebug("Refusing to fade because duration is impracticably low: " + to_string(this->durationMs));
 		} else {
-			opdi::DigitalPort::setLine(line, changeSource);
+			bool changed = opdi::DigitalPort::setLine(line, changeSource);
 			this->startTime = Poco::Timestamp();
 			// cause correct log output
 			this->lastValue = -1;
 			this->logDebug("Start fading at " + to_string(this->left) + "% with a duration of " + to_string(this->durationMs) + " ms");
+			return changed;
 		}
 	} else {
-		opdi::DigitalPort::setLine(line, changeSource);
+		bool changed = opdi::DigitalPort::setLine(line, changeSource);
 		// switched off?
 		if (oldline != this->line) {
 			this->logDebug("Stopped fading at " + to_string(this->lastValue * 100.0) + "%");
@@ -898,7 +900,9 @@ void FaderPort::setLine(uint8_t line, ChangeSource changeSource) {
 			this->left = this->leftValue.value();
 			this->right = this->rightValue.value();
 		}
+		return changed;
 	}
+	return false;
 }
 
 void FaderPort::prepare() {
@@ -1192,10 +1196,9 @@ uint8_t SceneSelectPort::doWork(uint8_t canSend)  {
 	return OPDI_STATUS_OK;
 }
 
-void SceneSelectPort::setPosition(uint16_t position, ChangeSource changeSource) {
-	opdi::SelectPort::setPosition(position, changeSource);
-
+bool SceneSelectPort::setPosition(uint16_t position, ChangeSource changeSource) {
 	this->positionSet = true;
+	return opdi::SelectPort::setPosition(position, changeSource);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1980,11 +1983,11 @@ void AggregatorPort::prepare() {
 		this->historyPort = this->findPort(this->getID(), "HistoryPort", this->historyPortID, true);
 }
 
-void AggregatorPort::setLine(uint8_t newLine, ChangeSource changeSource) {
+bool AggregatorPort::setLine(uint8_t newLine, ChangeSource changeSource) {
 	// if being deactivated, reset values and ports to error
 	if ((this->line == 1) && (newLine == 0))
 		this->resetValues("Aggregator was deactivated", opdi::LogVerbosity::VERBOSE);
-	opdi::DigitalPort::setLine(newLine, changeSource);
+	return opdi::DigitalPort::setLine(newLine, changeSource);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2212,11 +2215,11 @@ void TriggerPort::configure(ConfigurationView::Ptr config) {
 	this->counterPortStr = config->getString("CounterPort", "");
 }
 
-void TriggerPort::setLine(uint8_t line, ChangeSource changeSource) {
-	opdi::DigitalPort::setLine(line, changeSource);
+bool TriggerPort::setLine(uint8_t line, ChangeSource changeSource) {
+	bool changed = opdi::DigitalPort::setLine(line, changeSource);
 
 	// deactivated?
-	if (line == 0) {
+	if (changed && line == 0) {
 		// reset all input port states to "unknown"
 		auto it = this->portDataList.begin();
 		auto ite = this->portDataList.end();
@@ -2225,6 +2228,8 @@ void TriggerPort::setLine(uint8_t line, ChangeSource changeSource) {
 			++it;
 		}
 	}
+
+	return changed;
 }
 
 void TriggerPort::prepare() {
@@ -2716,7 +2721,7 @@ void AssignmentPort::configure(ConfigurationView::Ptr portConfig, ConfigurationV
 		this->logVerbose("Found " + this->to_string(this->assignmentValues.size()) + " assignments.");
 }
 
-void AssignmentPort::setLine(uint8_t line, ChangeSource changeSource) {
+bool AssignmentPort::setLine(uint8_t line, ChangeSource changeSource) {
 	// Important: this method does not call the base method to avoid
 	// refreshes and OnChange* handler processing. They are not necessary
 	// because the line is immediately returned to Low.
@@ -2778,6 +2783,7 @@ void AssignmentPort::setLine(uint8_t line, ChangeSource changeSource) {
 
 	// the line is always Low
 	this->line = 0;
+	return false;
 }
 
 }		// namespace openhat

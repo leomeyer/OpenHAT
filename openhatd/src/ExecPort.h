@@ -95,7 +95,7 @@ public:
 
 	/// This method ensures that the Line of an Exec port cannot be set to Low if a process is running.
 	///
-	virtual void setLine(uint8_t line, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
+	virtual bool setLine(uint8_t line, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 };
 
 }		// namespace openhat

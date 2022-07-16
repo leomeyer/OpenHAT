@@ -65,7 +65,7 @@ public:
 
 	/// This method ensures that the Line of a Logic port cannot be set directly.
 	///
-	virtual void setLine(uint8_t line, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
+	virtual bool setLine(uint8_t line, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 
 	/// Prepares the port for operation.
 	///
@@ -146,7 +146,7 @@ public:
 
 	/// Sets the specified Select port to the defined position if line is 1.
 	///
-	virtual void setLine(uint8_t line, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
+	virtual bool setLine(uint8_t line, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 
 	/// Prepares the port for operation.
 	///
@@ -336,7 +336,7 @@ public:
 
 	virtual void configure(ConfigurationView::Ptr config);
 
-	virtual void setLine(uint8_t line, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
+	virtual bool setLine(uint8_t line, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 
 	virtual void prepare() override;
 };
@@ -368,7 +368,7 @@ public:
 
 	virtual void configure(ConfigurationView::Ptr config, ConfigurationView::Ptr parentConfig);
 
-	virtual void setPosition(uint16_t position, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
+	virtual bool setPosition(uint16_t position, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 
 	virtual void prepare() override;
 };
@@ -399,10 +399,11 @@ protected:
 			this->filePort = filePort;
 		}
 
-		virtual void setLine(uint8_t line, ChangeSource /*changeSource*/) override {
+		virtual bool setLine(uint8_t line, ChangeSource /*changeSource*/) override {
 			// the internal state is not updated as this is an event handler only
 			if (line == 1)
 				this->filePort->writeContent();
+			return false;
 		}
 	};
 
@@ -512,7 +513,7 @@ public:
 
 	/// Resets all values if the line is set to Low.
 	///
-	virtual void setLine(uint8_t newLine, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
+	virtual bool setLine(uint8_t newLine, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -620,7 +621,7 @@ public:
 
 	virtual void prepare() override;
 
-	virtual void setLine(uint8_t newLine, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
+	virtual bool setLine(uint8_t newLine, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -736,7 +737,7 @@ public:
 	/// This method assigns the specified values to the target ports if the line is changed to High.
 	/// The changeSource is propagated to the target ports so as it looks as if the changeSource
 	/// was the same as the one that changed this port.
-	virtual void setLine(uint8_t line, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
+	virtual bool setLine(uint8_t line, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 };
 
 }		// namespace openhat

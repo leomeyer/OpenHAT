@@ -28,848 +28,768 @@
 #define DEFAULT_RETRIES			3
 
 namespace {
-	
-class ArducomPlugin;
 
-class ArducomPort  {
-friend class ArducomPlugin;
-protected:
-	ArducomPlugin *plugin;
-	bool valueSet;
-	uint64_t lastQueryTime;
-	int32_t timeoutSeconds;
-	uint32_t queryInterval;
-	uint64_t timeoutCounter;
-	Poco::Mutex mutex;
+	class ArducomPort;
 
-	int8_t readCommand;
-	std::string readParameters;
-	int8_t writeCommand;
-	std::string writeParameters;
-	bool writeReturnsValue;
-
-public:
-	std::string pid;
-	
-	ArducomPort(ArducomPlugin *plugin, const std::string& id) {
-		this->plugin = plugin;
-		this->pid = id;
-		this->valueSet = false;
-		this->lastQueryTime = 0;
-		this->queryInterval = DEFAULT_QUERY_INTERVAL;
-		this->timeoutCounter = 0;
-
-		readCommand = -1;
-		writeCommand = -1;
-		writeReturnsValue = false;
-	};
-	
-	virtual void query(ArducomMaster *arducom);
-};
-
-class DigitalArducomPort : ArducomPort, opdi::DigitalPort {
-protected:
-
-public:
-	DigitalArducomPort(ArducomPlugin* plugin, const std::string& id) : ArducomPort(plugin, id), DigitalPort(id.c_str()) {
-	}
-
-
-};
-
-class ActionNotification : public Poco::Notification {
-public:
-	typedef Poco::AutoPtr<ActionNotification> Ptr;
-
-	enum ActionType {
-		QUERY
-	};
-
-	ActionType type;
-	ArducomPort* port;
-
-	ActionNotification(ActionType type, ArducomPort* port);
-};
-
-ActionNotification::ActionNotification(ActionType type, ArducomPort* port) {
-	this->type = type;
-	this->port = port;
-}
-
-////////////////////////////////////////////////////////////////////////
-// Plugin main class
-////////////////////////////////////////////////////////////////////////
-
-class ArducomPlugin : public IOpenHATPlugin, public openhat::IConnectionListener, public Poco::Runnable
-{
-protected:
-	std::vector<ArducomPort*> myPorts;
-
-public:
-	std::string nodeID;
-	std::string type;
-	std::string device;
-	int address;
-	int baudrate;	// only for serial connections
-	int retries;
-	int initDelay;
-	uint32_t timeoutSeconds;
-
-	int errorCount;
-	std::string lastErrorMessage;
-
-	opdi::LogVerbosity logVerbosity;
-
-	Poco::NotificationQueue queue;
-	Poco::Thread workThread;
-	
-	ArducomBaseParameters parameters;
-	ArducomMasterTransport *transport;
-	ArducomMaster *arducom;
-	
-	bool terminateRequested;
-	
-	void errorOccurred(const std::string& message);
-
-public:
-	openhat::AbstractOpenHAT* openhat;
-
-	virtual void masterConnected(void) override;
-	virtual void masterDisconnected(void) override;
-
-	virtual void run(void);
-
-	virtual void setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const std::string& node, openhat::ConfigurationView::Ptr nodeConfig, openhat::ConfigurationView::Ptr parentConfig, const std::string& driverPath) override;
-	
-	virtual void terminate(void) override;
-};
-
-////////////////////////////////////////////////////////////////////////
-// Plugin ports
-////////////////////////////////////////////////////////////////////////
-
-class GenericPort : public opdi::CustomPort, public ArducomPort {
-	friend class ArducomPlugin;
-protected:
-	std::string myValue;
-	std::string initialValue;
-public:
-	GenericPort(ArducomPlugin* plugin, const std::string& id, const std::string& topic);
-	
-	virtual uint8_t doWork(uint8_t canSend) override;
-	
-	virtual void setValue(const std::string& value, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT) override;
-	
-	virtual void configure(Poco::Util::AbstractConfiguration::Ptr config) override;
-};
-
-/*
-class EventPort : public opdi::DigitalPort, public ArducomPort {
-	friend class ArducomPlugin;
-protected:
-	
-	class Output {
+	class ActionNotification : public Poco::Notification {
 	public:
-		std::string name;
-		std::string pattern;
-		std::string value;
-		std::string outputPortStr;
-		opdi::PortList outputPorts;
-		openhat::ExpressionPort exprPort;
-		
-		Output(openhat::AbstractOpenHAT* openhat, std::string name): exprPort(openhat, (name + "_Expr").c_str()) {
+		typedef Poco::AutoPtr<ActionNotification> Ptr;
+
+		enum ActionType {
+			READ,
+			WRITE
+		};
+
+		ActionType type;
+		ArducomPort* port;
+
+		ActionNotification(ActionType type, ArducomPort* port) {
+			this->type = type;
+			this->port = port;
 		}
-		
-		uint8_t process(EventPort* myPort, std::string aValue) {
-			std::string newValue = aValue;
+	};
+
+	////////////////////////////////////////////////////////////////////////
+	// Plugin main class
+	////////////////////////////////////////////////////////////////////////
+
+	class ArducomPlugin : public IOpenHATPlugin, public openhat::IConnectionListener, public Poco::Runnable
+	{
+	protected:
+		std::vector<ArducomPort*> myPorts;
+
+	public:
+		std::string nodeID;
+		std::string type;
+		std::string device;
+		int address;
+		int baudrate;	// only for serial connections
+		int retries;
+		int initDelay;
+		uint32_t timeoutSeconds;
+
+		int errorCount;
+		std::string lastErrorMessage;
+
+		opdi::LogVerbosity logVerbosity;
+
+		Poco::NotificationQueue queue;
+		Poco::Thread workThread;
+
+		ArducomBaseParameters parameters;
+		ArducomMasterTransport* transport;
+		ArducomMaster* arducom;
+
+		bool terminateRequested;
+
+		void errorOccurred(const std::string& message);
+
+		openhat::AbstractOpenHAT* openhat;
+
+		virtual void masterConnected(void) override;
+		virtual void masterDisconnected(void) override;
+
+		virtual void run(void);
+
+		virtual void setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const std::string& node, openhat::ConfigurationView::Ptr nodeConfig, openhat::ConfigurationView::Ptr parentConfig, const std::string& driverPath) override;
+
+		virtual void terminate(void) override;
+	};
+
+	////////////////////////////////////////////////////////////////////////
+	// Plugin ports
+	////////////////////////////////////////////////////////////////////////
+
+	class ArducomPort {
+		friend class ArducomPlugin;
+	protected:
+		ArducomPlugin* plugin;
+		bool valueSet;
+		std::string newValue;
+		uint64_t lastQueryTime;
+		int32_t timeoutSeconds;
+		uint32_t queryInterval;
+		uint64_t timeoutCounter;
+		Poco::Mutex mutex;
+		opdi::LogVerbosity logVerbosity;
+
+#if not defined(__CYGWIN__) && not defined(WIN32)
+		int semkey;
+#endif
+		int8_t readCommand;
+		std::string readParameters;
+		Arducom::Format readParameterFormat;
+		char readParameterSeparator;
+		Arducom::Format readType;
+		uint8_t readLength;
+		uint8_t readOffset;
+		std::string inputExpression;
+
+		int8_t writeCommand;
+		std::string writeParameters;
+		Arducom::Format writeParameterFormat;
+		char writeParameterSeparator;
+		Arducom::Format writeType;
+		std::string outputExpression;
+		bool writeReturnsValue;
+
+		openhat::ExpressionPort* expr;
+
+	public:
+		std::string pid;
+
+		ArducomPort(ArducomPlugin* plugin, const std::string& id, opdi::LogVerbosity logVerbosity) {
+			this->plugin = plugin;
+			this->pid = id;
+			this->valueSet = true;		// cause error state in doWork
+			this->lastQueryTime = 0;
+			this->timeoutSeconds = DEFAULT_TIMEOUT;
+			this->queryInterval = DEFAULT_QUERY_INTERVAL;
+			this->timeoutCounter = 0;
+			this->logVerbosity = logVerbosity;
+
+			this->readCommand = -1;
+			this->readLength = 0;
+			this->readOffset = 0;
+			this->writeCommand = -1;
+			this->writeReturnsValue = false;
+		};
+
+		virtual void configure(openhat::ConfigurationView::Ptr config) {
+#if not defined(__CYGWIN__) && not defined(WIN32)
+			this->semkey = config->getInt("SemaphoreKey", 0);
+#endif
+
+			this->logVerbosity = this->plugin->openhat->getConfigLogVerbosity(config, this->logVerbosity);
+
+			std::string sRead = this->plugin->openhat->getConfigString(config, this->pid, "ReadCommand", "", false);
+			if (!sRead.empty()) {
+				int iRead = -1;
+				try {
+					iRead = Poco::NumberParser::parse(sRead);
+				}
+				catch (Poco::Exception& e) {
+					throw Poco::InvalidArgumentException(this->pid + ": Value for 'ReadCommand' must be an integer; got: '" + sRead + "'");
+				}
+				if (iRead < 0 || iRead > 127)
+					throw Poco::InvalidArgumentException(this->pid + ": Value for 'ReadCommand' must be in range 0...127; got: '" + sRead + "'");
+				else
+					this->readCommand = iRead;
+
+				this->readParameters = this->plugin->openhat->getConfigString(config, this->pid, "ReadParameters", "", false);
+
+				std::string sReadParameterFormat = this->plugin->openhat->getConfigString(config, this->pid, "ReadParameterFormat", "Hex", false);
+				this->readParameterFormat = Arducom::parseFormat(sReadParameterFormat, "ReadParameterFormat");
+
+				std::string sReadParameterSeparator = this->plugin->openhat->getConfigString(config, this->pid, "ReadParameterSeparator", std::string(1, ARDUCOM_DEFAULT_SEPARATOR), false);
+				if (sReadParameterSeparator.empty() || sReadParameterSeparator.size() > 1) {
+					throw Poco::InvalidArgumentException(this->pid + ": ReadParameterSeparator must be a non-space string of length 1");
+				}
+				this->readParameterSeparator = sReadParameterSeparator[0];
+
+				std::string sReadType = this->plugin->openhat->getConfigString(config, this->pid, "ReadType", "", true);
+				this->readType = Arducom::parseFormat(sReadType, "ReadType");
+				switch (this->readType) {
+				case Arducom::FMT_BYTE: this->readLength = 1; break;
+				case Arducom::FMT_INT16: this->readLength = 2; break;
+				case Arducom::FMT_INT32: this->readLength = 4; break;
+				case Arducom::FMT_INT64: this->readLength = 8; break;
+				case Arducom::FMT_FLOAT:  this->readLength = 4; break;
+				default:
+					throw Poco::InvalidArgumentException(this->pid + ": ReadType must be one of: Byte, Int16, Int32, Int64, Float");
+				}
+
+				std::string sReadOffset = this->plugin->openhat->getConfigString(config, this->pid, "ReadOffset", "0", false);
+				try {
+					this->readOffset = Poco::NumberParser::parse(sReadOffset);
+				}
+				catch (Poco::Exception& e) {
+					throw Poco::InvalidArgumentException(this->pid + ": Value for 'ReadOffset' must be an integer; got: '" + sReadOffset + "'");
+				}
+				if (this->readOffset < 0 || this->readOffset > 63)
+					throw Poco::InvalidArgumentException(this->pid + ": Value for 'ReadOffset' must be in range 0...63; got: '" + sReadOffset + "'");
+
+				this->inputExpression = config->getString("InputExpression", "");
+				if (this->inputExpression.empty())
+					this->inputExpression = "$value";
+			}	// if (!sRead.empty())
+				
+			std::string sWrite = this->plugin->openhat->getConfigString(config, this->pid, "WriteCommand", "", false);
+			if (!sWrite.empty()) {
+				int iWrite = -1;
+				try {
+					iWrite = Poco::NumberParser::parse(sWrite);
+				}
+				catch (Poco::Exception& e) {
+					throw Poco::InvalidArgumentException(this->pid + ": Value for 'WriteCommand' must be an integer; got: '" + sWrite + "'");
+				}
+				if (iWrite < 0 || iWrite > 127)
+					throw Poco::InvalidArgumentException(this->pid + ": Value for 'WriteCommand' must be in range 0...127; got: '" + sWrite + "'");
+				this->writeCommand = iWrite;
+
+				this->writeParameters = this->plugin->openhat->getConfigString(config, this->pid, "WriteParameters", "", false);
+
+				std::string sWriteParameterFormat = this->plugin->openhat->getConfigString(config, this->pid, "WriteParameterFormat", "Hex", false);
+				this->writeParameterFormat = Arducom::parseFormat(sWriteParameterFormat, "WriteParameterFormat");
+
+				std::string sWriteParameterSeparator = this->plugin->openhat->getConfigString(config, this->pid, "WriteParameterSeparator", std::string(1, ARDUCOM_DEFAULT_SEPARATOR), false);
+				if (sWriteParameterSeparator.empty() || sWriteParameterSeparator.size() > 1) {
+					throw Poco::InvalidArgumentException(this->pid + ": WriteParameterSeparator must be a non-space string of length 1");
+				}
+				this->writeParameterSeparator = sWriteParameterSeparator[0];
+
+				std::string sWriteType = this->plugin->openhat->getConfigString(config, this->pid, "WriteType", "", true);
+				this->writeType = Arducom::parseFormat(sWriteType, "WriteType");
+				switch (this->writeType) {
+				case Arducom::FMT_BYTE:  break;
+				case Arducom::FMT_INT16: break;
+				case Arducom::FMT_INT32: break;
+				case Arducom::FMT_INT64: break;
+				case Arducom::FMT_FLOAT: break;
+				default:
+					throw Poco::InvalidArgumentException(this->pid + ": WriteType must be one of: Byte, Int16, Int32, Int64, Float");
+				}
+
+				this->outputExpression = config->getString("OutputExpression", "");
+				if (this->outputExpression.empty())
+					this->outputExpression = "$value";
+			}	// if (!sWrite.empty())
+
+			this->expr = new openhat::ExpressionPort(this->plugin->openhat, (this->pid + "_inputExpr").c_str());
+		};
+
+		std::size_t replace_all(std::string& inout, std::string what, std::string with)
+		{
+			std::size_t count{};
+			for (std::string::size_type pos{};
+				inout.npos != (pos = inout.find(what.data(), pos, what.length()));
+				pos += with.length(), ++count) {
+				inout.replace(pos, what.length(), with.data(), with.length());
+			}
+			return count;
+		}
+
+		std::string get_what(const std::exception& e) {
+			std::stringstream ss;
+			ss << e.what();
 			try {
-				// pattern specified?
-				if (pattern != "") {
-					Poco::RegularExpression re(pattern);
-					if (!re.match(newValue)) {
-						myPort->plugin->openhat->logDebug(myPort->ID() + 
-							": Event value '" + newValue + "', did not match the pattern '" + pattern + "'", myPort->logVerbosity);
+				std::rethrow_if_nested(e);
+			}
+			catch (const std::exception& nested) {
+				ss << ": ";
+				ss << get_what(nested);
+			}
+			return ss.str();
+		}
+
+		int64_t getResult(uint8_t command, uint8_t* buffer, uint8_t size, std::string& expression) {
+			// result data must contain at least (readOffset + readLength) bytes
+			if (size < (this->readOffset + this->readLength))
+				throw Poco::Exception(this->pid + ": The result of Arducom command " + this->plugin->openhat->to_string((int)command)
+					+ " did not contain the minimum number of expected bytes (" + this->plugin->openhat->to_string((this->readOffset + this->readLength))
+					+ ") but only " + this->plugin->openhat->to_string((int)size) + " byte(s)");
+
+			this->plugin->openhat->logDebug(this->pid + ": Evaluating result of command "
+				+ this->plugin->openhat->to_string((int)command) + "; payload size: " + this->plugin->openhat->to_string((int)size), this->logVerbosity);
+
+			// convert the result into a string for expression evaluation
+			std::string value;
+			switch (this->readType) {
+			case Arducom::FMT_BYTE: { uint8_t b = *((uint8_t*)buffer); value = this->plugin->openhat->to_string((int)b); break; }
+			case Arducom::FMT_INT16: { int16_t s = *((uint16_t*)buffer); value = this->plugin->openhat->to_string(s); break; }
+			case Arducom::FMT_INT32: { int32_t i = *((uint32_t*)buffer); value = this->plugin->openhat->to_string(i); break; }
+			case Arducom::FMT_INT64: { int64_t l = *((uint64_t*)buffer); value = this->plugin->openhat->to_string(l); break; }
+			case Arducom::FMT_FLOAT: { float f = *((float*)buffer); value = this->plugin->openhat->to_string(f); break; }
+			default:
+				throw Poco::InvalidArgumentException(this->pid + ": ReadType must be one of: Byte, Int16, Int32, Int64, Float");
+			}
+
+			// replace $value in expression with received value or use the value as it is as a fallback
+			std::string valueExpression(expression);
+			if (replace_all(valueExpression, "$value", value) == 0)
+				valueExpression = value;
+
+			this->expr->expressionStr = valueExpression;
+			this->expr->prepare();
+			double dResult = this->expr->apply();
+
+			return (int64_t)dResult;
+		}
+
+		int64_t executeRead() {
+			std::vector<uint8_t> payload;
+			uint8_t size;
+			uint8_t destBuffer[ARDUCOM_BUFFERSIZE];
+			uint8_t errorInfo;
+
+			if (!this->readParameters.empty())
+				Arducom::parsePayload(this->readParameters, this->readParameterFormat, this->readParameterSeparator, payload);
+
+			size = payload.size();
+
+			this->plugin->openhat->logDebug(this->pid + ": executeRead with command "
+				+ this->plugin->openhat->to_string((int)this->readCommand) + "; payload size: " + this->plugin->openhat->to_string((int)size), this->logVerbosity);
+
+			this->plugin->arducom->execute(this->plugin->parameters, this->readCommand, payload.data(), &size,
+				this->plugin->transport->getDefaultExpectedBytes(), destBuffer, &errorInfo);
+
+			return getResult(this->readCommand, destBuffer, size, this->inputExpression);
+		}
+
+		void checkRefresh() {
+			// time for refresh?
+			if ((this->queryInterval > 0) && (opdi_get_time_ms() - this->lastQueryTime > this->queryInterval * 1000)) {
+				this->plugin->queue.enqueueNotification(new ActionNotification(ActionNotification::READ, this));
+				this->lastQueryTime = opdi_get_time_ms();
+			}
+		}
+
+		// called asynchronously by notification handler thread
+		virtual void read() {
+			Poco::Mutex::ScopedLock lock(this->mutex);
+			this->lastQueryTime = opdi_get_time_ms();
+			this->mutex.unlock();
+
+			try {
+				std::string value = this->plugin->openhat->to_string(this->executeRead());
+
+				Poco::Mutex::ScopedLock lock(this->mutex);
+				this->newValue = value;
+				this->valueSet = true;
+			}
+			catch (Poco::Exception& e) {
+				this->plugin->openhat->logWarning(this->pid + ": executeRead: " + e.message());
+			}
+			catch (std::exception& e) {
+				this->plugin->openhat->logWarning(this->pid + ": executeRead: " + this->get_what(e));
+			}
+		};
+
+		virtual int64_t getValueToWrite() = 0;
+
+		int64_t executeWrite(double value) {
+			std::vector<uint8_t> payload;
+			uint8_t size;
+			uint8_t destBuffer[ARDUCOM_BUFFERSIZE];
+			uint8_t errorInfo;
+
+			if (!this->writeParameters.empty())
+				Arducom::parsePayload(this->writeParameters, this->writeParameterFormat, this->writeParameterSeparator, payload);
+
+			// append the bytes of the value using the provided writeFormat
+			switch (this->writeType) {
+			case Arducom::FMT_BYTE: {
+				if (value < 0 || value > 255)
+					throw Poco::InvalidArgumentException("Write value out of range for type 'Byte': " + this->plugin->openhat->to_string(value));
+				uint8_t b = (uint8_t)value;
+				payload.push_back(b); 
+				break;
+			}
+			case Arducom::FMT_INT16: {
+				if (value < INT16_MIN || value > INT16_MAX)
+					throw Poco::InvalidArgumentException("Write value out of range for type 'Int16': " + this->plugin->openhat->to_string(value));
+				int16_t s = (uint16_t)value;
+				payload.push_back(s); payload.push_back(s >> 8);
+				break;
+			}
+			case Arducom::FMT_INT32: {
+				if (value < INT32_MIN || value > INT32_MAX)
+					throw Poco::InvalidArgumentException("Write value out of range for type 'Int32': " + this->plugin->openhat->to_string(value));
+				int32_t i = (uint32_t)value;
+				payload.push_back(i); payload.push_back(i >> 8);
+				payload.push_back(i >> 16); payload.push_back(i >> 24);
+				break;
+			}
+			case Arducom::FMT_INT64: {
+				if (value < INT64_MIN || value > INT64_MAX)
+					throw Poco::InvalidArgumentException("Write value out of range for type 'Int64': " + this->plugin->openhat->to_string(value));
+				int64_t l = (uint64_t)value;
+				payload.push_back(l); payload.push_back(l >> 8);
+				payload.push_back(l >> 16); payload.push_back(l >> 24);
+				payload.push_back(l >> 32); payload.push_back(l >> 40); 
+				payload.push_back(l >> 48); payload.push_back(l >> 56);
+				break;
+			}
+			case Arducom::FMT_FLOAT: {
+				if (value < std::numeric_limits<float>::min() || value > std::numeric_limits<float>::max())
+					throw Poco::InvalidArgumentException("Write value out of range for type 'Float': " + this->plugin->openhat->to_string(value));
+				float f = (float)value;
+				uint8_t* buf = ((uint8_t*)&f);
+				payload.push_back(buf[0]); payload.push_back(buf[1]);
+				payload.push_back(buf[2]); payload.push_back(buf[3]);
+				break;
+			}
+			default:
+				throw Poco::InvalidArgumentException(this->pid + ": WriteType must be one of: Byte, Int16, Int32, Int64, Float");
+			}
+
+			size = payload.size();
+
+			this->plugin->openhat->logDebug(this->pid + ": executeWrite with command "
+				+ this->plugin->openhat->to_string((int)this->writeCommand) + "; payload size: " + this->plugin->openhat->to_string((int)size), this->logVerbosity);
+
+			this->plugin->arducom->execute(this->plugin->parameters, this->writeCommand, payload.data(), &size,
+				this->plugin->transport->getDefaultExpectedBytes(), destBuffer, &errorInfo);
+
+			if (this->writeReturnsValue)
+				return getResult(this->writeCommand, destBuffer, size, this->inputExpression);
+			else
+				return 0;
+		}
+
+		// called asynchronously by notification handler thread
+		virtual void write() {
+			Poco::Mutex::ScopedLock lock(this->mutex);
+
+			std::string value = this->plugin->openhat->to_string(this->getValueToWrite());
+			this->mutex.unlock();
+
+			// replace $value in expression with received value or use the value as it is as a fallback
+			std::string valueExpression(this->outputExpression);
+			if (replace_all(valueExpression, "$value", value) == 0)
+				valueExpression = value;
+
+			this->expr->expressionStr = valueExpression;
+			this->expr->prepare();
+			double dResult = this->expr->apply();
+			try {
+				int64_t result = this->executeWrite(dResult);
+				if (this->writeReturnsValue) {
+					// use returned value
+					std::string value = this->plugin->openhat->to_string(result);
+
+					Poco::Mutex::ScopedLock lock(this->mutex);
+					this->newValue = value;
+					this->valueSet = true;
+					this->lastQueryTime = opdi_get_time_ms();
+				}
+				else {
+					// immediately queue a read notification to reflect the changed value
+					this->plugin->queue.enqueueNotification(new ActionNotification(ActionNotification::READ, this));
+				}
+			}
+			catch (Poco::Exception& e) {
+				this->plugin->openhat->logWarning(this->pid + ": executeWrite: " + e.message());
+				// immediately queue a read notification to read a valid value
+				this->plugin->queue.enqueueNotification(new ActionNotification(ActionNotification::READ, this));
+			}
+			catch (std::exception& e) {
+				this->plugin->openhat->logWarning(this->pid + ": executeWrite: " + this->get_what(e));
+				// immediately queue a read notification to read a valid value
+				this->plugin->queue.enqueueNotification(new ActionNotification(ActionNotification::READ, this));
+			}
+		}
+	};
+
+	class DigitalPort : public ArducomPort, public opdi::DigitalPort {
+	protected:
+		std::string inputValueLow;
+		std::string inputValueHigh;
+		std::string outputValueLow;
+		std::string outputValueHigh;
+
+	public:
+		DigitalPort(ArducomPlugin* plugin, const std::string& id, opdi::LogVerbosity logVerbosity) : ArducomPort(plugin, id, logVerbosity), 
+			opdi::DigitalPort(id.c_str()) {
+			this->mode = OPDI_DIGITAL_MODE_OUTPUT;
+		}
+
+		virtual void configure(openhat::ConfigurationView::Ptr config) {
+			this->plugin->openhat->configureDigitalPort(config, this, false);
+
+			ArducomPort::configure(config);
+
+			// if there is no write command the port is input-only and readonly
+			if (this->writeCommand < 0) {
+				this->setDirCaps(OPDI_PORTDIRCAP_INPUT); // sets mode automatically
+				setReadonly(true);
+			}
+
+			this->inputValueLow = config->getString("InputValueLow");
+			this->inputValueHigh = config->getString("InputValueHigh");
+			this->outputValueLow = config->getString("OutputValueLow", "");
+			this->outputValueHigh = config->getString("OutputValueHigh", "");
+		};
+
+		virtual uint8_t doWork(uint8_t canSend) override {
+			opdi::DigitalPort::doWork(canSend);
+
+			Poco::Mutex::ScopedLock lock(this->mutex);
+
+			// value received?
+			if (this->valueSet) {
+				this->plugin->openhat->logDebug(this->pid + ": Value received: '" + this->newValue + "'", opdi::DigitalPort::logVerbosity);
+
+				try {
+					// compare received value
+					if (this->newValue == this->inputValueLow) {
+						opdi::DigitalPort::setLine(OPDI_DIGITAL_LINE_LOW);
+					}
+					else
+					if (this->newValue == this->inputValueHigh) {
+						opdi::DigitalPort::setLine(OPDI_DIGITAL_LINE_HIGH);
+					}
+					else {
+						this->plugin->openhat->logWarning(this->pid + ": Received unspecified value for digital port: " + this->newValue);
+						this->setError(opdi::Port::Error::VALUE_NOT_AVAILABLE);
+					}
+				}
+				catch (std::exception& e) {
+					this->plugin->openhat->logError(this->pid + ": Error setting DigitalPort line: " + get_what(e));
+				}
+				this->valueSet = false;
+			}
+
+			this->checkRefresh();
+
+			return OPDI_STATUS_OK;
+		};
+
+		virtual bool setLine(uint8_t line, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT) override {
+			if (!opdi::DigitalPort::setLine(line, changeSource))
+				return false;
+
+			this->plugin->queue.enqueueNotification(new ActionNotification(ActionNotification::WRITE, this));
+
+			return true;
+		};
+
+		virtual int64_t getValueToWrite() override {
+			this->checkError();
+
+			return this->line;
+		};
+	};
+
+	class DialPort : public ArducomPort, public opdi::DialPort {
+	public:
+		DialPort(ArducomPlugin* plugin, const std::string& id, opdi::LogVerbosity logVerbosity) : ArducomPort(plugin, id, logVerbosity), 
+			opdi::DialPort(id.c_str(), -999999999999, 999999999999, 1) {
+		}
+
+		virtual void configure(openhat::ConfigurationView::Ptr config) override {
+			this->plugin->openhat->configureDialPort(config, this, false);
+
+			ArducomPort::configure(config);
+
+			// if there is no write command the port is input-only and readonly
+			if (this->writeCommand < 0) {
+				this->setDirCaps(OPDI_PORTDIRCAP_INPUT); // sets mode automatically
+				setReadonly(true);
+			}
+		}
+
+		virtual uint8_t doWork(uint8_t canSend) override {
+			opdi::DialPort::doWork(canSend);
+
+			Poco::Mutex::ScopedLock lock(this->mutex);
+
+			// value received?
+			if (this->valueSet) {
+				this->plugin->openhat->logDebug(this->pid + ": Value received: '" + this->newValue + "'", opdi::DialPort::logVerbosity);
+
+				try {
+					if (!this->newValue.empty()) {
+						int64_t pos = Poco::NumberParser::parse(this->newValue);
+						opdi::DialPort::setPosition(pos);
+					}
+					else {
+						this->plugin->openhat->logWarning(this->pid + ": Missing value for dial port");
+						this->setError(opdi::Port::Error::VALUE_NOT_AVAILABLE);
+					}
+				}
+				catch (std::exception& e) {
+					this->plugin->openhat->logError(this->pid + ": Error setting DialPort line: " + e.what());
+				}
+				this->valueSet = false;
+			}
+
+			this->checkRefresh();
+
+			return OPDI_STATUS_OK;
+		};
+
+		virtual bool setPosition(int64_t position, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT) override {
+			if (!opdi::DialPort::setPosition(position, changeSource))
+				return false;
+
+			this->plugin->queue.enqueueNotification(new ActionNotification(ActionNotification::WRITE, this));
+
+			return true;
+		};
+
+		virtual int64_t getValueToWrite() override {
+			this->checkError();
+
+			return this->position;
+		};
+	};
+
+	class SelectPort : public ArducomPort, public opdi::SelectPort {
+	protected:
+		std::string inputMap;
+		std::vector<std::string> inputValues;
+		std::string outputMap;
+		std::vector<std::string> outputValues;
+
+		void tokenize(std::string const& str, const char delim,
+			std::vector<std::string>& out)
+		{
+			size_t start;
+			size_t end = 0;
+
+			while ((start = str.find_first_not_of(delim, end)) != std::string::npos) {
+				end = str.find(delim, start);
+				out.push_back(str.substr(start, end - start));
+			}
+		};
+
+	public:
+		SelectPort(ArducomPlugin* plugin, const std::string& id, opdi::LogVerbosity logVerbosity) : ArducomPort(plugin, id, logVerbosity), 
+			opdi::SelectPort(id.c_str()) {
+		};
+
+		virtual void configure(openhat::ConfigurationView::Ptr config, openhat::ConfigurationView::Ptr parentConfig) {
+			this->plugin->openhat->configureSelectPort(config, parentConfig, this, false);
+
+			ArducomPort::configure(config);
+
+			// if there is no write command the port is input-only and readonly
+			if (this->writeCommand < 0) {
+				this->setDirCaps(OPDI_PORTDIRCAP_INPUT); // sets mode automatically
+				setReadonly(true);
+			}
+
+			this->inputMap = this->plugin->openhat->getConfigString(config, this->ID(), "InputMap", "", false);
+			this->tokenize(this->inputMap, '|', this->inputValues);
+
+			this->outputMap = this->plugin->openhat->getConfigString(config, this->ID(), "OutputMap", "", false);
+			this->tokenize(this->outputMap, '|', this->outputValues);
+		};
+
+		virtual uint8_t doWork(uint8_t canSend) override {
+			opdi::SelectPort::doWork(canSend);
+
+			Poco::Mutex::ScopedLock lock(this->mutex);
+
+			if (this->valueSet) {
+				this->plugin->openhat->logDebug(this->pid + ": Value received: '" + this->newValue + "'", opdi::SelectPort::logVerbosity);
+
+				this->valueSet = false;
+
+				if (this->newValue.empty()) {
+					this->plugin->openhat->logWarning(this->pid + ": Received value is empty");
+					// set to error state
+					this->setError(Error::VALUE_NOT_AVAILABLE);
+					return OPDI_STATUS_OK;
+				}
+
+				uint16_t position;
+
+				// input map specified?
+				if (this->inputValues.size() > 0) {
+					// locate input string in input map
+					auto it = std::find(this->inputValues.begin(), this->inputValues.end(), this->newValue);
+
+					// element not found
+					if (it == this->inputValues.end()) {
+						this->plugin->openhat->logWarning(this->pid + ": Received value not in InputMap: '" + this->newValue + "'");
+						// set to error state
+						this->setError(Error::VALUE_NOT_AVAILABLE);
 						return OPDI_STATUS_OK;
 					}
-					// perform substitution
-					re.subst(newValue, value);
-				} else
-					// use specified value directly
-					newValue = value;
-				
-				exprPort.expressionStr = newValue;
-				exprPort.prepare();
-				exprPort.apply();
 
-			} catch (const Poco::Exception& e) {
-				myPort->plugin->openhat->logError(myPort->ID() + ": Error processing event value '" + value + "', evaluated to '" + newValue + "': " + e.message());
+					int index = it - this->inputValues.begin();
+					if (index > this->getMaxPosition()) {
+						this->plugin->openhat->logWarning(this->pid + ": Received value index in InputMap exceeds maximum position " + this->plugin->openhat->to_string(this->getMaxPosition()) + ": '" + this->newValue + "'");
+						// set to error state
+						this->setError(Error::VALUE_NOT_AVAILABLE);
+						return OPDI_STATUS_OK;
+					}
+					position = index;
+				}
+				else {
+					// no input map specified, use the input value to match orderID of label to select the position
+					int orderID;
+					try {
+						orderID = Poco::NumberParser::parse(this->newValue);
+					}
+					catch (Poco::Exception& e) {
+						this->plugin->openhat->logWarning(this->pid + ": Received value must be an integer; got: '" + this->newValue + "'");
+						// set to error state
+						this->setError(Error::VALUE_NOT_AVAILABLE);
+						return OPDI_STATUS_OK;
+					}
+
+					try {
+						position = this->getPositionByLabelOrderID(orderID);
+					}
+					catch (Poco::Exception& e) {
+						this->plugin->openhat->logWarning(this->pid + ": Unable to find the specified position: " + this->plugin->openhat->getExceptionMessage(e));
+						// set to error state
+						this->setError(Error::VALUE_NOT_AVAILABLE);
+						return OPDI_STATUS_OK;
+					}
+				}
+
+				try {
+					// use base method to avoid triggering an action!
+					opdi::SelectPort::setPosition(position);
+				}
+				catch (std::exception& e) {
+					this->plugin->openhat->logError(this->pid + ": Error setting SelectPort position: " + get_what(e));
+				}
 			}
+
+			this->checkRefresh();
+
 			return OPDI_STATUS_OK;
-		}
+		};
+
+		virtual bool setPosition(uint16_t value, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT) override {
+			if (!opdi::SelectPort::setPosition(value, changeSource))
+				return false;
+
+			this->plugin->queue.enqueueNotification(new ActionNotification(ActionNotification::WRITE, this));
+
+			return true;
+		};
+
+		virtual int64_t getValueToWrite() override {
+			this->checkError();
+
+			// output map specified?
+			if (this->outputValues.size() > 0) {
+				if (this->outputValues.size() < this->position + 1)
+					throw Poco::Exception("Not enough values in output map (position: " + this->plugin->openhat->to_string(this->position));
+
+				std::string sValue = this->outputValues[this->position];
+
+				return Poco::NumberParser::parse64(sValue);
+			}
+			else {
+				// no output map; use orderID of selected label
+				return this->orderedLabels.at(this->position).get<0>();
+			}
+		};
 	};
-	
-	std::vector<Output*> outputs;
-	
-	std::string value;
-
-public:
-	EventPort(ArducomPlugin* plugin, const std::string& id, const std::string& topic);
-	
-	virtual void subscribe(mqtt::async_client *client) override;
-	
-	virtual void query(mqtt::async_client *client) override;
-	
-	virtual void handle_payload(std::string payload) override;
-
-	virtual uint8_t doWork(uint8_t canSend) override;
-	
-	virtual void configure(openhat::ConfigurationView::Ptr config);
-
-	virtual void prepare() override;
-};
-
-
-class HG06337Switch : public opdi::DigitalPort, public ArducomPort {
-	friend class ArducomPlugin;
-protected:
-	int8_t switchState;
-	int8_t initialLine;
-	virtual void setSwitchState(int8_t line);
-
-public:
-	HG06337Switch(ArducomPlugin* plugin, const std::string& id, const std::string& topic);
-	
-	virtual void subscribe(mqtt::async_client *client) override;
-	
-	virtual void query(mqtt::async_client *client) override;
-	
-	virtual void handle_payload(std::string payload) override;
-
-	virtual void setLine(uint8_t line, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
-
-	virtual uint8_t doWork(uint8_t canSend) override;
-};
-
-
-class TasmotaSwitch : public opdi::DigitalPort, public ArducomPort {
-	friend class ArducomPlugin;
-protected:
-        std::string deviceID;
-	int8_t switchState;
-	int8_t initialLine;
-	virtual void setSwitchState(int8_t line);
-
-public:
-	TasmotaSwitch(ArducomPlugin* plugin, const std::string& id, const std::string& deviceID);
-	
-	virtual void subscribe(mqtt::async_client *client) override;
-	
-	virtual void query(mqtt::async_client *client) override;
-	
-	virtual void handle_payload(std::string payload) override;
-
-	virtual void setLine(uint8_t line, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
-
-	virtual uint8_t doWork(uint8_t canSend) override;
-};
-
-class TasmotaPower : public opdi::DialPort, public ArducomPort {
-	friend class ArducomPlugin;
-protected:
-        std::string deviceID;
-	int64_t newValue;
-	virtual void setValue(int64_t value);
-
-public:
-	TasmotaPower(ArducomPlugin* plugin, const std::string& id, const std::string& deviceID);
-	
-	virtual void subscribe(mqtt::async_client *client) override;
-	
-	virtual void query(mqtt::async_client *client) override;
-	
-	virtual void handle_payload(std::string payload) override;
-
-	virtual uint8_t doWork(uint8_t canSend) override;
-};
-*/
-
-}	// end anonymous namespace
-
-void ArducomPort::query(ArducomMaster* arducom) {
-//	arducom->execute()
-}
-
 /*
-GenericPort::GenericPort(ArducomPlugin* plugin, const std::string& id, const std::string& topic) :
-	opdi::CustomPort(id, OPDI_CUSTOM_PORT_TYPEGUID), ArducomPort(plugin, id, topic) {
-	this->myValue = "";
-	this->valueSet = false;
-}
-
-void GenericPort::query(mqtt::async_client *client) {
-	this->plugin->openhat->logDebug(this->pid + ": Querying state", this->logVerbosity);
-	if (client->is_connected())
-		try {
-			client->publish(this->topic + "/get", "{\"state\":\"\"}");
-		}  catch (mqtt::exception& ex) {
-			this->plugin->openhat->logError(std::string(this->getID()) + ": Error querying state: " + this->topic + ": " + ex.what());
-		}
-	}
-
-void GenericPort::handle_payload(std::string payload) {
-	this->plugin->openhat->logDebug(this->pid + ": Payload received: '" + payload + "'");
-
-	Poco::Mutex::ScopedLock lock(this->mutex);
-	this->myValue = payload;
-	this->valueSet = true;
-
-	// reset query timer
-	this->lastQueryTime = opdi_get_time_ms();
-	// reset timeout counter
-	this->timeoutCounter = opdi_get_time_ms();
-}
-
-uint8_t GenericPort::doWork(uint8_t canSend) {
-	opdi::CustomPort::doWork(canSend);
-	
-	this->logExtreme("Value: " + this->value);
-	
-	// time for refresh?
-	if ((this->queryInterval > 0) && (opdi_get_time_ms() - this->lastQueryTime > this->queryInterval * 1000)) {
-		this->plugin->queue.enqueueNotification(new ActionNotification(ActionNotification::QUERY, this));
-		this->lastQueryTime = opdi_get_time_ms();
-	}
-	
-	Poco::Mutex::ScopedLock lock(this->mutex);
-	// no error?
-	if (this->myValue != "") {
-		// error timeout reached without message?
-		if ((opdi_get_time_ms() - this->timeoutCounter) / 1000 > this->timeoutSeconds) {
-			// change to error state
-			this->myValue = "";
-			this->setError(Error::VALUE_NOT_AVAILABLE);
-		}
-	}
-
-	// has a value been returned?
-	if (this->valueSet) {
-		// empty values signify an error
-		if (this->myValue != "")
-			// use base method to avoid triggering an action!
-			opdi::CustomPort::setValue(this->myValue);
-		else
-			this->setError(Error::VALUE_NOT_AVAILABLE);
-		this->valueSet = false;
-	}
-
-	return OPDI_STATUS_OK;
-}
-
-void GenericPort::setValue(const std::string& newValue, ChangeSource changeSource) {
-	// opdi::CustomPort::setValue(newValue, changeSource);
-	
-	try {
-		if (this->plugin->client != nullptr && this->plugin->client->is_connected()) {
-			this->plugin->client->publish(this->topic + "/set", newValue);
-			this->plugin->openhat->logDebug(std::string(this->getID()) + ": Published value to: " + this->topic + ": " + newValue);
-		}
-	}  catch (mqtt::exception& ex) {
-		this->plugin->openhat->logError(std::string(this->getID()) + ": Error publishing state: " + this->topic + ": " + ex.what());
-	}
-}
-
-void GenericPort::configure(Poco::Util::AbstractConfiguration::Ptr config) {
-	CustomPort::configure(config);
-	this->initialValue = config->getString("Value", "");
-}
-
-
-EventPort::EventPort(ArducomPlugin* plugin, const std::string& id, const std::string& topic) : 
-	opdi::DigitalPort(id.c_str(), OPDI_PORTDIRCAP_OUTPUT, 0), ArducomPort(plugin, id, topic) {
-	// events are enabled by default
-	this->line = 1;
-	this->mode = OPDI_DIGITAL_MODE_OUTPUT;
-}
-
-void EventPort::subscribe(mqtt::async_client *client) {
-	if (client->is_connected())
-		try {
-			this->plugin->openhat->logDebug(std::string(this->getID()) + ": Subscribing to topic: " + this->topic, this->logVerbosity);
-			client->subscribe(this->topic, this->plugin->QOS, nullptr, this->listener);
-		}  catch (mqtt::exception& ex) {
-			this->plugin->openhat->logError(std::string(this->getID()) + ": Error subscribing to topic " + this->topic + ": " + ex.what());
-		}
-}
-
-void EventPort::query(mqtt::async_client *client) {
-}
-
-void EventPort::handle_payload(std::string payload) {
-	this->plugin->openhat->logDebug(this->pid + ": Payload received: '" + payload + "'", this->logVerbosity);
-	
-	Poco::Mutex::ScopedLock lock(this->mutex);
-	this->value = payload;
-	this->valueSet = true;
-}
-
-uint8_t EventPort::doWork(uint8_t canSend) {
-	opdi::DigitalPort::doWork(canSend);
-
-	// must be active to react to events
-	if (this->getLine() != 1) {
-		this->valueSet = false;
-		return OPDI_STATUS_OK;
-	}
-	
-	// value received?
-	if (this->valueSet) {
-		// go through outputs, let them process the value
-		auto it = this->outputs.begin();
-		auto ite = this->outputs.end();
-		while (it != ite) {
-			uint8_t result = (*it)->process(this, this->value);
-			if (result != OPDI_STATUS_OK)
-				return result;
-			++it;
-		}
-		
-		this->valueSet = false;
-	}
-	
-	return OPDI_STATUS_OK;
-}
-
-void EventPort::configure(openhat::ConfigurationView::Ptr config) {
-	this->plugin->openhat->configureDigitalPort(config, this, false);
-	// enumerate outputs (in specified order)
-	this->plugin->openhat->logVerbose(this->ID() + ": Enumerating EventPort outputs: " + this->ID() + ".Outputs", this->logVerbosity);
-
-	Poco::AutoPtr<openhat::ConfigurationView> nodes = this->plugin->openhat->createConfigView(config, "Outputs");
-	config->addUsedKey("Outputs");
-
-	// get ordered list of outputs
-	openhat::ConfigurationView::Keys outputKeys;
-	nodes->keys("", outputKeys);
-
-	typedef Poco::Tuple<int, std::string> Item;
-	typedef std::vector<Item> ItemList;
-	ItemList orderedItems;
-
-	// create ordered list of port keys (by priority)
-	for (auto it = outputKeys.begin(), ite = outputKeys.end(); it != ite; ++it) {
-
-		int itemNumber = nodes->getInt(*it, 0);
-		// check whether the item is active
-		if (itemNumber < 0)
-			continue;
-
-		// insert at the correct position to create a sorted list of items
-		auto nli = orderedItems.begin();
-		auto nlie = orderedItems.end();
-		while (nli != nlie) {
-			if (nli->get<0>() > itemNumber)
-				break;
-			++nli;
-		}
-		Item item(itemNumber, *it);
-		orderedItems.insert(nli, item);
-	}
-
-	if (orderedItems.size() == 0) {
-		this->plugin->openhat->logWarning("No outputs configured in " + this->ID() + ".Outputs; is this intended?");
-	}
-
-	// go through items, create outputs in specified order
-	auto nli = orderedItems.begin();
-	auto nlie = orderedItems.end();
-	while (nli != nlie) {
-		std::string outputName = nli->get<1>();
-
-		this->plugin->openhat->logVerbose(this->ID() + ": Setting up EventPort output: " + outputName, this->logVerbosity);
-
-		// get device section from the configuration>
-		Poco::AutoPtr<openhat::ConfigurationView> outputConfig = this->plugin->openhat->createConfigView(config, outputName);
-
-		Output* output = new Output(this->plugin->openhat, outputName);
-		// get output ports (required)
-		output->outputPortStr = this->plugin->openhat->getConfigString(outputConfig, outputName, "Ports", "", true);
-		output->pattern = this->plugin->openhat->getConfigString(outputConfig, outputName, "Pattern", "", false);
-		output->value =  this->plugin->openhat->getConfigString(outputConfig, outputName, "Value", "", false);
-
-		// test pattern if specified
-		if (output->pattern != "") {
-			Poco::RegularExpression re(output->pattern);
-		}
-		
-		this->outputs.push_back(output);
-		
-		++nli;
-	}
-}
-
-void EventPort::prepare() {
-	// go through outputs, resolve ports
-	auto it = this->outputs.begin();
-	auto ite = this->outputs.end();
-	while (it != ite) {
-		// will be mapped to ports in exprPort.prepare() when the value arrives
-		(*it)->exprPort.outputPortStr = (*it)->outputPortStr;
-//		this->plugin->openhat->findPorts((*it)->name, "Ports", (*it)->outputPortStr, (*it)->exprPort.outputPorts);
-		++it;
-	}
-}
-
-HG06337Switch::HG06337Switch(ArducomPlugin* plugin, const std::string& id, const std::string& topic) : 
-	opdi::DigitalPort(id.c_str(), OPDI_PORTDIRCAP_OUTPUT, 0), ArducomPort(plugin, id, topic) {
-	this->switchState = -1;	// unknown
-	this->valueSet = true;		// causes setError in doWork
-	this->initialLine = -1;
-	
-	this->mode = OPDI_DIGITAL_MODE_OUTPUT;
-	this->setIcon("powersocket");
-}
-
-void HG06337Switch::subscribe(mqtt::async_client *client) {
-	if (client->is_connected())
-		try {
-			this->plugin->openhat->logDebug(std::string(this->getID()) + ": Subscribing to topic: " + this->topic, this->logVerbosity);
-			client->subscribe(this->topic, this->plugin->QOS, nullptr, this->listener);
-			
-			if (this->initialLine > -1) {
-				this->setLine(this->initialLine);
-				this->initialLine = -1;
-			}
-		}  catch (mqtt::exception& ex) {
-			this->plugin->openhat->logError(std::string(this->getID()) + ": Error subscribing to topic " + this->topic + ": " + ex.what());
-		}
-}
-
-void HG06337Switch::query(mqtt::async_client *client) {
-	this->plugin->openhat->logDebug(this->pid + ": Querying state", this->logVerbosity);
-	if (client->is_connected())
-		try {
-			client->publish(this->topic + "/get", "{\"state\":\"\"}");
-		}  catch (mqtt::exception& ex) {
-			this->plugin->openhat->logError(std::string(this->getID()) + ": Error querying state: " + this->topic + ": " + ex.what());
-		}
-	}
-
-void HG06337Switch::handle_payload(std::string payload) {
-	this->plugin->openhat->logDebug(this->pid + ": Payload received: '" + payload + "'");
-	if (payload.find("\"state\":\"OFF\"") != std::string::npos) {
-		this->setSwitchState(0);
-		this->valueSet = true;
-	} else
-	if (payload.find("\"state\":\"ON\"") != std::string::npos) {
-		this->setSwitchState(1);
-		this->valueSet = true;
-	} else {
-		// error
-		this->setSwitchState(-1);
-		this->valueSet = true;
-	}
-	// reset query timer
-	this->lastQueryTime = opdi_get_time_ms();
-	// reset timeout counter
-	this->timeoutCounter = opdi_get_time_ms();
-}
-
-uint8_t HG06337Switch::doWork(uint8_t canSend) {
-	opdi::DigitalPort::doWork(canSend);
-
-	// time for refresh?
-	if ((this->queryInterval > 0) && (opdi_get_time_ms() - this->lastQueryTime > this->queryInterval * 1000)) {
-		this->plugin->queue.enqueueNotification(new ActionNotification(ActionNotification::QUERY, this));
-		this->lastQueryTime = opdi_get_time_ms();
-	}
-	
-	Poco::Mutex::ScopedLock lock(this->mutex);
-	// no error?
-	if (this->switchState > -1) {
-		// error timeout reached without message?
-		if ((opdi_get_time_ms() - this->timeoutCounter) / 1000 > this->timeoutSeconds) {
-			// change to error state
-			this->switchState = -1;
-			this->setError(Error::VALUE_NOT_AVAILABLE);
-		}
-	}
-
-	// has a value been returned?
-	if (this->valueSet) {
-		// values < 0 signify an error
-		if (this->switchState > -1)
-			// use base method to avoid triggering an action!
-			opdi::DigitalPort::setLine(this->switchState);
-		else
-			this->setError(Error::VALUE_NOT_AVAILABLE);
-		this->valueSet = false;
-	}
-
-	return OPDI_STATUS_OK;
-}
-
-void HG06337Switch::setLine(uint8_t line, ChangeSource changeSource) {
-	// opdi::DigitalPort::setLine(line, changeSource);
-
-	if (this->plugin->client == nullptr)
-		return;
-	try {
-		std::string payload;
-		if (line == 0)
-			payload = "{\"state\":\"OFF\"}";
-		else
-		if (line == 1)
-			payload = "{\"state\":\"ON\"}";
-
-		if (payload != "") {
-			this->plugin->client->publish(this->topic + "/set", payload);
-			this->plugin->openhat->logDebug(std::string(this->getID()) + ": Published value to: " + this->topic + ": " + payload);
-		} else
-			this->plugin->openhat->logDebug(std::string(this->getID()) + ": No payload to publish, line is " + this->plugin->openhat->to_string(line));
-		
-	}  catch (mqtt::exception& ex) {
-		this->plugin->openhat->logError(std::string(this->getID()) + ": Error publishing state: " + this->topic + ": " + ex.what());
-	}
-}
-
-void HG06337Switch::setSwitchState(int8_t switchState) {
-	Poco::Mutex::ScopedLock lock(this->mutex);
-
-	this->switchState = switchState;
-	this->valueSet = true;
-}
-
-TasmotaSwitch::TasmotaSwitch(ArducomPlugin* plugin, const std::string& id, const std::string& deviceID) : 
-	opdi::DigitalPort(id.c_str(), OPDI_PORTDIRCAP_OUTPUT, 0), ArducomPort(plugin, id, std::string("stat/") + deviceID + "/POWER") {
-    this->deviceID = deviceID;
-    this->switchState = -1;	// unknown
-    this->valueSet = true;		// causes setError in doWork
-    this->initialLine = -1;
-	
-    this->mode = OPDI_DIGITAL_MODE_OUTPUT;
-    this->setIcon("powersocket");
-}
-
-void TasmotaSwitch::subscribe(mqtt::async_client *client) {
-	if (client->is_connected())
-		try {
-			this->plugin->openhat->logDebug(std::string(this->getID()) + ": Subscribing to topic: " + this->topic, this->logVerbosity);
-			client->subscribe(this->topic, this->plugin->QOS, nullptr, this->listener);
-			
-			if (this->initialLine > -1) {
-				this->setLine(this->initialLine);
-				this->initialLine = -1;
-			}
-		}  catch (mqtt::exception& ex) {
-			this->plugin->openhat->logError(std::string(this->getID()) + ": Error subscribing to topic " + this->topic + ": " + ex.what());
-		}
-}
-
-void TasmotaSwitch::query(mqtt::async_client *client) {
-	this->plugin->openhat->logDebug(this->pid + ": Querying state", this->logVerbosity);
-	if (client->is_connected())
-		try {
-			client->publish(std::string("cmnd/") + this->deviceID + "/power", std::string());
-		}  catch (mqtt::exception& ex) {
-			this->plugin->openhat->logError(std::string(this->getID()) + ": Error querying state: " + this->topic + ": " + ex.what());
-		}
-	}
-
-void TasmotaSwitch::handle_payload(std::string payload) {
-	this->plugin->openhat->logDebug(this->pid + ": Payload received: '" + payload + "'");
-	if (payload.find("OFF") != std::string::npos) {
-		this->setSwitchState(0);
-		this->valueSet = true;
-	} else
-	if (payload.find("ON") != std::string::npos) {
-		this->setSwitchState(1);
-		this->valueSet = true;
-	} else {
-		// error
-		this->setSwitchState(-1);
-		this->valueSet = true;
-	}
-	// reset query timer
-	this->lastQueryTime = opdi_get_time_ms();
-	// reset timeout counter
-	this->timeoutCounter = opdi_get_time_ms();
-}
-
-uint8_t TasmotaSwitch::doWork(uint8_t canSend) {
-	opdi::DigitalPort::doWork(canSend);
-
-	// time for refresh?
-	if ((this->queryInterval > 0) && (opdi_get_time_ms() - this->lastQueryTime > this->queryInterval * 1000)) {
-		this->plugin->queue.enqueueNotification(new ActionNotification(ActionNotification::QUERY, this));
-		this->lastQueryTime = opdi_get_time_ms();
-	}
-	
-	Poco::Mutex::ScopedLock lock(this->mutex);
-	// no error?
-	if (this->switchState > -1) {
-		// error timeout reached without message?
-		if ((opdi_get_time_ms() - this->timeoutCounter) / 1000 > this->timeoutSeconds) {
-			// change to error state
-			this->switchState = -1;
-			this->setError(Error::VALUE_NOT_AVAILABLE);
-		}
-	}
-
-	// has a value been returned?
-	if (this->valueSet) {
-		// values < 0 signify an error
-		if (this->switchState > -1)
-			// use base method to avoid triggering an action!
-			opdi::DigitalPort::setLine(this->switchState);
-		else
-			this->setError(Error::VALUE_NOT_AVAILABLE);
-		this->valueSet = false;
-	}
-
-	return OPDI_STATUS_OK;
-}
-
-void TasmotaSwitch::setLine(uint8_t line, ChangeSource changeSource) {
-	// opdi::DigitalPort::setLine(line, changeSource);
-
-	if (this->plugin->client == nullptr)
-		return;
-	try {
-		std::string payload;
-		if (line == 0)
-			payload = "OFF";
-		else
-		if (line == 1)
-			payload = "ON";
-
-		if (payload != "") {
-                    std::string topic = "cmnd/" + this->deviceID + "/power";
-                    this->plugin->client->publish(topic, payload);
-                    this->plugin->openhat->logDebug(std::string(this->getID()) + ": Published value to: " + topic + ": " + payload);
-		} else
-                    this->plugin->openhat->logDebug(std::string(this->getID()) + ": No payload to publish, line is " + this->plugin->openhat->to_string(line));
-		
-	}  catch (mqtt::exception& ex) {
-		this->plugin->openhat->logError(std::string(this->getID()) + ": Error publishing state: " + topic + ": " + ex.what());
-	}
-}
-
-void TasmotaSwitch::setSwitchState(int8_t switchState) {
-	Poco::Mutex::ScopedLock lock(this->mutex);
-
-	this->switchState = switchState;
-	this->valueSet = true;
-}
-
-
-TasmotaPower::TasmotaPower(ArducomPlugin* plugin, const std::string& id, const std::string& deviceID) : 
-	opdi::DialPort(id.c_str(), 0, 999999999999, 1), ArducomPort(plugin, id, std::string("stat/") + deviceID + "/STATUS8") {
-    this->deviceID = deviceID;
-    this->newValue = -1;
-    this->valueSet = true;		// causes setError in doWork
-	this->readonly = true;
-	
-    this->setIcon("energymeter");
-    this->setUnit("electricPower_mW");
-}
-
-void TasmotaPower::subscribe(mqtt::async_client *client) {
-    if (client->is_connected())
-        try {
-            this->plugin->openhat->logDebug(std::string(this->getID()) + ": Subscribing to topic: " + this->topic, this->logVerbosity);
-            client->subscribe(this->topic, this->plugin->QOS, nullptr, this->listener);
-        }  catch (mqtt::exception& ex) {
-                this->plugin->openhat->logError(std::string(this->getID()) + ": Error subscribing to topic " + this->topic + ": " + ex.what());
-        }
-}
-
-void TasmotaPower::query(mqtt::async_client *client) {
-    this->plugin->openhat->logDebug(this->pid + ": Querying state", this->logVerbosity);
-    if (client->is_connected())
-        try {
-            std::string topic = std::string("cmnd/") + this->deviceID + "/status";
-            client->publish(topic, std::string("8"));
-        }  catch (mqtt::exception& ex) {
-            this->plugin->openhat->logError(std::string(this->getID()) + ": Error querying state: " + topic + ": " + ex.what());
-        }
-}
-
-void TasmotaPower::handle_payload(std::string payload) {
-    this->plugin->openhat->logDebug(this->pid + ": Payload received: '" + payload + "'");
-
-    if (payload.empty()) {
-        this->setValue(-1);
-        return;
-    }
-
-    // parse result JSON
-    try {
-            Poco::JSON::Parser parser;
-            Poco::Dynamic::Var loParsedJson = parser.parse(payload);
-            Poco::Dynamic::Var jsonResult = parser.result();
-
-            Poco::JSON::Object::Ptr root = jsonResult.extract<Poco::JSON::Object::Ptr>();
-            Poco::JSON::Object::Ptr body = this->plugin->GetObject(root, "StatusSNS");
-            Poco::JSON::Object::Ptr data = this->plugin->GetObject(body, "ENERGY");
-            std::string value = this->plugin->GetString(data, "Power");
-            // parse value
-            int power = -1;
-            Poco::NumberParser::tryParse(value, power);
-            this->setValue(power * 1000);	// milliwatts
-    } catch (Poco::Exception &e) {
-            this->plugin->errorOccurred(this->ID() + ": Error parsing JSON: " + this->plugin->openhat->getExceptionMessage(e));
-            this->setValue(-1);
-    }
-
-    // reset query timer
-    this->lastQueryTime = opdi_get_time_ms();
-    // reset timeout counter
-    this->timeoutCounter = opdi_get_time_ms();
-}
-
-uint8_t TasmotaPower::doWork(uint8_t canSend) {
-    opdi::DialPort::doWork(canSend);
-
-    // time for refresh?
-    if ((this->queryInterval > 0) && (opdi_get_time_ms() - this->lastQueryTime > this->queryInterval * 1000)) {
-        this->plugin->queue.enqueueNotification(new ActionNotification(ActionNotification::QUERY, this));
-        this->lastQueryTime = opdi_get_time_ms();
-    }
-
-    Poco::Mutex::ScopedLock lock(this->mutex);
-    // no error?
-    if (this->newValue > -1) {
-        // error timeout reached without message?
-        if ((opdi_get_time_ms() - this->timeoutCounter) / 1000 > this->timeoutSeconds) {
-            // change to error state
-            this->newValue = -1;
-            this->setError(Error::VALUE_NOT_AVAILABLE);
-        }
-    }
-
-    // has a value been returned?
-    if (this->valueSet) {
-        // values < 0 signify an error
-        if (this->newValue > -1)
-                // use base method to avoid triggering an action!
-                opdi::DialPort::setPosition(this->newValue);
-        else
-                this->setError(Error::VALUE_NOT_AVAILABLE);
-        this->valueSet = false;
-    }
-
-    return OPDI_STATUS_OK;
-}
-
-void TasmotaPower::setValue(int64_t value) {
-	Poco::Mutex::ScopedLock lock(this->mutex);
-
-	this->newValue = value;
-	this->valueSet = true;
-}
-
-
+	class GenericPort : public opdi::CustomPort, public ArducomPort {
+		friend class ArducomPlugin;
+	protected:
+		std::string myValue;
+		std::string initialValue;
+	public:
+		GenericPort(ArducomPlugin* plugin, const std::string& id, const std::string& topic);
+
+		virtual uint8_t doWork(uint8_t canSend) override;
+
+		virtual void setValue(const std::string& value, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT) override;
+
+		virtual void configure(Poco::Util::AbstractConfiguration::Ptr config) override;
+	};
 */
+} // end of anonymous namespace
 
 ////////////////////////////////////////////////////////
 // Plugin implementation
@@ -916,6 +836,9 @@ void ArducomPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const
 
 	this->errorCount = 0;
 
+	// store main node's verbosity level (will become the default of ports)
+	this->logVerbosity = this->openhat->getConfigLogVerbosity(nodeConfig, this->openhat->getLogVerbosity());
+
 	// get Arducom connection details
 	// initialize the parameters
 	parameters.transportType = this->openhat->getConfigString(nodeConfig, node, "Transport", "", false);
@@ -926,6 +849,9 @@ void ArducomPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const
 	parameters.initDelayMs = nodeConfig->getInt("InitDelayMs", 0);
 	parameters.timeoutMs = nodeConfig->getInt("Timeout", this->timeoutSeconds) * 1000;
 
+	parameters.debug = this->logVerbosity >= opdi::LogVerbosity::DEBUG;
+	parameters.verbose = this->logVerbosity >= opdi::LogVerbosity::EXTREME;
+
 	try {
 		// validate parameters
 		this->transport = parameters.validate();
@@ -933,14 +859,13 @@ void ArducomPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const
 	catch (std::exception& e) {
 		this->openhat->throwSettingException(node + ": Error initializing Arducom transport: " + e.what());
 	}
-	this->arducom = nullptr;
+	this->openhat->logDebug(this->nodeID + ": Initializing Arducom master", this->logVerbosity);
+	this->arducom = new ArducomMaster(transport);
+
 	this->terminateRequested = false;
 
 	// store main node's group (will become the default of ports)
 	std::string group = nodeConfig->getString("Group", "");
-
-	// store main node's verbosity level (will become the default of ports)
-	this->logVerbosity = this->openhat->getConfigLogVerbosity(nodeConfig, this->openhat->getLogVerbosity());
 
 	// enumerate keys of the plugin's nodes (in specified order)
 	this->openhat->logVerbose(node + ": Enumerating Arducom ports: " + node + ".Ports", this->logVerbosity);
@@ -999,134 +924,71 @@ void ArducomPlugin::setupPlugin(openhat::AbstractOpenHAT* abstractOpenHAT, const
 		int queryInterval = portConfig->getInt("QueryInterval", DEFAULT_QUERY_INTERVAL);
 		if (queryInterval < 0)
 			this->openhat->throwSettingException(portName + ": Please specify a QueryInterval >= 0: " + this->openhat->to_string(queryInterval));
+
+		if (portType == "DigitalPort") {
+			this->openhat->logVerbose(node + ": Setting up Arducom digital port: " + portName, this->logVerbosity);
+			// setup the port instance and add it
+			DigitalPort* digitalPort = new DigitalPort(this, portName, this->logVerbosity);
+			digitalPort->timeoutSeconds = timeout;
+			digitalPort->queryInterval = queryInterval;
+			// set default group: Arducom node's group
+			digitalPort->setGroup(group);
+			// set default log verbosity
+			digitalPort->setLogVerbosity(this->logVerbosity);
+			digitalPort->configure(portConfig);
+			this->openhat->addPort(digitalPort);
+			this->myPorts.push_back(digitalPort);
+		}
+		else if (portType == "DialPort") {
+			this->openhat->logVerbose(node + ": Setting up Arducom dial port: " + portName, this->logVerbosity);
+			// setup the port instance and add it
+			DialPort* dialPort = new DialPort(this, portName, this->logVerbosity);
+			dialPort->timeoutSeconds = timeout;
+			dialPort->queryInterval = queryInterval;
+			// set default group: Arducom node's group
+			dialPort->setGroup(group);
+			// set default log verbosity
+			dialPort->setLogVerbosity(this->logVerbosity);
+			dialPort->configure(portConfig);
+			this->openhat->addPort(dialPort);
+			this->myPorts.push_back(dialPort);
+		}
+		else if (portType == "SelectPort") {
+			this->openhat->logVerbose(node + ": Setting up Arducom select port: " + portName, this->logVerbosity);
+			// setup the port instance and add it
+			SelectPort* selectPort = new SelectPort(this, portName, this->logVerbosity);
+			selectPort->timeoutSeconds = timeout;
+			selectPort->queryInterval = queryInterval;
+			// set default group: Arducom node's group
+			selectPort->setGroup(group);
+			// set default log verbosity
+			selectPort->setLogVerbosity(this->logVerbosity);
+			selectPort->configure(portConfig, nodeConfig);
+			this->openhat->addPort(selectPort);
+			this->myPorts.push_back(selectPort);
+		}
 /*
-		if (portType == "Generic") {
-			this->openhat->logVerbose(node + ": Setting up generic Arducom device port: " + portName, this->logVerbosity);
-                        // get topic (required)
-                        std::string topic = this->openhat->getConfigString(deviceConfig, deviceName, "Topic", "", true);
+		else if (portType == "Generic") {
+			this->openhat->logVerbose(node + ": Setting up generic Arducom port: " + portName, this->logVerbosity);
+			// get topic (required)
+			std::string topic = this->openhat->getConfigString(portConfig, portName, "Topic", "", true);
 
 			// setup the generic port instance and add it
 			GenericPort* genericPort = new GenericPort(this, portName, topic);
 			genericPort->timeoutSeconds = timeout;
 			genericPort->queryInterval = queryInterval;
-			// set default group: Arducom's node's group
+			// set default group: MQTT's node's group
 			genericPort->setGroup(group);
 			// set default log verbosity
 			genericPort->logVerbosity = this->logVerbosity;
-			this->openhat->configureCustomPort(deviceConfig, genericPort);
+			this->openhat->configureCustomPort(portConfig, genericPort);
 			this->openhat->addPort(genericPort);
 			this->myPorts.push_back(genericPort);
 		}
-		else if (deviceType == "Event") {
-			this->openhat->logVerbose(node + ": Setting up Arducom event port: " + portName, this->logVerbosity);
-                        // get topic (required)
-                        std::string topic = this->openhat->getConfigString(deviceConfig, deviceName, "Topic", "", true);
-
-			// setup the generic port instance and add it
-			EventPort* eventPort = new EventPort(this, deviceName, topic);
-			eventPort->timeoutSeconds = timeout;
-			eventPort->queryInterval = queryInterval;
-			// set default group: Arducom's node's group
-			eventPort->setGroup(group);
-			// set default log verbosity
-			eventPort->logVerbosity = this->logVerbosity;
-			eventPort->configure(deviceConfig);
-			this->openhat->addPort(eventPort);
-			this->myPorts.push_back(eventPort);
-		}
-		else if (deviceType == "HG06337") {
-			this->openhat->logVerbose(node + ": Setting up HG06337 device port: " + deviceName + "_Switch", this->logVerbosity);
-                        // get topic (required)
-                        std::string topic = this->openhat->getConfigString(deviceConfig, deviceName, "Topic", "", true);
-
-			if (parentConfig->hasProperty(deviceName + "_Switch.Type")) {
-				this->openhat->logVerbose(node + ": Setting up HG06337 device port: " + deviceName + "_Switch", this->logVerbosity);
-				Poco::AutoPtr<openhat::ConfigurationView> portConfig = this->openhat->createConfigView(parentConfig, deviceName + "_Switch");
-				// check type
-				if (portConfig->getString("Type") != "DigitalPort")
-					this->openhat->throwSettingException(node + ": HG06337 Switch device port must be of type 'DigitalPort'");
-				// setup the switch port instance and add it
-				HG06337Switch* switchPort = new HG06337Switch(this, deviceName + "_Switch", topic);
-				switchPort->timeoutSeconds = timeout;
-				switchPort->queryInterval = queryInterval;
-				// set default group: Arducom's node's group
-				switchPort->setGroup(group);
-				// set default log verbosity
-				switchPort->logVerbosity = this->logVerbosity;
-				std::string portLine = portConfig->getString("Line", "");
-				if (portLine == "High") {
-					switchPort->initialLine = 1;
-				} else if (portLine == "Low") {
-					switchPort->initialLine = 0;
-				} else if (portLine != "")
-					this->openhat->throwSettingException("Unknown Line specified; expected 'Low' or 'High'", portLine);
-				// allow only basic settings to be changed
-				this->openhat->configurePort(portConfig, switchPort, 0);
-				this->openhat->addPort(switchPort);
-				this->myPorts.push_back(switchPort);
-			} else {
-				this->openhat->logVerbose(node + ": HG06337 device port: " + deviceName + "_Switch.Type not found, ignoring", this->logVerbosity);
-			}
-		}
-		else if (deviceType == "GosundTasmota") {
-			this->openhat->logVerbose(node + ": Setting up GosundTasmota device port: " + deviceName + "_Switch", this->logVerbosity);
-                        // get device ID (required)
-                        std::string deviceID = this->openhat->getConfigString(deviceConfig, deviceName, "DeviceID", "", true);
-
-			if (parentConfig->hasProperty(deviceName + "_Switch.Type")) {
-				this->openhat->logVerbose(node + ": Setting up GosundTasmota device port: " + deviceName + "_Switch", this->logVerbosity);
-				Poco::AutoPtr<openhat::ConfigurationView> portConfig = this->openhat->createConfigView(parentConfig, deviceName + "_Switch");
-				// check type
-				if (portConfig->getString("Type") != "DigitalPort")
-					this->openhat->throwSettingException(node + ": GosundTasmota Switch device port must be of type 'DigitalPort'");
-				// setup the switch port instance and add it
-				TasmotaSwitch* switchPort = new TasmotaSwitch(this, deviceName + "_Switch", deviceID);
-				switchPort->timeoutSeconds = timeout;
-				switchPort->queryInterval = queryInterval;
-				// set default group: Arducom's node's group
-				switchPort->setGroup(group);
-				// set default log verbosity
-				switchPort->logVerbosity = this->logVerbosity;
-				std::string portLine = portConfig->getString("Line", "");
-				if (portLine == "High") {
-					switchPort->initialLine = 1;
-				} else if (portLine == "Low") {
-					switchPort->initialLine = 0;
-				} else if (portLine != "")
-					this->openhat->throwSettingException("Unknown Line specified; expected 'Low' or 'High'", portLine);
-				// allow only basic settings to be changed
-				this->openhat->configurePort(portConfig, switchPort, 0);
-				this->openhat->addPort(switchPort);
-				this->myPorts.push_back(switchPort);
-			} else {
-				this->openhat->logVerbose(node + ": GosundTasmota device port: " + deviceName + "_Switch.Type not found, ignoring", this->logVerbosity);
-			}
-                        
-			if (parentConfig->hasProperty(deviceName + "_Power.Type")) {
-				this->openhat->logVerbose(node + ": Setting up GosundTasmota device port: " + deviceName + "_Power", this->logVerbosity);
-				Poco::AutoPtr<openhat::ConfigurationView> portConfig = this->openhat->createConfigView(parentConfig, deviceName + "_Power");
-				// check type
-				if (portConfig->getString("Type") != "DialPort")
-					this->openhat->throwSettingException(node + ": GosundTasmota Power device port must be of type 'DialPort'");
-				// setup the switch port instance and add it
-				TasmotaPower* powerPort = new TasmotaPower(this, deviceName + "_Power", deviceID);
-				powerPort->timeoutSeconds = timeout;
-				powerPort->queryInterval = queryInterval;
-				// set default group: Arducom's node's group
-				powerPort->setGroup(group);
-				// set default log verbosity
-				powerPort->logVerbosity = this->logVerbosity;
-				// allow only basic settings to be changed
-				this->openhat->configurePort(portConfig, powerPort, 0);
-				this->openhat->addPort(powerPort);
-				this->myPorts.push_back(powerPort);
-			} else {
-				this->openhat->logVerbose(node + ": GosundTasmota device port: " + deviceName + "_Power.Type not found, ignoring", this->logVerbosity);
-			}
-                }
-                else
-                    this->openhat->throwSettingException(node + ": This plugin does not support the device type '" + deviceType + "'");
 */
+		else
+			this->openhat->throwSettingException(node + ": This plugin does not support the port type '" + portType + "'");
+
 		++nli;
 	}
 
@@ -1149,34 +1011,30 @@ void ArducomPlugin::run(void) {
 	this->openhat->logVerbose(this->nodeID + ": ArducomPlugin worker thread started", this->logVerbosity);
 
 	while (!this->openhat->shutdownRequested && !this->terminateRequested) {
-		
-		this->openhat->logExtreme(this->nodeID + ": Worker thread loop...", this->logVerbosity);
-
-		if (this->arducom == nullptr) {
-			this->openhat->logDebug(this->nodeID + ": Initializing Arducom master", this->logVerbosity);
-			this->arducom = new ArducomMaster(transport);
-		}
-
 		if (this->arducom != nullptr) {
 			try {
-				this->openhat->logExtreme(this->nodeID + ": Waiting for actions...", this->logVerbosity);
 				Poco::Notification::Ptr notification = this->queue.waitDequeueNotification(100);
 				if (!this->openhat->shutdownRequested && notification) {
 					ActionNotification::Ptr workNf = notification.cast<ActionNotification>();
 					if (workNf) {
 						std::string action;
 						switch (workNf->type) {
-							case ActionNotification::QUERY: action = "QUERY"; break;
+						case ActionNotification::READ: action = "READ"; break;
+						case ActionNotification::WRITE: action = "WRITE"; break;
 						}
 						ArducomPort* port = (ArducomPort*)workNf->port;
 
-						this->openhat->logDebug(this->nodeID + ": Processing requested action: " + action + " for port: " + port->pid, this->logVerbosity);
+						this->openhat->logExtreme(this->nodeID + ": Processing requested action: " + action + " for port: " + port->pid, this->logVerbosity);
 						// inspect action and decide what to do
 						switch (workNf->type) {
-							case ActionNotification::QUERY: {
-								workNf->port->query(this->arducom);
-								break;
-							}
+						case ActionNotification::READ: {
+							workNf->port->read();
+							break;
+						}
+						case ActionNotification::WRITE: {
+							workNf->port->write();
+							break;
+						}
 						}
 					}
 				}

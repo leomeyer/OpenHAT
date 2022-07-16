@@ -110,7 +110,8 @@
     <ClCompile Include="..\..\..\libraries\Arducom\src\master\ArducomMasterTCPIP.cpp" />
     <ClCompile Include="..\..\src\Configuration.cpp" />
     <ClCompile Include="..\..\src\ExpressionPort.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+      <DeploymentContent>false</DeploymentContent>
     </ClCompile>
     <ClCompile Include="..\..\src\OPDI_Ports.cpp" />
     <ClCompile Include="ArducomPlugin.cpp" />

@@ -162,7 +162,7 @@ namespace openhat {
 				this->timerPort = timerPort;
 			}
 
-			virtual void setPosition(int64_t position, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
+			virtual bool setPosition(int64_t position, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 		};
 
 		class ScheduleNotification : public Poco::Notification {
@@ -217,7 +217,7 @@ namespace openhat {
 
 		virtual void configure(ConfigurationView::Ptr config, ConfigurationView::Ptr parentConfig);
 
-		virtual void setLine(uint8_t line, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
+		virtual bool setLine(uint8_t line, ChangeSource changeSource = opdi::Port::ChangeSource::CHANGESOURCE_INT) override;
 
 		virtual void prepare() override;
 

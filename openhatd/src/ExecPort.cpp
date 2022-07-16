@@ -56,17 +56,17 @@ void ExecPort::prepare() {
 	this->exitCodePort = this->findDialPort(this->ID(), "ExitCodePort", this->exitCodePortStr, false);
 }
 
-void ExecPort::setLine(uint8_t line, ChangeSource changeSource) {
+bool ExecPort::setLine(uint8_t line, ChangeSource changeSource) {
 	// the line cannot be set to 0 while the process is still running
 	if ((line == 0) && (this->processPID != 0) && Poco::Process::isRunning(*this->processHandle))
-		return;
+		return false;
 
 	// switch from Low to High?
 	if ((this->line == 0) && (line == 1))
 		// set flag for doWork
 		this->startRequested = true;
 
-	opdi::DigitalPort::setLine(line, changeSource);
+	return opdi::DigitalPort::setLine(line, changeSource);
 }
 
 void ExecPort::waitForProcessEnd() {

@@ -13,6 +13,7 @@
 #include <sstream>
 
 #include "Poco/Exception.h"
+#include "Poco/Tuple.h"
 #include "Poco/RegularExpression.h"
 #include "Poco/NumberParser.h"
 #include "Poco/Util/AbstractConfiguration.h"
@@ -710,7 +711,8 @@ public:
 	/// Sets the port line (opdi_set_digital_port_line).
 	/// line = 0: low
 	/// line = 1: high
-	virtual void setLine(uint8_t line, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT);
+	/// Returns whether the state has changed.
+	virtual bool setLine(uint8_t line, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT);
 
 	/// Retrieves the current line state.
 	///
@@ -799,8 +801,12 @@ public:
 ///
 class SelectPort : public Port {
 	friend class OPDI;
+public:
+	typedef Poco::Tuple<int, std::string> Label;
+	typedef std::vector<Label> LabelList;
 
 protected:
+	LabelList orderedLabels;
 	char** labels;
 	uint16_t count;
 	uint16_t position;
@@ -808,6 +814,12 @@ protected:
 	/// Frees the internal items memory. Do not use.
 	///
 	void freeItems();
+
+	/// Sets the port's labels. The last element must be NULL.
+	/// Copies the labels into the privately managed data structure of this class.
+	virtual void setLabels(const char** labels);
+
+	virtual uint16_t getPositionByLabelOrderID(int orderID);
 
 public:
 	/// Constructs a Select port with the given ID.
@@ -823,13 +835,13 @@ public:
 	///
 	virtual ~SelectPort();
 
-	/// Sets the port's labels. The last element must be NULL.
+	/// Sets the port's labels.
 	/// Copies the labels into the privately managed data structure of this class.
-	virtual void setLabels(const char** labels);
+	virtual void setLabels(LabelList& orderedLabels);
 
 	/// Handles position setting; position may be in the range of 0..(labels.length - 1).
-	///
-	virtual void setPosition(uint16_t position, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT);
+	/// Returns whether the state has changed.
+	virtual bool setPosition(uint16_t position, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT);
 
 	/// Returns the current port position.
 	///
@@ -905,8 +917,8 @@ public:
 	virtual int64_t getStep(void);
 
 	/// Sets the port's position; position may be in the range of minValue..maxValue.
-	///
-	virtual void setPosition(int64_t position, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT);
+	/// Returns whether the state has changed.
+	virtual bool setPosition(int64_t position, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT);
 
 	/// Returns the current port position.
 	///
@@ -944,8 +956,8 @@ public:
         virtual void configure(Poco::Util::AbstractConfiguration::Ptr portConfig); 
 
 	/// Sets the value.
-	///
-	virtual void setValue(const std::string& value, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT);
+	/// Returns whether the state has changed.
+	virtual bool setValue(const std::string& value, ChangeSource changeSource = Port::ChangeSource::CHANGESOURCE_INT);
 
 	/// Returns the value.
 	///

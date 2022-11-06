@@ -8,15 +8,15 @@ namespace {
 class DigitalTestPort : public opdi::DigitalPort {
 public:
 	DigitalTestPort();
-	virtual void setLine(uint8_t line, ChangeSource changeSource = ChangeSource::CHANGESOURCE_INT) override;
+	virtual bool setLine(uint8_t line, ChangeSource changeSource = ChangeSource::CHANGESOURCE_INT) override;
 };
 
 }
 
 DigitalTestPort::DigitalTestPort() : opdi::DigitalPort("LinuxTestPluginPort", OPDI_PORTDIRCAP_OUTPUT, 0) {}
 
-void DigitalTestPort::setLine(uint8_t line, ChangeSource changeSource) {
-	opdi::DigitalPort::setLine(line);
+bool DigitalTestPort::setLine(uint8_t line, ChangeSource changeSource) {
+	bool changed = opdi::DigitalPort::setLine(line);
 
 	openhat::AbstractOpenHAT* openhat = (openhat::AbstractOpenHAT*)this->opdi;
 	if (line == 0) {
@@ -24,6 +24,7 @@ void DigitalTestPort::setLine(uint8_t line, ChangeSource changeSource) {
 	} else {
 		openhat->logNormal("DigitalTestPort line set to High");
 	}
+	return changed;
 }
 
 class LinuxTestOpenHATPlugin : public IOpenHATPlugin, public openhat::IConnectionListener {

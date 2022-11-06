@@ -1,4 +1,5 @@
-SUBDIRS = linux_test WindowPlugin FritzBoxPlugin WeatherPlugin MQTTPlugin WebServerPlugin ArducomPlugin
+SUBDIRS = linux_test WindowPlugin FritzBoxPlugin WeatherPlugin MQTTPlugin WebServerPlugin
+#ArducomPlugin
 
 
 UNAME_M = $(shell uname -m)

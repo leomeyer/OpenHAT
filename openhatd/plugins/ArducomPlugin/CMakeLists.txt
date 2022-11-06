@@ -17,6 +17,8 @@ target_sources(${PROJECT_NAME}
         ${ARDUCOM}/ArducomMasterI2C.cpp
     )
 
+target_link_libraries(${PROJECT_NAME} libcrypto.a)
+
 target_include_directories(${PROJECT_NAME} PRIVATE 
     ${ARDUCOM}
     )

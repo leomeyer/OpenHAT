@@ -21,9 +21,9 @@ target_sources(${PROJECT_NAME}
         ${DIR_LEVEL}/openhatd/src/ExpressionPort.cpp
     )
 
-    target_link_libraries(${PROJECT_NAME} libpaho-mqttpp3.a)
-    target_link_libraries(${PROJECT_NAME} libpaho-mqtt3a.a)
-    target_link_libraries(${PROJECT_NAME} libpaho-mqtt3c.a)
+target_link_libraries(${PROJECT_NAME} libpaho-mqttpp3.a)
+target_link_libraries(${PROJECT_NAME} libpaho-mqtt3a.a)
+target_link_libraries(${PROJECT_NAME} libpaho-mqtt3c.a)
 
 target_include_directories(${PROJECT_NAME} PRIVATE 
     ${PAHO_MQTT_C_INCLUDE}

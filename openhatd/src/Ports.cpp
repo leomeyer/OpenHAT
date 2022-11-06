@@ -1610,6 +1610,17 @@ void AggregatorPort::Calculation::calculate(AggregatorPort* aggregator) {
 				aggregator->logWarning(std::string(aggregator->getID()) + ": Cannot set new position: Calculated minimum value is out of range: " + this->to_string(max));
 			break;
 		}
+		case INTEGRATE: {
+			int64_t sum = std::accumulate(values.begin(), values.end(), (int64_t)0);
+			double val = sum * 1.0 / aggregator->totalValues;
+//			double val = sum * 1.0 / (60.0 * aggregator->totalValues / aggregator->queryInterval) * values.size();
+			aggregator->logDebug(std::string(aggregator->getID()) + ": New value according to Integrate algorithm: " + this->to_string(val));
+			if ((val >= this->getMin()) && (val <= this->getMax()))
+				this->setPosition(val);
+			else
+				aggregator->logWarning(std::string(aggregator->getID()) + ": Cannot set new position: Calculated sum is out of range: " + this->to_string(sum));
+			break;
+		}
 		default:
 			throw Poco::ApplicationException(std::string(aggregator->getID()) + ": Algorithm not supported");
 		}
@@ -1857,7 +1868,7 @@ void AggregatorPort::configure(ConfigurationView::Ptr config, ConfigurationView:
 
 	this->totalValues = config->getInt("Values", 0);
 	if (this->totalValues <= 1) {
-		this->openhat->throwSettingException(this->ID() + ": Please specify a number greater than 1 for Values: " + this->to_string(this->totalValues));
+		this->openhat->throwSettingException(this->ID() + ": Please specify a number between 1 and 65535 for Values: " + this->to_string(this->totalValues));
 	}
 
 	this->multiplier = config->getInt("Multiplier", this->multiplier);
@@ -1952,7 +1963,11 @@ void AggregatorPort::configure(ConfigurationView::Ptr config, ConfigurationView:
 			calc->algorithm = MAXIMUM;
 			calc->allowIncomplete = true;
 		} else
-			this->openhat->throwSettingException(this->ID() + ": Algorithm unsupported or not specified; expected 'Delta', 'ArithmeticMean'/'Average', 'Minimum', or 'Maximum': " + algStr);
+		if (algStr == "Integrate") {
+			calc->algorithm = INTEGRATE;
+			calc->allowIncomplete = true;
+		} else
+		this->openhat->throwSettingException(this->ID() + ": Algorithm unsupported or not specified; expected 'Delta', 'ArithmeticMean'/'Average', 'Minimum', 'Maximum', or 'Integrate': " + algStr);
 
 		// override allowIncomplete flag if specified
 		calc->allowIncomplete = calculationConfig->getBool("AllowIncomplete", calc->allowIncomplete);

@@ -453,7 +453,8 @@ protected:
 		DELTA,
 		ARITHMETIC_MEAN,
 		MINIMUM,
-		MAXIMUM
+		MAXIMUM,
+		INTEGRATE
 	};
 
 	/// Encapsulates a calculation result as a dial port.

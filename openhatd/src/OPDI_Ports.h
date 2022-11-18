@@ -714,7 +714,7 @@ public:
 
 	/// Returns the current port mode.
 	///
-	virtual uint8_t getMode(void);
+	virtual uint8_t getMode(void) const;
 
 	/// Sets the port line (opdi_set_digital_port_line).
 	/// line = 0: low
@@ -749,6 +749,7 @@ private:
 	uint8_t resolution;
 	int32_t value;
 
+protected:
 	/// Validates and adjusts the supplied value if necessary.
 	int32_t validateValue(int32_t value) const;
 
@@ -769,7 +770,19 @@ public:
 
 	/// Returns the current port mode.
 	///
-	virtual uint8_t getMode(void);
+	virtual uint8_t getMode(void) const;
+
+	/// Returns the current port resolution.
+	///
+	virtual uint8_t getResolution(void) const;
+
+	/// Returns the current port reference.
+	///
+	virtual uint8_t getReference(void) const;
+
+	/// Returns the current port value.
+	///
+	virtual int32_t getValue(void) const;
 
 	/// Sets the port resolution in bits.
 	/// Supported values are 8..12.

@@ -206,7 +206,7 @@ namespace {
 				catch (Poco::Exception& e) {
 					throw Poco::InvalidArgumentException(this->pid + ": Value for 'ReadOffset' must be an integer; got: '" + sReadOffset + "'");
 				}
-				if (this->readOffset < 0 || this->readOffset > 63)
+				if (this->readOffset > 63)
 					throw Poco::InvalidArgumentException(this->pid + ": Value for 'ReadOffset' must be in range 0...63; got: '" + sReadOffset + "'");
 
 				this->inputExpression = config->getString("InputExpression", "");

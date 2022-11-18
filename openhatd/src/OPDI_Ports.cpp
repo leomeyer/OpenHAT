@@ -12,6 +12,7 @@
 #include <sstream>
 #include <cassert>
 #include <algorithm>
+#include <math.h>
 
 #include "Poco/Exception.h"
 
@@ -837,7 +838,7 @@ void DigitalPort::getState(uint8_t* mode, uint8_t* line) const {
 	*line = this->line;
 }
 
-uint8_t DigitalPort::getMode() {
+uint8_t DigitalPort::getMode() const {
 	return this->mode;
 }
 
@@ -997,8 +998,20 @@ void AnalogPort::setRelativeValue(double value, ChangeSource changeSource) {
 	this->setAbsoluteValue(static_cast<int32_t>(value * ((1 << this->resolution) - 1)), changeSource);
 }
 
-uint8_t AnalogPort::getMode() {
+uint8_t AnalogPort::getMode() const {
 	return this->mode;
+}
+
+uint8_t AnalogPort::getResolution() const {
+	return this->resolution;
+}
+
+uint8_t AnalogPort::getReference() const {
+	return this->reference;
+}
+
+int32_t AnalogPort::getValue() const {
+    return this->value;
 }
 
 bool AnalogPort::hasError(void) const {

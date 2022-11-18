@@ -280,7 +280,7 @@ void DigitalGertboardPort::setMode(uint8_t mode, ChangeSource /*changeSource*/) 
 
 	opdi::DigitalPort::setMode(mode);
 
-	if (this->mode == OPDI_DIGITAL_MODE_INPUT_FLOATING) {
+	if (this->getMode() == OPDI_DIGITAL_MODE_INPUT_FLOATING) {
 		// configure as floating input
 		INP_GPIO(this->pin);
 
@@ -291,7 +291,7 @@ void DigitalGertboardPort::setMode(uint8_t mode, ChangeSource /*changeSource*/) 
 		GPIO_PULL = 0;
 		GPIO_PULLCLK0 = 0;
 	} else
-	if (this->mode == OPDI_DIGITAL_MODE_INPUT_PULLUP) {
+	if (this->getMode() == OPDI_DIGITAL_MODE_INPUT_PULLUP) {
 		// configure as input with pullup
 		INP_GPIO(this->pin);
 
@@ -309,7 +309,7 @@ void DigitalGertboardPort::setMode(uint8_t mode, ChangeSource /*changeSource*/) 
 }
 
 void DigitalGertboardPort::getState(uint8_t* mode, uint8_t* line) const {
-	*mode = this->mode;
+	*mode = this->getMode();
 
 	// read line
 	unsigned int b = GPIO_IN0;
@@ -324,10 +324,8 @@ AnalogGertboardOutput::AnalogGertboardOutput(openhat::AbstractOpenHAT* openhat, 
 	OPDI_ANALOG_PORT_RESOLUTION_8 | OPDI_ANALOG_PORT_RESOLUTION_10 | OPDI_ANALOG_PORT_RESOLUTION_12) {
 
 	this->openhat = openhat;
-	this->mode = 1;
-	this->resolution = 8;	// most Gertboards apparently use an 8 bit DAC; but this can be changed in the configuration
-	this->reference = 0;
-	this->value = 0;
+	this->setMode(1);
+	this->setResolution(8);	// most Gertboards apparently use an 8 bit DAC; but this can be changed in the configuration
 
 	// check valid output
 	if ((output < 0) || (output > 1))
@@ -343,7 +341,7 @@ AnalogGertboardOutput::AnalogGertboardOutput(openhat::AbstractOpenHAT* openhat, 
 	// Setup SPI bus
 	setup_spi();
 
-	write_dac(this->output, this->value);
+	write_dac(this->output, this->getValue());
 }
 
 // function that handles the set direction command (opdi_set_digital_port_mode)
@@ -362,16 +360,16 @@ void AnalogGertboardOutput::setReference(uint8_t reference, ChangeSource /*chang
 void AnalogGertboardOutput::setAbsoluteValue(int32_t value, ChangeSource /*changeSource*/) {
 	opdi::AnalogPort::setAbsoluteValue(value);
 
-	write_dac(this->output, this->value);
+	write_dac(this->output, this->getValue());
 }
 
 // function that fills in the current port state
 void AnalogGertboardOutput::getState(uint8_t* mode, uint8_t* resolution, uint8_t* reference, int32_t* value) const {
-	*mode = this->mode;
-	*resolution = this->resolution;
-	*reference = this->reference;
+	*mode = this->getMode();
+	*resolution = this->getResolution();
+	*reference = this->getReference();
 	// set remembered value
-	*value = this->value;
+	*value = this->getValue();
 }
 
 
@@ -381,10 +379,7 @@ AnalogGertboardInput::AnalogGertboardInput(openhat::AbstractOpenHAT* openhat, co
 	OPDI_ANALOG_PORT_RESOLUTION_8 | OPDI_ANALOG_PORT_RESOLUTION_10 | OPDI_ANALOG_PORT_RESOLUTION_12) {
 
 	this->openhat = openhat;
-	this->mode = 0;
-	this->resolution = 8;	// most Gertboards apparently use an 8 bit DAC; but this can be changed in the configuration
-	this->reference = 0;
-	this->value = 0;
+	this->setResolution(8);	// most Gertboards apparently use an 8 bit DAC; but this can be changed in the configuration
 
 	// check valid input
 	if ((input < 0) || (input > 1))
@@ -420,9 +415,9 @@ void AnalogGertboardInput::setAbsoluteValue(int32_t value, ChangeSource /*change
 
 // function that fills in the current port state
 void AnalogGertboardInput::getState(uint8_t* mode, uint8_t* resolution, uint8_t* reference, int32_t* value) const {
-	*mode = this->mode;
-	*resolution = this->resolution;
-	*reference = this->reference;
+	*mode = this->getMode();
+	*resolution = this->getResolution();
+	*reference = this->getReference();
 	// read value from ADC; correct range
 	*value = opdi::AnalogPort::validateValue(read_adc(this->input));
 }
@@ -433,7 +428,7 @@ GertboardButton::GertboardButton(openhat::AbstractOpenHAT* openhat, const char* 
 	OPDI_DIGITAL_PORT_HAS_PULLUP | OPDI_DIGITAL_PORT_PULLUP_ALWAYS) {
 	this->openhat = openhat;
 	this->pin = pin;
-	this->mode = OPDI_DIGITAL_MODE_INPUT_PULLUP;
+	this->setMode(OPDI_DIGITAL_MODE_INPUT_PULLUP);
 
 	// configure as input with pullup
 	INP_GPIO(this->pin);
@@ -505,22 +500,19 @@ void GertboardButton::setMode(uint8_t mode, ChangeSource /*changeSource*/) {
 }
 
 void GertboardButton::getState(uint8_t* mode, uint8_t* line) const {
-	*mode = this->mode;
+	*mode = this->getMode();
 	// remember queried line state
 	*line = this->lastQueriedState;
 }
 
 
-GertboardPWM::GertboardPWM(openhat::AbstractOpenHAT* openhat, const int pin, const char* ID, bool inverse) : opdi::DialPort(ID) {
+GertboardPWM::GertboardPWM(openhat::AbstractOpenHAT* openhat, const int pin, const char* ID, bool inverse) 
+    : opdi::DialPort(ID, 0, 1024, 1) {  // use 10 bit PWM
 	if (pin != 18)
 		throw Poco::ApplicationException("GertboardPWM only supports pin 18");
 	this->openhat = openhat;
 	this->pin = pin;
 	this->inverse = inverse;
-	this->minValue = 0;
-	// use 10 bit PWM
-	this->maxValue = 1024;
-	this->step = 1;
 
 	// initialize PWM
 	INP_GPIO(this->pin);  SET_GPIO_ALT(this->pin, 5);
@@ -540,7 +532,7 @@ bool GertboardPWM::setPosition(int64_t position, ChangeSource /*changeSource*/) 
 	bool changed = opdi::DialPort::setPosition(position);
 
 	// set PWM value; inverse polarity if specified
-	force_pwm0(this->position, PWM0_ENABLE | (this->inverse ? PWM0_REVPOLAR : 0));
+	force_pwm0(this->getPosition(), PWM0_ENABLE | (this->inverse ? PWM0_REVPOLAR : 0));
 
 	return changed;
 }
@@ -567,13 +559,13 @@ bool DigitalExpansionPort::setLine(uint8_t line, ChangeSource /*changeSource*/) 
 		// set output flag
 		code |= (1 << OUTPUT);
 		// set High or Low accordingly
-		if (this->line == 1) {
+		if (this->getLine() == 1) {
 			code |= (1 << LINESTATE);
 		}
 	} else
 	if (this->driverType == LOW_SIDE) {
 		// active (High)?
-		if (this->line == 1) {
+		if (this->getLine() == 1) {
 			// set to a Low output
 			code |= (1 << OUTPUT);
 		} else {
@@ -582,7 +574,7 @@ bool DigitalExpansionPort::setLine(uint8_t line, ChangeSource /*changeSource*/) 
 	} else
 	if (this->driverType == HIGH_SIDE) {
 		// active (High)?
-		if (this->line == 1) {
+		if (this->getLine() == 1) {
 			// set to a Low output
 			code |= (1 << OUTPUT);
 			code |= (1 << LINESTATE);
@@ -609,23 +601,23 @@ void DigitalExpansionPort::setMode(uint8_t mode, ChangeSource /*changeSource*/) 
 
 	uint8_t code = this->pin;
 
-	if (this->mode == OPDI_DIGITAL_MODE_INPUT_FLOATING) {
+	if (this->getMode() == OPDI_DIGITAL_MODE_INPUT_FLOATING) {
 		// configure as floating input
 	} else
-	if (this->mode == OPDI_DIGITAL_MODE_INPUT_PULLUP) {
+	if (this->getMode() == OPDI_DIGITAL_MODE_INPUT_PULLUP) {
 		code |= (1 << PULLUP);
 	} else {
 		if (this->driverType == STANDARD) {
 			// set output flag
 			code |= (1 << OUTPUT);
 			// set High or Low accordingly
-			if (this->line == 1) {
+			if (this->getLine() == 1) {
 				code |= (1 << LINESTATE);
 			}
 		} else
 		if (this->driverType == LOW_SIDE) {
 			// active (High)?
-			if (this->line == 1) {
+			if (this->getLine() == 1) {
 				// set to a Low output
 				code |= (1 << OUTPUT);
 			} else {
@@ -634,7 +626,7 @@ void DigitalExpansionPort::setMode(uint8_t mode, ChangeSource /*changeSource*/) 
 		} else
 		if (this->driverType == HIGH_SIDE) {
 			// active (High)?
-			if (this->line == 1) {
+			if (this->getLine() == 1) {
 				// set to a Low output
 				code |= (1 << OUTPUT);
 				code |= (1 << LINESTATE);
@@ -652,16 +644,16 @@ void DigitalExpansionPort::setMode(uint8_t mode, ChangeSource /*changeSource*/) 
 }
 
 void DigitalExpansionPort::getState(uint8_t* mode, uint8_t* line) const {
-	*mode = this->mode;
+	*mode = this->getMode();
 
-	if (this->mode == OPDI_DIGITAL_MODE_OUTPUT) {
+	if (this->getMode() == OPDI_DIGITAL_MODE_OUTPUT) {
 		// return remembered state
-		*line = this->line;
+		*line = this->getLine();
 	} else {
 		// read line state from the port expander
 		uint8_t code = this->pin;
 
-		if (this->mode == OPDI_DIGITAL_MODE_INPUT_PULLUP) {
+		if (this->getMode() == OPDI_DIGITAL_MODE_INPUT_PULLUP) {
 			code |= (1 << PULLUP);
 		}
 

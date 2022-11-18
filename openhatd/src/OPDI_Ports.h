@@ -92,6 +92,7 @@ protected:
 	bool hidden;
 	bool readonly;
 	uint8_t priority;
+	double valueAsDouble;
 
 	/// LogVerbosity setting. This setting usually overrides the main program's log verbosity.
 	///
@@ -565,13 +566,20 @@ public:
 	/// respective configure() method if applicable.
 	virtual void testValue(const std::string& property, const std::string& expectedValue);
         
-        /// Sets the priority requirement of this port. 0 means real time.
-        ///
-        virtual void setPriority(uint8_t priority);
+    /// Sets the priority requirement of this port. 0 means real time.
+    ///
+    virtual void setPriority(uint8_t priority);
 
-        /// Returns the priority requirement of this port. 0 means real time.
-        ///
-        virtual uint8_t getPriority(void);
+    /// Returns the priority requirement of this port. 0 means real time.
+    ///
+    virtual uint8_t getPriority(void);
+
+	/// <summary>
+	/// Returns the value pointer (for ExpressionPort optimization).
+	/// Is only valid as long as the port has not been freed!
+	/// </summary>
+	/// <returns></returns>
+	double& getValuePtr() { return this->valueAsDouble; }
 };
 
 inline std::ostream& operator<<(std::ostream& oStream, const Port::Error error) {
@@ -680,7 +688,7 @@ public:
 class DigitalPort : public Port {
 	friend class OPDI;
 
-protected:
+private:
 	uint8_t mode;
 	uint8_t line;
 
@@ -735,15 +743,14 @@ public:
 class AnalogPort : public Port {
 	friend class OPDI;
 
-protected:
+private:
 	uint8_t mode;
 	uint8_t reference;
 	uint8_t resolution;
 	int32_t value;
 
 	/// Validates and adjusts the supplied value if necessary.
-	///
-	virtual int32_t validateValue(int32_t value) const;
+	int32_t validateValue(int32_t value) const;
 
 public:
 	/// Constructs an Analog port with default settings. The ID is required.
@@ -805,21 +812,29 @@ public:
 	typedef Poco::Tuple<int, std::string> Label;
 	typedef std::vector<Label> LabelList;
 
-protected:
+private:
 	LabelList orderedLabels;
 	char** labels;
 	uint16_t count;
 	uint16_t position;
 
 	/// Frees the internal items memory. Do not use.
-	///
 	void freeItems();
 
+protected:
 	/// Sets the port's labels. The last element must be NULL.
 	/// Copies the labels into the privately managed data structure of this class.
 	virtual void setLabels(const char** labels);
 
+	/// <summary>
+	/// 
+	/// </summary>
 	virtual uint16_t getPositionByLabelOrderID(int orderID);
+
+	/// <summary>
+	/// 
+	/// </summary>
+	virtual Label getLabelAt(uint16_t position);
 
 public:
 	/// Constructs a Select port with the given ID.
@@ -872,7 +887,7 @@ public:
 class DialPort : public Port {
 	friend class OPDI;
 
-protected:
+private:
 	int64_t minValue;
 	int64_t maxValue;
 	uint64_t step;

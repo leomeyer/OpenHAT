@@ -198,7 +198,7 @@ WindowPort::WindowPort(openhat::AbstractOpenHAT* openhat, const char* id) : opdi
 
 bool WindowPort::setPosition(uint16_t position, ChangeSource changeSource) {
 	// recovery from error state is always possible
-	if ((this->currentState == ERR) || this->position != position) {
+	if ((this->currentState == ERR) || this->getPosition() != position) {
 		// prohibit disabling the automatic mode by setting the position to the current state
 		if ((this->positionAfterClose >= 0) && (position == POSITION_CLOSED ) && (this->currentState == CLOSED))
 			position = POSITION_AUTO;
@@ -417,9 +417,9 @@ void WindowPort::setCurrentState(WindowState state) {
 			(state == OPEN) || 
 			(state == ERR)) {
 
-			if ((this->targetState != UNKNOWN) && (state == CLOSED) && (this->positionAfterClose >= 0) && (this->position != POSITION_OFF))
+			if ((this->targetState != UNKNOWN) && (state == CLOSED) && (this->positionAfterClose >= 0) && (this->getPosition() != POSITION_OFF))
 				this->setPosition(this->positionAfterClose);
-			if ((this->targetState != UNKNOWN) && (state == OPEN) && (this->positionAfterOpen >= 0) && (this->position != POSITION_OFF))
+			if ((this->targetState != UNKNOWN) && (state == OPEN) && (this->positionAfterOpen >= 0) && (this->getPosition() != POSITION_OFF))
 				this->setPosition(this->positionAfterOpen);
 
 			this->refreshRequired = (this->refreshMode ==RefreshMode::REFRESH_AUTO);
@@ -522,10 +522,10 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 				this->setCurrentState(UNKNOWN_WAITING);
 
 			// set target state according to selected position (== mode)
-			if (this->position == POSITION_OPEN) {
+			if (this->getPosition() == POSITION_OPEN) {
 				this->setTargetState(OPEN);
 			} else
-			if (this->position == POSITION_CLOSED) {
+			if (this->getPosition() == POSITION_CLOSED) {
 				this->setTargetState(CLOSED);
 			}
 		} else
@@ -782,10 +782,10 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 			this->setCurrentState(WAITING_AFTER_DISABLE);
 
 			// set target state according to selected position
-			if (this->position == POSITION_OPEN) {
+			if (this->getPosition() == POSITION_OPEN) {
 				this->setTargetState(OPEN);
 			} else
-			if (this->position == POSITION_CLOSED) {
+			if (this->getPosition() == POSITION_CLOSED) {
 				this->setTargetState(CLOSED);
 			}
 		} else
@@ -1026,7 +1026,7 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 		WindowState target = UNKNOWN;
 		// if the window has detected an error, do not automatically open or close
 		// if the position is set to automatic, evaluate auto ports
-		if ((this->currentState != ERR) && (this->position >= POSITION_AUTO)) {
+		if ((this->currentState != ERR) && (this->getPosition() >= POSITION_AUTO)) {
 			// if one of the AutoClose ports is High, the window should be closed (takes precedence)
 			pi = this->autoClosePorts.begin();
 			auto pie = this->autoClosePorts.end();
@@ -1060,14 +1060,14 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 		} else
 		// check for position changes only - not if the previous setting is still active
 		// this helps to recover from an error state - the user must manually change the position
-		if (this->positionNewlySet && (this->position == POSITION_OFF)) {
+		if (this->positionNewlySet && (this->getPosition() == POSITION_OFF)) {
 			// setting the window "UNKNOWN" disables the motor and re-initializes
 			this->setCurrentState(UNKNOWN);
 		} else
-		if (this->positionNewlySet && (this->position == POSITION_OPEN)) {
+		if (this->positionNewlySet && (this->getPosition() == POSITION_OPEN)) {
 			target = OPEN;
 		} else
-		if (this->positionNewlySet && (this->position == POSITION_CLOSED)) {
+		if (this->positionNewlySet && (this->getPosition() == POSITION_CLOSED)) {
 			target = CLOSED;
 		}
 		this->positionNewlySet = false;

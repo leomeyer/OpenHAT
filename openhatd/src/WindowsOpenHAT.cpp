@@ -85,15 +85,6 @@ static uint8_t io_receive(void* info, uint8_t* byte, uint16_t timeout, uint8_t c
 	uint64_t ticks = opdi_get_time_ms();
 
 	while (1) {
-		// call work function
-		if (canSend) {
-			uint8_t sleepTimeMs;
-			uint8_t waitResult = Opdi->doWork(canSend, &sleepTimeMs);
-			if (waitResult != OPDI_STATUS_OK)
-				return waitResult;
-			Sleep(sleepTimeMs);
-		}
-
 		if (connection_mode == MODE_TCP) {
 			int* csock = (int*)info;
 			fd_set sockset;
@@ -163,6 +154,15 @@ static uint8_t io_receive(void* info, uint8_t* byte, uint16_t timeout, uint8_t c
 					return OPDI_DEVICE_ERROR;
 				}
 			}
+		}
+
+		// call work function
+		if (canSend) {
+			uint8_t sleepTimeMs;
+			uint8_t waitResult = Opdi->doWork(canSend, &sleepTimeMs);
+			if (waitResult != OPDI_STATUS_OK)
+				return waitResult;
+			Sleep(sleepTimeMs);
 		}
 	}
 

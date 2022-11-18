@@ -214,7 +214,7 @@ FritzDECT200Switch::FritzDECT200Switch(FritzBoxPlugin* plugin, const std::string
 	this->lastQueryTime = 0;
 	this->valueSet = false;
 
-	this->mode = OPDI_DIGITAL_MODE_OUTPUT;
+	this->setMode(OPDI_DIGITAL_MODE_OUTPUT);
 	this->setIcon("powersocket");
 }
 
@@ -266,16 +266,13 @@ void FritzDECT200Switch::setSwitchState(int8_t switchState) {
 }
 
 FritzDECT200Power::FritzDECT200Power(FritzBoxPlugin* plugin, const std::string& id, const std::string& ain, int queryInterval) : 
-	opdi::DialPort(id.c_str()), FritzPort(id, ain, queryInterval) {
+	opdi::DialPort(id.c_str(), 0, 2300000, 1),		// measured in mW; 2300 W is maximum power load for the DECT200
+	FritzPort(id, ain, queryInterval)
+{
 	this->plugin = plugin;
 	this->power = -1;	// unknown
 	this->lastQueryTime = 0;
 	this->valueSet = true;		// causes setError in doWork
-
-	this->minValue = 0;
-	this->maxValue = 2300000;	// measured in mW; 2300 W is maximum power load for the DECT200
-	this->step = 1;
-	this->position = 0;
 
 	this->setUnit("electricPower_mW");
 	this->setIcon("powermeter");
@@ -316,16 +313,13 @@ void FritzDECT200Power::setPower(int32_t power) {
 }
 
 FritzDECT200Energy::FritzDECT200Energy(FritzBoxPlugin* plugin, const std::string& id, const std::string& ain, int queryInterval) : 
-	opdi::DialPort(id.c_str()), FritzPort(id, ain, queryInterval) {
+	opdi::DialPort(id.c_str(), 0, 2147483647, 1),	// measured in Wh
+	FritzPort(id, ain, queryInterval)
+{
 	this->plugin = plugin;
 	this->energy = -1;	// unknown
 	this->lastQueryTime = 0;
 	this->valueSet = true;		// causes setError in doWork
-
-	this->minValue = 0;
-	this->maxValue = 2147483647;	// measured in Wh
-	this->step = 1;
-	this->position = 0;
 
 	this->setUnit("electricEnergy_Wh");
 	this->setIcon("energymeter");
@@ -366,17 +360,13 @@ void FritzDECT200Energy::setEnergy(int32_t energy) {
 }
 
 FritzDECT200Temperature::FritzDECT200Temperature(FritzBoxPlugin* plugin, const std::string& id, const std::string& ain, int queryInterval) :
-	opdi::DialPort(id.c_str()), FritzPort(id, ain, queryInterval) {
+	opdi::DialPort(id.c_str(), -1000, 1000, 1), // value is measured in decidegrees Celsius; -100 °C to 100 °C
+	FritzPort(id, ain, queryInterval) 
+{
 	this->plugin = plugin;
 	this->temperature = -9999;	// unknown
 	this->lastQueryTime = 0;
 	this->valueSet = true;		// causes setError in doWork
-
-	// value is measured in decidegrees Celsius
-	this->minValue = -1000;			// -100°C
-	this->maxValue = 1000;			// +100°C
-	this->step = 1;
-	this->position = 0;
 
 	this->setUnit("temperature_deciDegreesCelsius");
 	this->setIcon("thermometer_celsius");

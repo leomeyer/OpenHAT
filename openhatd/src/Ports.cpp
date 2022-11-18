@@ -36,10 +36,6 @@ LogicPort::LogicPort(AbstractOpenHAT* openhat, const char* id) : opdi::DigitalPo
 	this->negate = false;
 
 	opdi::DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
-	// set the line to an invalid state
-	// this will trigger the detection logic in the first call of doWork
-	// so that all dependent output ports will be set to a defined state
-	this->line = -1;
 }
 
 void LogicPort::configure(ConfigurationView::Ptr config) {
@@ -162,8 +158,8 @@ uint8_t LogicPort::doWork(uint8_t canSend)  {
 		break;
 	}
 
-	// change detected?
-	if (newLine != this->line) {
+	// first iteration or change detected?
+	if (this->openhat->getCurrentFrame() == 0 || newLine != this->getLine()) {
 		this->logDebug("Detected line change (" + this->to_string(highCount) + " of " + this->to_string(this->inputPorts.size()) + " inputs port are High)");
 
 		opdi::DigitalPort::setLine(newLine);
@@ -272,7 +268,7 @@ uint8_t PulsePort::doWork(uint8_t canSend)  {
 	opdi::DigitalPort::doWork(canSend);
 
 	// default: pulse is enabled if the line is High
-	bool enabled = (this->line == 1);
+	bool enabled = (this->getLine() == 1);
 
 	if (!enabled && (this->enablePorts.size() > 0)) {
 		int highCount = 0;
@@ -405,8 +401,6 @@ SelectorPort::SelectorPort(AbstractOpenHAT* openhat, const char* id) : opdi::Dig
 	this->opdi = this->openhat = openhat;
 
 	opdi::DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
-	// set the line to an invalid state
-	this->line = -1;
 	this->errorState = -1;		// undefined
 }
 
@@ -438,7 +432,7 @@ void SelectorPort::configure(ConfigurationView::Ptr config) {
 
 bool SelectorPort::setLine(uint8_t line, ChangeSource changeSource) {
 	bool changed = opdi::DigitalPort::setLine(line, changeSource);
-	if (this->line == 1) {
+	if (this->getLine() == 1) {
 		this->logDebug("Setting Port '" + this->selectPort->ID() + "' to position " + to_string(this->position));
 		// set the specified select port to the specified position
 		this->selectPort->setPosition(this->position);
@@ -484,8 +478,8 @@ uint8_t SelectorPort::doWork(uint8_t canSend)  {
 		return OPDI_STATUS_OK;
 	}
 
-	if (pos == this->position) {
-		if (this->line != 1) {
+	if (this->openhat->getCurrentFrame() == 0 || pos == this->position) {
+		if (this->getLine() != 1) {
 			this->logDebug("Port " + this->selectPort->ID() + " is in position " + to_string(this->position) + ", switching SelectorPort to High");
 			opdi::DigitalPort::setLine(1);
 			// set output ports' lines
@@ -496,7 +490,7 @@ uint8_t SelectorPort::doWork(uint8_t canSend)  {
 			}
 		}
 	} else {
-		if (this->line != 0) {
+		if (this->getLine() != 0) {
 			this->logDebug("Port " + this->selectPort->ID() + " is in position " + to_string(this->position) + ", switching SelectorPort to Low");
 			opdi::DigitalPort::setLine(0);
 			// set output ports' lines
@@ -519,9 +513,6 @@ ErrorDetectorPort::ErrorDetectorPort(AbstractOpenHAT* openhat, const char* id) :
 	this->opdi = this->openhat = openhat;
 
 	opdi::DigitalPort::setMode(OPDI_DIGITAL_MODE_INPUT_FLOATING);
-
-	// make sure to trigger state change at first doWork
-	this->line = -1;
 }
 
 void ErrorDetectorPort::configure(ConfigurationView::Ptr config) {
@@ -871,7 +862,7 @@ void FaderPort::configure(ConfigurationView::Ptr config) {
 }
 
 bool FaderPort::setLine(uint8_t line, ChangeSource changeSource) {
-	uint8_t oldline = this->line;
+	uint8_t oldline = this->getLine();
 	if ((oldline == 0) && (line == 1)) {
 		// store current values on start (might be resolved by ValueResolvers, and we don't want them to change during fading
 		// because each value might again refer to the output port - not an uncommon scenario for e.g. dimmers)
@@ -893,7 +884,7 @@ bool FaderPort::setLine(uint8_t line, ChangeSource changeSource) {
 	} else {
 		bool changed = opdi::DigitalPort::setLine(line, changeSource);
 		// switched off?
-		if (oldline != this->line) {
+		if (oldline != this->getLine()) {
 			this->logDebug("Stopped fading at " + to_string(this->lastValue * 100.0) + "%");
 			this->actionToPerform = this->switchOffAction;
 			// resolve values again for the switch off action
@@ -918,11 +909,11 @@ uint8_t FaderPort::doWork(uint8_t canSend)  {
 	opdi::DigitalPort::doWork(canSend);
 
 	// active, or a switch off action needs to be performed?
-	if ((this->line == 1) || (this->actionToPerform != NONE)) {
+	if ((this->getLine() == 1) || (this->actionToPerform != NONE)) {
 		
 		Poco::Timestamp::TimeVal elapsedMs(0);
 
-		if (this->line == 1) {
+		if (this->getLine() == 1) {
 			if (this->durationMs < 0) {
 				this->logWarning("Duration may not be negative; disabling fader: " + to_string(this->durationMs));
 				// disable the fader immediately
@@ -1125,9 +1116,9 @@ uint8_t SceneSelectPort::doWork(uint8_t canSend)  {
 
 	// position changed?
 	if (this->positionSet) {
-		this->logVerbose(std::string("Scene selected: ") + this->getPositionLabel(this->position));
+		this->logVerbose(std::string("Scene selected: ") + this->getPositionLabel(this->getPosition()));
 
-		std::string sceneFile = this->fileList[this->position];
+		std::string sceneFile = this->fileList[this->getPosition()];
 
 		// prepare scene file parameters (environment, ports, ...)
 		std::map<std::string, std::string> parameters;
@@ -1221,7 +1212,7 @@ uint8_t FilePort::doWork(uint8_t canSend) {
 		}
 	}
 
-	if (this->line == 0) {
+	if (this->getLine() == 0) {
 		// always clear flag if not active (to avoid reloading when set to High)
 		this->needsReload = false;
 		return OPDI_STATUS_OK;
@@ -1346,7 +1337,7 @@ void FilePort::fileChangedEvent(const void*, const Poco::DirectoryWatcher::Direc
 }
 
 void FilePort::writeContent() {
-	if (this->line == 0)
+	if (this->getLine() == 0)
 		return;
 
 	// create file content
@@ -1707,7 +1698,7 @@ uint8_t AggregatorPort::doWork(uint8_t canSend) {
 		return result;
 
 	// disabled?
-	if (this->line != 1) {
+	if (this->getLine() != 1) {
 		// this->logExtreme("Aggregator is disabled");
 		return OPDI_STATUS_OK;
 	}
@@ -2000,7 +1991,7 @@ void AggregatorPort::prepare() {
 
 bool AggregatorPort::setLine(uint8_t newLine, ChangeSource changeSource) {
 	// if being deactivated, reset values and ports to error
-	if ((this->line == 1) && (newLine == 0))
+	if ((this->getLine() == 1) && (newLine == 0))
 		this->resetValues("Aggregator was deactivated", opdi::LogVerbosity::VERBOSE);
 	return opdi::DigitalPort::setLine(newLine, changeSource);
 }
@@ -2059,12 +2050,12 @@ void CounterPort::prepare() {
 }
 
 void CounterPort::doIncrement(int64_t increment) {
-	int64_t newPosition = this->position + increment;
+	int64_t newPosition = this->getPosition() + increment;
 
 	// detect underflow
-	if ((increment < 0) && (newPosition < this->minValue)) {
+	if ((increment < 0) && (newPosition < this->getMin())) {
 		// underflow detected, wrap around
-		newPosition = this->maxValue - (this->minValue - newPosition);
+		newPosition = this->getMax() - (this->getMin() - newPosition);
 		// set underflow ports to High
 		auto it = this->underflowPorts.begin();
 		auto ite = this->underflowPorts.end();
@@ -2082,9 +2073,9 @@ void CounterPort::doIncrement(int64_t increment) {
 		}
 	}
 	// detect overflow
-	if ((increment > 0) && (newPosition > this->maxValue)) {
+	if ((increment > 0) && (newPosition > this->getMax())) {
 		// overflow detected, wrap around
-		newPosition = this->minValue + (newPosition - this->maxValue);
+		newPosition = this->getMin() + (newPosition - this->getMax());
 		// set overflow ports to High
 		auto it = this->overflowPorts.begin();
 		auto ite = this->overflowPorts.end();
@@ -2186,7 +2177,7 @@ TriggerPort::TriggerPort(AbstractOpenHAT* openhat, const char* id) : opdi::Digit
 	this->opdi = this->openhat = openhat;
 
 	opdi::DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
-	this->line = 1;	// default: active
+	this->setLine(1);	// default: active
 
 	this->counterPort = nullptr;
 }
@@ -2279,7 +2270,7 @@ void TriggerPort::prepare() {
 uint8_t TriggerPort::doWork(uint8_t canSend)  {
 	opdi::DigitalPort::doWork(canSend);
 
-	if (this->line == 0)
+	if (this->getLine() == 0)
 		return OPDI_STATUS_OK;
 
 	bool changeDetected = false;
@@ -2385,7 +2376,7 @@ InfluxDBPort::InfluxDBPort(AbstractOpenHAT * openhat, const char * id) : opdi::D
 	this->opdi = this->openhat = openhat;
 
 	opdi::DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
-	this->line = 1;	// default: active
+	this->setLine(1);	// default: active
 
 	this->tcpPort = 8086;
 	this->intervalMs = 60000;	// default: once a minute
@@ -2529,7 +2520,7 @@ void InfluxDBPort::prepare() {
 
 uint8_t TestPort::doWork(uint8_t canSend) {
 	// test only if High and interval is specified
-	if ((this->line == 0) || (this->interval <= 0)) {
+	if ((this->getLine() == 0) || (this->interval <= 0)) {
 		// reset execution time (to start over when it's being switched on again)
 		this->lastExecution = 0;
 		return OPDI_STATUS_OK;
@@ -2641,7 +2632,7 @@ TestPort::TestPort(AbstractOpenHAT* openhat, const char *id) : opdi::DigitalPort
 	this->warnOnFailure = false;
 	this->exitAfterTest = false;
 	// tests are active and hidden by default
-	this->line = 1;
+	this->setLine(1);
 	this->hidden = true;
 }
 
@@ -2744,8 +2735,8 @@ bool AssignmentPort::setLine(uint8_t line, ChangeSource changeSource) {
 	// calls due to cycles in the assignment configuration, however.
 	
 	// state changed to High?
-	if ((this->line == 0) && (line == 1)) {
-		this->line = 1;
+	if ((this->getLine() == 0) && (line == 1)) {
+		this->setLine(1);
 
 		// process assignments
 		auto it = this->assignmentValues.begin();
@@ -2797,7 +2788,7 @@ bool AssignmentPort::setLine(uint8_t line, ChangeSource changeSource) {
 	}
 
 	// the line is always Low
-	this->line = 0;
+	this->setLine(0);
 	return false;
 }
 

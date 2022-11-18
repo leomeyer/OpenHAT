@@ -166,16 +166,13 @@ public:
 
 
 CurrentSolarPower::CurrentSolarPower(FroniusPlugin* plugin, const std::string& id, const std::string& parameters) : 
-	opdi::DialPort(id.c_str()), FroniusPort(plugin, id, parameters) {
+	opdi::DialPort(id.c_str(), 0, 999999999, 1),	// measured in W
+	FroniusPort(plugin, id, parameters) 
+{
 	this->plugin = plugin;
 	this->power = -1;	// unknown
 	this->lastQueryTime = 0;
 	this->valueSet = true;		// causes setError in doWork
-
-	this->minValue = 0;
-	this->maxValue = 999999999;	// measured in W
-	this->step = 1;
-	this->position = 0;
 
 	this->setUnit("electricPower_mW");
 	this->setIcon("powermeter");
@@ -217,16 +214,13 @@ void CurrentSolarPower::setPower(int32_t power) {
 
 
 DayEnergy::DayEnergy(FroniusPlugin* plugin, const std::string& id, const std::string& parameters) : 
-	opdi::DialPort(id.c_str()), FroniusPort(plugin, id, parameters) {
+	opdi::DialPort(id.c_str(), 0, 999999999, 1),	// measured in Wh
+	FroniusPort(plugin, id, parameters) 
+{
 	this->plugin = plugin;
 	this->energy = -1;	// unknown
 	this->lastQueryTime = 0;
 	this->valueSet = true;		// causes setError in doWork
-
-	this->minValue = 0;
-	this->maxValue = 999999999;	// measured in Wh
-	this->step = 1;
-	this->position = 0;
 
 	this->setUnit("electricEnergy_Wh");
 	this->setIcon("energymeter");

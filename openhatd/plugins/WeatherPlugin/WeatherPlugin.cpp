@@ -186,13 +186,13 @@ uint8_t WeatherGaugePort::doWork(uint8_t canSend) {
 	this->logDebug("WeatherGaugePort for element " + this->dataElement + ": Extracted value is: " + to_string(newPos));
 
 	// correct value if necessary
-	if (newPos < this->minValue) {
-		this->logDebug("Warning: Value too low (" + to_string(newPos) + " < " + to_string(this->minValue) + "), correcting");
-		newPos = this->minValue;
+	if (newPos < this->getMin()) {
+		this->logDebug("Warning: Value too low (" + to_string(newPos) + " < " + to_string(this->getMin()) + "), correcting");
+		newPos = this->getMin();
 	}
-	if (newPos > this->maxValue) {
-		this->logDebug("Warning: Value too high (" + to_string(newPos) + " > " + to_string(this->maxValue) + "), correcting");
-		newPos = this->maxValue;
+	if (newPos > this->getMax()) {
+		this->logDebug("Warning: Value too high (" + to_string(newPos) + " > " + to_string(this->getMax()) + "), correcting");
+		newPos = this->getMax();
 	}
 	this->setPosition(newPos);
 	this->lastValidTime = opdi_get_time_ms();

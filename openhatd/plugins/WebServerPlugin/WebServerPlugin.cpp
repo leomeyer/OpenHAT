@@ -481,10 +481,16 @@ void WebServerPlugin::handleEvent(struct mg_connection* nc, int ev, void* p) {
 					this->logDebug("Sending JSON-RPC response: " + strOut);
 
 					// send result
+                    mg_printf(nc, "%s", "HTTP/1.0 200 OK\r\n");                  // Response line
+                    mg_printf(nc, "%s", "Content-Type: application/json\r\n");   // One header
+                    mg_printf(nc, "Content-Length: %d\r\n", strOut.size());      // important: content length first
+                    mg_printf(nc, "%s", "\r\n");                                 // End of headers
+                    mg_printf(nc, "%s", strOut.c_str());                         // Body
+/*
 					mg_printf(nc, "HTTP/1.0 200 OK\r\nContent-Length: %zu\r\n"
 						"Content-Type: application/json\r\n\r\n%s",
 						strOut.size(), strOut.c_str());
-
+*/
 				// Error handling:
 				// http://www.jsonrpc.org/specification, section 5.1
 				} catch (Poco::JSON::JSONException& e) {

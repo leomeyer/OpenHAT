@@ -64,23 +64,8 @@ static uint8_t io_receive(void* info, uint8_t* byte, uint16_t timeout, uint8_t c
 	long ticks = opdi_get_time_ms();
 
 	while (1) {
-		// call work function
-        uint8_t sleepTimeMs;
-		uint8_t workResult = Opdi->doWork(canSend, &sleepTimeMs);
-		if (workResult != OPDI_STATUS_OK)
-			return workResult;
-
 		if (connection_mode == MODE_TCP) {
-
 			int newsockfd = (long)info;
-            // set receive timeout in milliseconds
-            struct timeval aTimeout;
-            aTimeout.tv_sec = 0;
-            aTimeout.tv_usec = (sleepTimeMs > 0 ? sleepTimeMs : 1) * 1000;  // at least 1 ms
-            if (setsockopt(newsockfd, SOL_SOCKET, SO_RCVTIMEO, (char*)&aTimeout, sizeof(aTimeout)) < 0) {
-                linuxOpenHAT->logError("Error setting socket receive timeout");
-                return OPDI_DEVICE_ERROR;
-            }
 
 			// try to read data
 			result = read(newsockfd, &c, 1);
@@ -142,6 +127,22 @@ static uint8_t io_receive(void* info, uint8_t* byte, uint16_t timeout, uint8_t c
 				// device error
 				return OPDI_DEVICE_ERROR;
 			}
+		}
+
+        // call work function
+        uint8_t sleepTimeMs;
+		uint8_t workResult = Opdi->doWork(canSend, &sleepTimeMs);
+		if (workResult != OPDI_STATUS_OK)
+			return workResult;
+
+        struct timespec aSleep;
+        aSleep.tv_sec = 0;
+        aSleep.tv_nsec = (sleepTimeMs > 0 ? sleepTimeMs : 1) * 1000000;  // at least 1 ms
+        struct timespec aRem;
+        
+        if (nanosleep(&aSleep, &aRem) != 0) {
+            Opdi->shutdown(0);
+			return OPDI_SHUTDOWN;
 		}
 	}
 
@@ -391,6 +392,15 @@ int LinuxOpenHAT::setupTCP(const std::string& /*interface_*/, int port) {
 			} else {
 
 				this->logNormal((std::string("Connection attempt from ") + std::string(inet_ntoa(cli_addr.sin_addr))).c_str());
+
+                // set receive timeout in milliseconds
+                struct timeval aTimeout;
+                aTimeout.tv_sec = 0;
+                aTimeout.tv_usec = 1000;  // 1 ms
+                if (setsockopt(newsockfd, SOL_SOCKET, SO_RCVTIMEO, (char*)&aTimeout, sizeof(aTimeout)) < 0) {
+                    linuxOpenHAT->logError("Error setting socket receive timeout");
+                    return OPDI_DEVICE_ERROR;
+                }
 
 				int err = HandleTCPConnection(newsockfd);
 

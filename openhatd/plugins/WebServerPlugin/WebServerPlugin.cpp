@@ -653,7 +653,7 @@ void WebServerPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::
 uint8_t WebServerPlugin::doWork(uint8_t canSend) {
 	opdi::DigitalPort::doWork(canSend);
 
-	if (this->line == 1)
+	if (this->getLine() == 1)
 		// call Mongoose work function
 		mg_mgr_poll(&this->mgr, 1);
 	

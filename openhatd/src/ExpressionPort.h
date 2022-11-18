@@ -87,15 +87,11 @@ class ExpressionPort : public opdi::DigitalPort {
 protected:
 	openhat::AbstractOpenHAT* openhat;
 
-	std::vector<double> portValues;	// holds the numeric values of the ports for the expression evaluation
-	std::vector<std::string> portStrings;	// holds the string values of the ports for the expression evaluation
-
 	int64_t numIterations;
 	double fallbackValue;
 	bool fallbackSpecified;
 	double deactivationValue;
 	bool deactivationSpecified;
-        double currentFrame;
 
 	timestamp_func timestampFunc;
 
@@ -109,7 +105,7 @@ protected:
 	expression_t expression;
 	int64_t iterations;
 
-	virtual bool prepareSymbols(bool duringSetup);
+	virtual bool prepareSymbols(symbol_table_t& symTab, bool duringSetup);
 
 	virtual bool prepareVariables(bool duringSetup);
 

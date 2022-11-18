@@ -561,7 +561,7 @@ void MQTTPort::query(mqtt::async_client* client) {}
 DigitalPort::DigitalPort(MQTTPlugin* plugin, const std::string& id, const std::string& topic) :
 	opdi::DigitalPort(id.c_str(), OPDI_PORTDIRCAP_BIDI, 0), MQTTPort(plugin, id, topic) {
 	// default mode is "output"
-	this->mode = 3;
+	this->setMode(OPDI_DIGITAL_MODE_OUTPUT);
 	this->refreshMode = RefreshMode::REFRESH_AUTO;
 	this->valueSet = true;		// causes error in doWork
 }
@@ -639,10 +639,10 @@ bool DigitalPort::setLine(uint8_t line, ChangeSource changeSource) {
 
 	if (changed) {
 		// publish state if specified
-		if ((this->line == 0) && (this->setTopic != "") && (this->outputValueLow != "")) {
+		if ((this->getLine() == 0) && (this->setTopic != "") && (this->outputValueLow != "")) {
 			this->plugin->publish(this->setTopic, this->outputValueLow);
 		}
-		else if ((this->line == 1) && (this->setTopic != "") && (this->outputValueHigh != "")) {
+		else if ((this->getLine() == 1) && (this->setTopic != "") && (this->outputValueHigh != "")) {
 			this->plugin->publish(this->setTopic, this->outputValueHigh);
 		}
 	}
@@ -652,7 +652,7 @@ bool DigitalPort::setLine(uint8_t line, ChangeSource changeSource) {
 
 DialPort::DialPort(MQTTPlugin* plugin, const std::string& id, const std::string& topic) :
 	opdi::DialPort(id.c_str(), -999999999999, 999999999999, 1), MQTTPort(plugin, id, topic) {
-	this->newValue = this->minValue - 1;
+	this->newValue = this->getMin() - 1;
 	this->valueSet = true;		// causes setError in doWork
 	this->inputExpr = nullptr;
 	this->outputExpr = nullptr;
@@ -697,7 +697,7 @@ void DialPort::handle_payload(std::string payload) {
 	Poco::Mutex::ScopedLock lock(this->mutex);
 
 	if (payload.empty()) {
-		this->newValue = this->minValue - 1;
+		this->newValue = this->getMin() - 1;
 		this->valueSet = true;
 		return;
 	}
@@ -708,7 +708,7 @@ void DialPort::handle_payload(std::string payload) {
 	if (input.empty()) {
 		this->plugin->openhat->logWarning(this->pid + ": Payload does not match input pattern: '" + payload + "'");
 		// set to error state
-		this->newValue = this->minValue - 1;
+		this->newValue = this->getMin() - 1;
 		this->valueSet = true;
 		return;
 	}
@@ -718,7 +718,7 @@ void DialPort::handle_payload(std::string payload) {
 	if (replace_all(expr, "$value", input) == 0) {
 		this->plugin->openhat->logWarning(this->pid + ": Could not replace placeholder '$value' in input expression: '" + this->inputExpression + "'");
 		// set to error state
-		this->newValue = this->minValue - 1;
+		this->newValue = this->getMin() - 1;
 		this->valueSet = true;
 		return;
 	}
@@ -730,7 +730,7 @@ void DialPort::handle_payload(std::string payload) {
 	if (value == NAN) {
 		this->plugin->openhat->logWarning(this->pid + ": Expression evaluated to NAN: '" + expr + "'");
 		// set to error state
-		this->newValue = this->minValue - 1;
+		this->newValue = this->getMin() - 1;
 		this->valueSet = true;
 		return;
 	}
@@ -750,7 +750,7 @@ uint8_t DialPort::doWork(uint8_t canSend) {
 	if (this->valueSet) {
 		try {
 			// values < minValue signify an error
-			if (this->newValue < this->minValue) {
+			if (this->newValue < this->getMin()) {
 				// change to error state
 				this->setError(Error::VALUE_NOT_AVAILABLE);
 			}
@@ -779,7 +779,7 @@ bool DialPort::setPosition(int64_t value, ChangeSource changeSource) {
 
 	// replace $value in output expression with the position
 	std::string expr = this->outputExpression;
-	if (replace_all(expr, "$value", Poco::NumberFormatter::format(this->position)) == 0) {
+	if (replace_all(expr, "$value", Poco::NumberFormatter::format(this->getPosition())) == 0) {
 		this->plugin->openhat->logWarning(this->pid + ": Could not replace placeholder '$value' in output expression: '" + this->outputExpression + "'");
 		return true;
 	}
@@ -931,11 +931,11 @@ bool SelectPort::setPosition(uint16_t value, ChangeSource changeSource) {
 	if (!changed)
 		return false;
 
-	if (this->outputValues.size() < this->position + 1) {
-		this->plugin->openhat->logWarning(this->pid + ": Not enough values in output map (position: " + this->plugin->openhat->to_string(this->position));
+	if (this->outputValues.size() < this->getPosition() + 1) {
+		this->plugin->openhat->logWarning(this->pid + ": Not enough values in output map (position: " + this->plugin->openhat->to_string(this->getPosition()));
 		return true;
 	}
-	std::string sValue = this->outputValues[this->position];
+	std::string sValue = this->outputValues[this->getPosition()];
 	std::string output = this->outputPattern;
 	if (this->outputRegex->subst(output, sValue, Poco::RegularExpression::RE_GLOBAL) == 0) {
 		this->plugin->openhat->logWarning(this->pid + ": Could not replace placeholder '$value' in output pattern: '" + this->outputPattern + "'");
@@ -1057,9 +1057,9 @@ void GenericPort::configure(Poco::Util::AbstractConfiguration::Ptr config) {
 
 EventPort::EventPort(MQTTPlugin* plugin, const std::string& id, const std::string& topic) : 
 	opdi::DigitalPort(id.c_str(), OPDI_PORTDIRCAP_OUTPUT, 0), MQTTPort(plugin, id, topic) {
+	this->setMode(OPDI_DIGITAL_MODE_OUTPUT);
 	// events are enabled by default
-	this->line = 1;
-	this->mode = OPDI_DIGITAL_MODE_OUTPUT;
+	this->setLine(1);
 }
 
 void EventPort::subscribe(mqtt::async_client *client) {
@@ -1198,7 +1198,7 @@ HG06337Switch::HG06337Switch(MQTTPlugin* plugin, const std::string& id, const st
 	this->valueSet = true;		// causes setError in doWork
 	this->initialLine = -1;
 	
-	this->mode = OPDI_DIGITAL_MODE_OUTPUT;
+	this->setMode(OPDI_DIGITAL_MODE_OUTPUT);
 	this->setIcon("powersocket");
 }
 
@@ -1324,7 +1324,7 @@ TasmotaSwitch::TasmotaSwitch(MQTTPlugin* plugin, const std::string& id, const st
     this->valueSet = true;		// causes setError in doWork
     this->initialLine = -1;
 	
-    this->mode = OPDI_DIGITAL_MODE_OUTPUT;
+	this->setMode(OPDI_DIGITAL_MODE_OUTPUT);
     this->setIcon("powersocket");
 }
 

@@ -21,7 +21,7 @@ ExpressionPort::ExpressionPort(AbstractOpenHAT* openhat, const char* id) : opdi:
 	opdi::DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
 
 	// default: enabled
-	this->line = 1;
+	this->setLine(1);
 }
 
 ExpressionPort::~ExpressionPort() {
@@ -74,8 +74,8 @@ bool ExpressionPort::setLine(uint8_t line, ChangeSource changeSource) {
 	return true;
 }
 
-bool ExpressionPort::prepareSymbols(bool /*duringSetup*/) {
-	this->symbol_table.add_function("timestamp", this->timestampFunc);
+bool ExpressionPort::prepareSymbols(symbol_table_t& symTab, bool /*duringSetup*/) {
+	symTab.add_function("timestamp", this->timestampFunc);
 
 	// Adding constants leads to a memory leak; furthermore, constants are not detected as known symbols.
 	// As there are only three constants (pi, epsilon, infinity) we can well do without this function.
@@ -85,11 +85,6 @@ bool ExpressionPort::prepareSymbols(bool /*duringSetup*/) {
 }
 
 bool ExpressionPort::prepareVariables(bool duringSetup) {
-	this->portValues.clear();
-	// assume most port values are numeric
-	this->portValues.reserve(this->symbol_list.size());
-	this->portStrings.clear();
-
 	// go through dependent entities (variables) of the expression
 	for (std::size_t i = 0; i < this->symbol_list.size(); ++i)
 	{
@@ -97,13 +92,6 @@ bool ExpressionPort::prepareVariables(bool duringSetup) {
 
 		if (symbol.second != parser_t::e_st_variable)
 			continue;
-		
-		if (symbol.first == "currentframe") {
-			this->currentFrame = this->openhat->getCurrentFrame();
-			if (!this->symbol_table.add_variable("currentframe", this->currentFrame))
-				return false;			
-			continue;
-		}
 
 		// find port (variable name is the port ID)
 		opdi::Port* port = this->openhat->findPortByID(symbol.first.c_str(), true);
@@ -114,53 +102,16 @@ bool ExpressionPort::prepareVariables(bool duringSetup) {
 		}
 
 		// custom port?
-		if (port->getType()[0] == OPDI_PORTTYPE_CUSTOM[0]) {
-			// custom port: set text variable
-			try {
-				std::string value = ((opdi::CustomPort*)port)->getValue();
-				this->logExtreme("Resolved value of port " + port->ID() + " to: '" + value + "'");
-				this->portStrings.push_back(value);
-			} catch (Poco::Exception& e) {
-				// error handling during setup is different; to avoid too many warnings (in the doWork method)
-				// we make a difference here
-				if (duringSetup) {
-					// emit a warning
-					this->logWarning("Failed to resolve value of port " + port->ID() + ": " + this->openhat->getExceptionMessage(e));
-					this->portStrings.push_back("");
-				} else {
-					// warn in extreme logging mode only
-					this->logExtreme("Failed to resolve value of port " + port->ID() + ": " + this->openhat->getExceptionMessage(e));
-					// the expression cannot be evaluated if there is an error
-					return false;
-				}
-			}
-
-			// add reference to the port value (by port ID)
-			if (!this->symbol_table.add_stringvar(port->ID(), this->portStrings[this->portStrings.size() - 1]))
-				return false;
-		} else {
+		if (port->getType()[0] == OPDI_PORTTYPE_CUSTOM[0])
+			throw PortError(this->ID() + ": Cannot use a custom port in an expression: " + symbol.first);
+		else
+		// streaming port?
+		if (port->getType()[0] == OPDI_PORTTYPE_STREAMING[0])
+			throw PortError(this->ID() + ": Cannot use a streaming port in an expression: " + symbol.first);
+		else {
 			// numeric port value
-			try {
-				double value = openhat->getPortValue(port);
-				this->logExtreme("Resolved value of port " + port->ID() + " to: " + to_string(value));
-				this->portValues.push_back(value);
-			} catch (Poco::Exception& e) {
-				// error handling during setup is different; to avoid too many warnings (in the doWork method)
-				// we make a difference here
-				if (duringSetup) {
-					// emit a warning
-					this->logWarning("Failed to resolve value of port " + port->ID() + ": " + this->openhat->getExceptionMessage(e));
-					this->portValues.push_back(0.0f);
-				} else {
-					// warn in extreme logging mode only
-					this->logExtreme("Failed to resolve value of port " + port->ID() + ": " + this->openhat->getExceptionMessage(e));
-					// the expression cannot be evaluated if there is an error
-					return false;
-				}
-			}
-
 			// add reference to the port value (by port ID)
-			if (!this->symbol_table.add_variable(port->ID(), this->portValues[this->portValues.size() - 1]))
+			if (!this->symbol_table.add_variable(port->ID(), port->getValuePtr()))
 				return false;
 		}
 	}
@@ -174,11 +125,10 @@ void ExpressionPort::prepare() {
 	// find ports; throws errors if something required is missing
 	this->findPorts(this->getID(), "OutputPorts", this->outputPortStr, this->outputPorts);
 
-	// clear symbol table and values
-	this->symbol_table.clear();
-
-	expression.register_symbol_table(symbol_table);
-	this->prepareSymbols(true);
+	symbol_table_t localSymtab;
+	expression_t localExpr;
+	localExpr.register_symbol_table(localSymtab);
+	this->prepareSymbols(localSymtab, true);
 
 	parser_t parser;
 	parser.enable_unknown_symbol_resolver();
@@ -186,20 +136,22 @@ void ExpressionPort::prepare() {
 	parser.dec().collect_variables() = true;
 
 	// compile to detect variables
-	if (!parser.compile(this->expressionStr, expression))
+	if (!parser.compile(this->expressionStr, localExpr))
 		throw Poco::Exception(this->ID() + ": Error in expression: " + parser.error());
 
 	// store symbol list (input variables)
 	parser.dec().symbols(this->symbol_list);
 
-	this->symbol_table.clear();
-	this->prepareSymbols(true);
+	// prepare actual symbol table
+	this->expression.register_symbol_table(symbol_table);
+	this->prepareSymbols(this->symbol_table, true);
 	if (!this->prepareVariables(true)) {
 		throw Poco::Exception(this->ID() + ": Unable to resolve variables");
 	}
-	parser.disable_unknown_symbol_resolver();
 
-	if (!parser.compile(this->expressionStr, expression))
+	parser.disable_unknown_symbol_resolver();
+	parser.dec().collect_variables() = false;
+	if (!parser.compile(this->expressionStr, this->expression))
 		throw Poco::Exception(this->ID() + ": Error in expression: " + parser.error());
 
 	// initialize the number of iterations
@@ -251,6 +203,7 @@ void ExpressionPort::setOutputPorts(double value) {
 }
 
 double ExpressionPort::apply() {
+/*
 	// clear symbol table and values
 	this->symbol_table.clear();
 
@@ -258,7 +211,7 @@ double ExpressionPort::apply() {
 
 	// prepareVariables will return false in case of errors
 	if (this->prepareVariables(false)) {
-
+*/
 		double value = expression.value();
 
 		this->logExtreme("Expression result: " + to_string(value));
@@ -266,6 +219,7 @@ double ExpressionPort::apply() {
 		this->setOutputPorts(value);
 
 		return value;
+/*
 	}
 	else {
 		// the variables could not be prepared, due to some error
@@ -283,12 +237,13 @@ double ExpressionPort::apply() {
 	}
 
 	return NAN;
+*/
 }
 
 uint8_t ExpressionPort::doWork(uint8_t canSend)  {
 	opdi::DigitalPort::doWork(canSend);
 
-	if (this->line == 1) {
+	if (this->getLine() == 1) {
 		this->apply();
 		
 		// maximum number of iterations specified and reached?

@@ -58,6 +58,7 @@ Port::Port(const char* id, const char* type) {
 	this->setLabel(id);
 	this->type[0] = type[0];
 	this->type[1] = '\0';
+	this->valueAsDouble = NAN;
 }
 
 Port::Port(const char* id, const char* type, const char* dircaps, int32_t flags, void* ptr) : Port(id, type) {
@@ -428,6 +429,8 @@ void Port::checkError() const {
 void Port::setError(Error error) {
 	if (this->error != error)
 		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
+	if (error != Error::VALUE_OK)
+		this->valueAsDouble = NAN;
 	this->error = error;
 }
 
@@ -715,18 +718,19 @@ const char* PortGroup::getParent(void) {
 
 #ifndef OPDI_NO_DIGITAL_PORTS
 
-DigitalPort::DigitalPort(const char* id) : Port(id, OPDI_PORTTYPE_DIGITAL, OPDI_PORTDIRCAP_BIDI, 0, nullptr) {
-	this->mode = 0;
-	this->line = 0;
-}
-
 DigitalPort::DigitalPort(const char* id, const char* dircaps, const int32_t flags) :
 	// call base constructor; mask unsupported flags (?)
-	Port(id, OPDI_PORTTYPE_DIGITAL, dircaps, flags, nullptr) { // & (OPDI_DIGITAL_PORT_HAS_PULLUP | OPDI_DIGITAL_PORT_PULLUP_ALWAYS) & (OPDI_DIGITAL_PORT_HAS_PULLDN | OPDI_DIGITAL_PORT_PULLDN_ALWAYS))
-
-	this->mode = 0;
+	Port(id, OPDI_PORTTYPE_DIGITAL, dircaps, flags, nullptr) // & (OPDI_DIGITAL_PORT_HAS_PULLUP | OPDI_DIGITAL_PORT_PULLUP_ALWAYS) & (OPDI_DIGITAL_PORT_HAS_PULLDN | OPDI_DIGITAL_PORT_PULLDN_ALWAYS))
+{
+	if (dircaps[0] == OPDI_PORTDIRCAP_OUTPUT[0])
+		this->mode = OPDI_DIGITAL_MODE_OUTPUT;
+	else
+		this->mode = OPDI_DIGITAL_MODE_INPUT_FLOATING;
 	this->line = 0;
+	this->valueAsDouble = 0;
 }
+
+DigitalPort::DigitalPort(const char* id) : DigitalPort(id, OPDI_PORTDIRCAP_BIDI, 0) {}
 
 void DigitalPort::setDirCaps(const char* dirCaps) {
 	Port::setDirCaps(dirCaps);
@@ -813,6 +817,7 @@ bool DigitalPort::setLine(uint8_t line, ChangeSource changeSource) {
 	if (changed) {
 		this->refreshRequired |= (this->refreshMode == RefreshMode::REFRESH_AUTO);
 		this->line = line;
+		this->valueAsDouble = line;
 		this->logDebug("DigitalPort Line changed to: " + this->to_string((int)this->line) + " by: " + this->getChangeSourceText(changeSource));
 		if (persistent && (this->opdi != nullptr))
 			this->opdi->persist(this);
@@ -859,9 +864,9 @@ void DigitalPort::testValue(const std::string & property, const std::string & ex
 	}
 	if (property == "Line") {
 		std::string lineStr("Unknown");
-		if (this->line == 0)
+		if (this->getLine() == 0)
 			lineStr = "Low";
-		if (this->line == 1)
+		if (this->getLine() == 1)
 			lineStr = "High";
 		return this->compareProperty(property, expectedValue, lineStr);
 	}
@@ -883,6 +888,7 @@ AnalogPort::AnalogPort(const char* id) : Port(id, OPDI_PORTTYPE_ANALOG, OPDI_POR
 	nullptr) {
 	this->mode = 0;
 	this->value = 0;
+	this->valueAsDouble = 0;
 	this->reference = 0;
 	this->resolution = 12;		// default
 }
@@ -958,6 +964,7 @@ void AnalogPort::setAbsoluteValue(int32_t value, ChangeSource changeSource) {
 	if (changed) {
 		this->refreshRequired |= (this->refreshMode == RefreshMode::REFRESH_AUTO);
 		this->value = newValue;
+		this->valueAsDouble = newValue;
 		this->logDebug("AnalogPort Value changed to: " + this->to_string((int)this->value) + " by: " + this->getChangeSourceText(changeSource));
 		if (persistent && (this->opdi != nullptr))
 			this->opdi->persist(this);
@@ -1042,12 +1049,14 @@ SelectPort::SelectPort(const char* id) : Port(id, OPDI_PORTTYPE_SELECT, OPDI_POR
 	this->count = 0;
 	this->labels = nullptr;
 	this->position = 0;
+	this->valueAsDouble = 0;
 }
 
 SelectPort::SelectPort(const char* id, const char** labels)
 	: Port(id, OPDI_PORTTYPE_SELECT, OPDI_PORTDIRCAP_OUTPUT, 0, nullptr) {
 	this->setLabels(labels);
 	this->position = 0;
+	this->valueAsDouble = 0;
 }
 
 SelectPort::~SelectPort() {
@@ -1096,7 +1105,13 @@ uint16_t SelectPort::getPositionByLabelOrderID(int orderID) {
 		++pos;
 	}
 	// not found
-	throw Poco::InvalidArgumentException("Specified OrderID does not match any SelectPort label: " + this->opdi->to_string(orderID));
+	throw Poco::InvalidArgumentException(this->ID() + ": Specified OrderID does not match any SelectPort label: " + this->opdi->to_string(orderID));
+}
+
+SelectPort::Label SelectPort::getLabelAt(uint16_t pos) {
+	if (pos > this->orderedLabels.size())
+		throw Poco::InvalidArgumentException(this->ID() + ": Specified position does not match any SelectPort label: " + this->opdi->to_string(pos));
+	return this->orderedLabels.at(pos);
 }
 
 void SelectPort::setLabels(const char** labels) {
@@ -1143,6 +1158,7 @@ bool SelectPort::setPosition(uint16_t position, ChangeSource changeSource) {
 	if (changed) {
 		this->refreshRequired |= (this->refreshMode == RefreshMode::REFRESH_AUTO);
 		this->position = position;
+		this->valueAsDouble = position;
 		this->logDebug("SelectPort Position changed to: " + this->to_string(this->position) + " by: " + this->getChangeSourceText(changeSource));
 		if (persistent && (this->opdi != nullptr))
 			this->opdi->persist(this);
@@ -1199,6 +1215,7 @@ DialPort::DialPort(const char* id) : Port(id, OPDI_PORTTYPE_DIAL, OPDI_PORTDIRCA
 	this->maxValue = 100;
 	this->step = 1;
 	this->position = 0;
+	this->valueAsDouble = 0;
 }
 
 DialPort::DialPort(const char* id, int64_t minValue, int64_t maxValue, uint64_t step)
@@ -1210,6 +1227,7 @@ DialPort::DialPort(const char* id, int64_t minValue, int64_t maxValue, uint64_t 
 	this->maxValue = maxValue;
 	this->step = step;
 	this->position = minValue;
+	this->valueAsDouble = minValue;
 }
 
 DialPort::~DialPort() {
@@ -1275,6 +1293,7 @@ bool DialPort::setPosition(int64_t position, ChangeSource changeSource) {
 	if (changed) {
 		this->refreshRequired |= (this->refreshMode == RefreshMode::REFRESH_AUTO);
 		this->position = position;
+		this->valueAsDouble = position;
 		this->logDebug("DialPort Position changed to: " + this->to_string(this->position) + " by: " + this->getChangeSourceText(changeSource));
 		if (persistent && (this->opdi != nullptr))
 			this->opdi->persist(this);

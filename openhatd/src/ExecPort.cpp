@@ -20,8 +20,7 @@ ExecPort::ExecPort(AbstractOpenHAT* openhat, const char* id) : opdi::DigitalPort
 
 	this->exitCodePort = nullptr;
 
-	// default: Low
-	this->line = 0;
+	// default is Low
 	this->processPID = 0;
 	this->killTimeMs = 0;		// kill time disabled
 	this->startRequested = false;
@@ -62,7 +61,7 @@ bool ExecPort::setLine(uint8_t line, ChangeSource changeSource) {
 		return false;
 
 	// switch from Low to High?
-	if ((this->line == 0) && (line == 1))
+	if ((this->getLine() == 0) && (line == 1))
 		// set flag for doWork
 		this->startRequested = true;
 

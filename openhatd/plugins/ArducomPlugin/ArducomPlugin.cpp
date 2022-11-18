@@ -493,7 +493,7 @@ namespace {
 	public:
 		DigitalPort(ArducomPlugin* plugin, const std::string& id, opdi::LogVerbosity logVerbosity) : ArducomPort(plugin, id, logVerbosity), 
 			opdi::DigitalPort(id.c_str()) {
-			this->mode = OPDI_DIGITAL_MODE_OUTPUT;
+			this->setMode(OPDI_DIGITAL_MODE_OUTPUT);
 		}
 
 		virtual void configure(openhat::ConfigurationView::Ptr config) {
@@ -559,7 +559,7 @@ namespace {
 		virtual int64_t getValueToWrite() override {
 			this->checkError();
 
-			return this->line;
+			return this->getLine();
 		};
 	};
 
@@ -623,7 +623,7 @@ namespace {
 		virtual int64_t getValueToWrite() override {
 			this->checkError();
 
-			return this->position;
+			return this->getPosition();
 		};
 	};
 
@@ -762,16 +762,16 @@ namespace {
 
 			// output map specified?
 			if (this->outputValues.size() > 0) {
-				if (this->outputValues.size() < this->position + 1)
-					throw Poco::Exception("Not enough values in output map (position: " + this->plugin->openhat->to_string(this->position));
+				if (this->outputValues.size() < this->getPosition() + 1)
+					throw Poco::Exception("Not enough values in output map (position: " + this->plugin->openhat->to_string(this->getPosition()));
 
-				std::string sValue = this->outputValues[this->position];
+				std::string sValue = this->outputValues[this->getPosition()];
 
 				return Poco::NumberParser::parse64(sValue);
 			}
 			else {
 				// no output map; use orderID of selected label
-				return this->orderedLabels.at(this->position).get<0>();
+				return this->getLabelAt(this->getPosition()).get<0>();
 			}
 		};
 	};

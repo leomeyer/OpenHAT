@@ -192,7 +192,7 @@ TimerPort::TimerPort(AbstractOpenHAT* openhat, const char* id) : DigitalPort(id,
 	DigitalPort::setMode(OPDI_DIGITAL_MODE_OUTPUT);
 
 	// default: enabled
-	this->line = 1;
+	this->setLine(1);
 	this->masterLoggedIn = false;
 
 	// set default icon
@@ -411,7 +411,7 @@ void TimerPort::prepare() {
 	// find ports; throws errors if something required is missing
 	this->findDigitalPorts(this->ID(), "OutputPorts", this->outputPortStr, this->outputPorts);
 
-	if (this->line == 1) {
+	if (this->getLine() == 1) {
 		// calculate all schedules
 		this->recalculateSchedules();
 	}
@@ -685,7 +685,7 @@ uint8_t TimerPort::doWork(uint8_t canSend)  {
 	this->masterLoggedIn = connected;
 
 	// timer not active?
-	if (this->line != 1)
+	if (this->getLine() != 1)
 		return OPDI_STATUS_OK;
 
 	Poco::Notification::Ptr notification = nullptr;
@@ -781,7 +781,7 @@ uint8_t TimerPort::doWork(uint8_t canSend)  {
 	// determine next scheduled time text
 	this->nextOccurrenceStr = "";
 
-	if (this->line == 1) {
+	if (this->getLine() == 1) {
 		// go through schedules
 		Poco::Timestamp ts = Poco::Timestamp::TIMEVAL_MAX;
 		Poco::Timestamp now;
@@ -825,12 +825,12 @@ void TimerPort::recalculateSchedules(Schedule* /*activatingSchedule*/) {
 }
 
 bool TimerPort::setLine(uint8_t line, ChangeSource changeSource) {
-	bool wasLow = (this->line == 0);
+	bool wasLow = (this->getLine() == 0);
 
 	bool changed = DigitalPort::setLine(line, changeSource);
 
 	// set to Low?
-	if (this->line == 0) {
+	if (this->getLine() == 0) {
 		if (!wasLow) {
 			// clear all schedules
 			this->queue.clear();
@@ -840,7 +840,7 @@ bool TimerPort::setLine(uint8_t line, ChangeSource changeSource) {
 	}
 
 	// set to High?
-	if (this->line == 1) {
+	if (this->getLine() == 1) {
 		if (wasLow)
 			this->recalculateSchedules();
 	}
@@ -852,7 +852,7 @@ bool TimerPort::setLine(uint8_t line, ChangeSource changeSource) {
 std::string TimerPort::getExtendedState(bool withHistory) const {
 	std::string result = DigitalPort::getExtendedState(withHistory);
 	std::string myText;
-	if (this->line != 1) {
+	if (this->getLine() != 1) {
 		myText = this->deactivatedText;
 	} else {
 		if (this->nextOccurrenceStr == "")

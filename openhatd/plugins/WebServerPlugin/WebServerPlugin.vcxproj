@@ -96,6 +96,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="../../../opdi_core/code/c/common\cppwrapper\OPDI_Ports.h" />
+    <ClInclude Include="..\..\..\libraries\Mongoose\mongoose.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="webdocroot\index.html" />

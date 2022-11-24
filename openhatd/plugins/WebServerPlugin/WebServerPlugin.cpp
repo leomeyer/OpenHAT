@@ -35,9 +35,9 @@ class WebServerPlugin : public IOpenHATPlugin, public opdi::DigitalPort {
 
 	openhat::AbstractOpenHAT* openhat;
 	// web server management structures
-	struct mg_mgr mgr;
-	struct mg_connection* nc;
-	struct mg_serve_http_opts s_http_server_opts;	// https://docs.cesanta.com/mongoose/dev/#/c-api/http.h/struct_mg_serve_http_opts/
+	mg_mgr mgr;
+	mg_connection* nc;
+	mg_http_serve_opts s_http_server_opts;	// https://docs.cesanta.com/mongoose/dev/#/c-api/http.h/struct_mg_serve_http_opts/
 	
 	std::string httpPort;
 	std::string documentRoot;
@@ -56,7 +56,7 @@ class WebServerPlugin : public IOpenHATPlugin, public opdi::DigitalPort {
 
 public:
 	WebServerPlugin(): opdi::DigitalPort("WebServerPlugin", OPDI_PORTDIRCAP_OUTPUT, 0), mgr() {
-		memset(&this->s_http_server_opts, 0, sizeof(mg_serve_http_opts));
+		memset(&this->s_http_server_opts, 0, sizeof(mg_http_serve_opts));
 		this->httpPort = "8080";
 		this->documentRoot = "./webdocroot/";
 		this->enableDirListing = "yes";
@@ -70,7 +70,7 @@ public:
 
 	virtual void setupPlugin(openhat::AbstractOpenHAT* openhat, const std::string& node, openhat::ConfigurationView::Ptr nodeConfig, openhat::ConfigurationView::Ptr parentConfig, const std::string& driverPath) override;
 
-	void handleEvent(struct mg_connection* nc, int ev, void* p);
+	void handleEvent(struct mg_connection* nc, int ev, void* ev_data, void* fn_data);
 
 	virtual uint8_t doWork(uint8_t canSend) override;
 	virtual void shutdown(void) override;
@@ -95,26 +95,26 @@ public:
 	Poco::JSON::Array jsonGetPortGroups();
 
 	/** This method returns information about the device (name, ports, groups, ...) as a JSON object. */
-	Poco::JSON::Object jsonRpcGetDeviceInfo(struct mg_connection* nc, struct http_message* hm, Poco::Dynamic::Var& params);
+	Poco::JSON::Object jsonRpcGetDeviceInfo(struct mg_connection* nc, struct mg_http_message* hm, Poco::Dynamic::Var& params);
 
 	/** This method expects the port ID in the portID parameter of the params object. */
-	Poco::JSON::Object jsonRpcGetPortInfo(struct mg_connection* nc, struct http_message* hm, Poco::Dynamic::Var& params);
+	Poco::JSON::Object jsonRpcGetPortInfo(struct mg_connection* nc, struct mg_http_message* hm, Poco::Dynamic::Var& params);
 
 	/** This method expects the port ID in the portID parameter and the new line state in the line parameter of the params object.
 	* It returns the port info object. */
-	Poco::JSON::Object jsonRpcSetDigitalState(struct mg_connection* nc, struct http_message* hm, Poco::Dynamic::Var& params);
+	Poco::JSON::Object jsonRpcSetDigitalState(struct mg_connection* nc, struct mg_http_message* hm, Poco::Dynamic::Var& params);
 
 	/** This method expects the port ID in the portID parameter and the new value in the value parameter of the params object.
 	* It returns the port info object. */
-	Poco::JSON::Object jsonRpcSetAnalogValue(struct mg_connection* nc, struct http_message* hm, Poco::Dynamic::Var& params);
+	Poco::JSON::Object jsonRpcSetAnalogValue(struct mg_connection* nc, struct mg_http_message* hm, Poco::Dynamic::Var& params);
 
 	/** This method expects the port ID in the portID parameter and the new position in the position parameter of the params object.
 	* It returns the port info object. */
-	Poco::JSON::Object jsonRpcSetDialPosition(struct mg_connection* nc, struct http_message* hm, Poco::Dynamic::Var& params);
+	Poco::JSON::Object jsonRpcSetDialPosition(struct mg_connection* nc, struct mg_http_message* hm, Poco::Dynamic::Var& params);
 
 	/** This method expects the port ID in the portID parameter and the new position in the position parameter of the params object.
 	* It returns the port info object. */
-	Poco::JSON::Object jsonRpcSetSelectPosition(struct mg_connection* nc, struct http_message* hm, Poco::Dynamic::Var& params);
+	Poco::JSON::Object jsonRpcSetSelectPosition(struct mg_connection* nc, struct mg_http_message* hm, Poco::Dynamic::Var& params);
 };
 
 }	// end anonymous namespace
@@ -122,9 +122,9 @@ public:
 static WebServerPlugin* instance;
 
 // Mongoose event handler function
-static void ev_handler(struct mg_connection* nc, int ev, void* p) {
+static void ev_handler(struct mg_connection* nc, int ev, void* ev_data, void* fn_data) {
 	// delegate to class instance
-	instance->handleEvent(nc, ev, p);
+	instance->handleEvent(nc, ev, ev_data, fn_data);
 }
 
 Poco::JSON::Object WebServerPlugin::jsonGetPortState(opdi::Port* port) {
@@ -201,7 +201,7 @@ Poco::JSON::Object WebServerPlugin::jsonGetPortInfo(opdi::Port* port) {
 	return result;
 }
 
-Poco::JSON::Object WebServerPlugin::jsonRpcGetPortInfo(struct mg_connection* /*nc*/, struct http_message* /*hm*/, Poco::Dynamic::Var& params) {
+Poco::JSON::Object WebServerPlugin::jsonRpcGetPortInfo(struct mg_connection* /*nc*/, struct mg_http_message* /*hm*/, Poco::Dynamic::Var& params) {
 	Poco::JSON::Object::Ptr object = params.extract<Poco::JSON::Object::Ptr>();
 	Poco::Dynamic::Var portID = object->get("portID");
 	std::string portIDStr = portID.convert<std::string>();
@@ -249,7 +249,7 @@ Poco::JSON::Array WebServerPlugin::jsonGetPortGroups() {
 	return result;
 }
 
-Poco::JSON::Object WebServerPlugin::jsonRpcGetDeviceInfo(struct mg_connection* /*nc*/, struct http_message* /*hm*/, Poco::Dynamic::Var& /*params*/) {
+Poco::JSON::Object WebServerPlugin::jsonRpcGetDeviceInfo(struct mg_connection* /*nc*/, struct mg_http_message* /*hm*/, Poco::Dynamic::Var& /*params*/) {
 	// return an object that represents the top group
 	// sub-groups will be contained in its subgroups member
 	Poco::JSON::Object result;
@@ -262,7 +262,7 @@ Poco::JSON::Object WebServerPlugin::jsonRpcGetDeviceInfo(struct mg_connection* /
 	return result;
 }
 
-Poco::JSON::Object WebServerPlugin::jsonRpcSetDigitalState(struct mg_connection* /*nc*/, struct http_message* /*hm*/, Poco::Dynamic::Var& params) {
+Poco::JSON::Object WebServerPlugin::jsonRpcSetDigitalState(struct mg_connection* /*nc*/, struct mg_http_message* /*hm*/, Poco::Dynamic::Var& params) {
 	Poco::JSON::Object::Ptr object = params.extract<Poco::JSON::Object::Ptr>();
 	Poco::Dynamic::Var portID = object->get("portID");
 	if (portID.isEmpty())
@@ -292,7 +292,7 @@ Poco::JSON::Object WebServerPlugin::jsonRpcSetDigitalState(struct mg_connection*
 	return this->jsonGetPortInfo(port);
 }
 
-Poco::JSON::Object WebServerPlugin::jsonRpcSetAnalogValue(struct mg_connection* /*nc*/, struct http_message* /*hm*/, Poco::Dynamic::Var& params) {
+Poco::JSON::Object WebServerPlugin::jsonRpcSetAnalogValue(struct mg_connection* /*nc*/, struct mg_http_message* /*hm*/, Poco::Dynamic::Var& params) {
 	Poco::JSON::Object::Ptr object = params.extract<Poco::JSON::Object::Ptr>();
 	Poco::Dynamic::Var portID = object->get("portID");
 	if (portID.isEmpty())
@@ -320,7 +320,7 @@ Poco::JSON::Object WebServerPlugin::jsonRpcSetAnalogValue(struct mg_connection* 
 	return this->jsonGetPortInfo(port);
 }
 
-Poco::JSON::Object WebServerPlugin::jsonRpcSetDialPosition(struct mg_connection* /*nc*/, struct http_message* /*hm*/, Poco::Dynamic::Var& params) {
+Poco::JSON::Object WebServerPlugin::jsonRpcSetDialPosition(struct mg_connection* /*nc*/, struct mg_http_message* /*hm*/, Poco::Dynamic::Var& params) {
 	Poco::JSON::Object::Ptr object = params.extract<Poco::JSON::Object::Ptr>();
 	Poco::Dynamic::Var portID = object->get("portID");
 	if (portID.isEmpty())
@@ -348,7 +348,7 @@ Poco::JSON::Object WebServerPlugin::jsonRpcSetDialPosition(struct mg_connection*
 	return this->jsonGetPortInfo(port);
 }
 
-Poco::JSON::Object WebServerPlugin::jsonRpcSetSelectPosition(struct mg_connection* /*nc*/, struct http_message* /*hm*/, Poco::Dynamic::Var& params) {
+Poco::JSON::Object WebServerPlugin::jsonRpcSetSelectPosition(struct mg_connection* /*nc*/, struct mg_http_message* /*hm*/, Poco::Dynamic::Var& params) {
 	Poco::JSON::Object::Ptr object = params.extract<Poco::JSON::Object::Ptr>();
 	Poco::Dynamic::Var portID = object->get("portID");
 	if (portID.isEmpty())
@@ -407,24 +407,31 @@ void WebServerPlugin::sendJsonRpcError(struct mg_connection* nc, Poco::Dynamic::
 		strOut.size(), strOut.c_str());
 }
 
-void WebServerPlugin::handleEvent(struct mg_connection* nc, int ev, void* p) {
+void WebServerPlugin::handleEvent(struct mg_connection* nc, int ev, void* ev_data, void* fn_data) {
 
-	struct http_message* hm = (struct http_message*)p;
+	struct mg_http_message* hm = (struct mg_http_message*)ev_data;
 	
   	switch (ev) {
-		case MG_EV_HTTP_REQUEST:
+		case MG_EV_HTTP_MSG:
 			// accelerate processing
 			this->priority = 5;
 			this->accelTime = opdi_get_time_ms();
-			
+
+		/*
 			// prepare log message
 			char address[INET6_ADDRSTRLEN];
-			inet_ntop(nc->sa.sa.sa_family, get_in_addr(&nc->sa.sa), address, sizeof address);
+			inet_ntop(nc->rem.sa.sa.sa_family, get_in_addr(&nc->sa.sa), address, sizeof address);
 			this->logDebug(std::string("Request received from: ") + address + " for: " + std::string(hm->uri.p, hm->uri.len));
-
+		*/
+			// websocket request?
+			if (mg_vcmp(&hm->uri, "/ws") == 0) {
+				// upgrade the connection to websocket
+				mg_ws_upgrade(nc, hm, NULL);
+			}
+			else
 			// JSON-RPC url received?
 			if (mg_vcmp(&hm->uri, jsonRpcUrl.c_str()) == 0) {
-				std::string json(hm->body.p, hm->body.len);
+				std::string json(hm->body.ptr, hm->body.len);
 				this->logDebug("Received JSON-RPC request: " + json);
 				// parse JSON
 				Poco::Dynamic::Var id;
@@ -540,11 +547,11 @@ void WebServerPlugin::handleEvent(struct mg_connection* nc, int ev, void* p) {
 					this->sendJsonRpcError(nc, id, -32603, err);	// Internal error
 				}
 				// send data
-				nc->flags |= MG_F_SEND_AND_CLOSE;
+				nc->is_draining = 1;
 				break;
 			} else
 				// serve static content
-				mg_serve_http(nc, hm, this->s_http_server_opts);
+				mg_http_serve_dir(nc, hm, &this->s_http_server_opts);
 			break;
 		default:
 			break;
@@ -552,25 +559,27 @@ void WebServerPlugin::handleEvent(struct mg_connection* nc, int ev, void* p) {
 }
 
 void WebServerPlugin::onAllPortsRefreshed(const void* /*pSender*/) {
-	struct mg_connection *c;
+	struct mg_connection *c = this->mgr.conns;
 	const char* message = "RefreshAll";
 	int msgLen = strlen(message);
 
-	for (c = mg_next(&this->mgr, NULL); c != NULL; c = mg_next(&this->mgr, c)) {
-		if (c->flags & MG_F_IS_WEBSOCKET)
-			mg_send_websocket_frame(c, WEBSOCKET_OP_TEXT, message, msgLen);
+	while (c != nullptr) {
+		if (c->is_websocket == 1)
+			mg_ws_send(c, message, msgLen, WEBSOCKET_OP_TEXT);
+		c = c->next;
 	}
 }
 
 void WebServerPlugin::onPortRefreshed(const void* /*pSender*/, opdi::Port*& port) {
-	struct mg_connection *c;
+	struct mg_connection* c = this->mgr.conns;
 	char buf[255];
-
 	snprintf(buf, sizeof(buf), "Refresh %s", port->ID().c_str());
 	int bufLen = strlen(buf);
-	for (c = mg_next(&this->mgr, NULL); c != NULL; c = mg_next(&this->mgr, c)) {
-		if (c->flags & MG_F_IS_WEBSOCKET)
-			mg_send_websocket_frame(c, WEBSOCKET_OP_TEXT, buf, bufLen);
+
+	while (c != nullptr) {
+		if (c->is_websocket == 1)
+			mg_ws_send(c, buf, bufLen, WEBSOCKET_OP_TEXT);
+		c = c->next;
 	}
 }
 
@@ -597,9 +606,11 @@ void WebServerPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::
 	// expose JSON-RPC API via special URL (can be disabled by setting the URL to "")
 	this->jsonRpcUrl = nodeConfig->getString("JsonRpcUrl", this->jsonRpcUrl);
 		
-	this->s_http_server_opts.document_root = this->documentRoot.c_str();
+	this->s_http_server_opts.root_dir = this->documentRoot.c_str();
+
+	/*
 	this->enableDirListing = nodeConfig->getBool("EnableDirListing", false) ? "yes" : "";
-	this->s_http_server_opts.enable_directory_listing = this->enableDirListing.c_str();
+	this->s_http_server_opts. = this->enableDirListing.c_str();
 	this->indexFiles = nodeConfig->getString("IndexFiles", this->indexFiles);
 	this->s_http_server_opts.index_files = this->indexFiles.c_str();
 	this->perDirectoryAuthFile = nodeConfig->getString("PerDirectoryAuthFile", this->perDirectoryAuthFile);
@@ -614,31 +625,33 @@ void WebServerPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::
 	this->ipACL = nodeConfig->getString("IP_ACL", this->ipACL);
 	if (this->ipACL != "")
 		this->s_http_server_opts.ip_acl = this->ipACL.c_str();
-
+*/
 	this->logVerbose("Setting up web server on port " + this->httpPort);
-
+/*
 	const char* errorString[256];
 	struct mg_bind_opts opts;
 	opts.user_data = nullptr;
 	opts.iface = nullptr;
 	opts.flags = 0;
 	opts.error_string = errorString;
-		
+*/		
 	// setup web server
-	mg_mgr_init(&this->mgr, nullptr);
-	this->nc = mg_bind_opt(&this->mgr, this->httpPort.c_str(), ev_handler, opts);
+	mg_mgr_init(&this->mgr);
+	
+	this->nc = mg_http_listen(&this->mgr, (std::string("0.0.0.0:") + this->httpPort).c_str(), ev_handler, NULL);
 	
 	if (this->nc == nullptr)
 #ifdef linux
 		throw Poco::ApplicationException(this->ID() + ": Unable to setup web server: " + *errorString + ": " + strerror(errno));
 #elif _WINDOWS
-		throw Poco::ApplicationException(this->ID() + ": Unable to setup web server: " + *errorString);
+		;
+		//throw Poco::ApplicationException(this->ID() + ": Unable to setup web server: " + *errorString);
 #else
 #error Platform not defined
 #endif
 
 	// set HTTP server parameters
-	mg_set_protocol_http_websocket(this->nc);
+	//mg_set_protocol_http_websocket(this->nc);
 
 	this->logVerbose("WebServerPlugin setup completed successfully on port " + this->httpPort);
 	

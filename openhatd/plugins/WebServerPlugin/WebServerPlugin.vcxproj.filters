@@ -38,6 +38,9 @@
     <ClInclude Include="../../../opdi_core/code/c/common\cppwrapper\OPDI_Ports.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\libraries\Mongoose\mongoose.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="webdocroot\index.html">

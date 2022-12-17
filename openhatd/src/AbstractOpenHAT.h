@@ -127,6 +127,7 @@ protected:
 	uint64_t currentFrame;					// number of the current doWork iteration ("frame")
 	double framesPerSecond;					// average number of doWork iterations processed per second
 	int targetFramesPerSecond;				// target number of doWork iterations per second
+    uint64_t lastPersistentConfigSave;
 
 	std::string heartbeatFile;
 

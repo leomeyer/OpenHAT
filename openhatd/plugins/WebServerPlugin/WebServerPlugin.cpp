@@ -642,7 +642,7 @@ void WebServerPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::
 	
 	if (this->nc == nullptr)
 #ifdef linux
-		throw Poco::ApplicationException(this->ID() + ": Unable to setup web server: " + *errorString + ": " + strerror(errno));
+		throw Poco::ApplicationException(this->ID() + ": Unable to setup web server: " + strerror(errno));
 #elif _WINDOWS
 		;
 		//throw Poco::ApplicationException(this->ID() + ": Unable to setup web server: " + *errorString);

@@ -79,6 +79,7 @@ AbstractOpenHAT::AbstractOpenHAT(void) {
 	this->allowHiddenPorts = true;
 	this->suppressUnusedParameterMessages = false;
     this->defaultPortPriority = opdi::DEFAULT_PORT_PRIORITY;
+    this->lastPersistentConfigSave = 0;
 
 	// opdi result codes
 	resultCodeTexts[0] = "STATUS_OK";
@@ -1535,8 +1536,13 @@ void AbstractOpenHAT::savePersistentConfig() {
 	if (this->persistentConfig == nullptr)
 		return;
 
-	this->persistentConfig->setString("LastChange", this->getTimestampStr());
-	this->persistentConfig->save(this->persistentConfigFile);
+    // avoid saving too often (performance)
+    if (this->shutdownRequested || (opdi_get_time_ms() - this->lastPersistentConfigSave > 10000)) {
+	    this->persistentConfig->setString("LastChange", this->getTimestampStr());
+	    this->persistentConfig->save(this->persistentConfigFile);
+
+        this->lastPersistentConfigSave = opdi_get_time_ms();
+    }
 }
 
 void AbstractOpenHAT::persist(opdi::Port* port) {

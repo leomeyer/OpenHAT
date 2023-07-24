@@ -2032,7 +2032,7 @@ void MQTTPlugin::terminate() {
 
 Poco::JSON::Object::Ptr MQTTPlugin::GetObject(Poco::JSON::Object::Ptr jsonObject, const std::string& key) {
 	Poco::JSON::Object::Ptr result = jsonObject->getObject(key);
-	if (result == nullptr)
+	if (result.isNull())
 		throw Poco::Exception("JSON value not found: " + key);
     return result;
 }

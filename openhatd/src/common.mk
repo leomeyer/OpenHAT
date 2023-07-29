@@ -92,7 +92,7 @@ SRC += $(LIBCTB)/src/fifo.cpp $(LIBCTB)/src/getopt.cpp $(LIBCTB)/src/iobase.cpp 
 SRC += $(LIBCTB)/src/linux/timer.cpp $(LIBCTB)/src/portscan.cpp $(LIBCTB)/src/serportx.cpp
 
 # Additional libraries
-LIBS += -lpthread -ldl -lrt
+LIBS += 
 
 # The compiler to be used.
 CC ?= g++

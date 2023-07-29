@@ -97,10 +97,18 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${OPDI_POCO_XML}/include
     )
 
-target_link_libraries(${PROJECT_NAME} -ldl -lpthread)
-target_link_libraries(${PROJECT_NAME} PocoNet)
-target_link_libraries(${PROJECT_NAME} PocoUtil)
-target_link_libraries(${PROJECT_NAME} PocoFoundation)
+#if (DEFINED OPENHAT_STATIC_LINKING)
+#    target_link_libraries(${PROJECT_NAME} -static libdl.a)
+#    target_link_libraries(${PROJECT_NAME} -static libpthread.a)
+#    target_link_libraries(${PROJECT_NAME} -static libPocoNet.a)
+#    target_link_libraries(${PROJECT_NAME} -static libPocoUtil.a)
+#    target_link_libraries(${PROJECT_NAME} -static libPocoFoundation.a)
+#else()
+    target_link_libraries(${PROJECT_NAME} -ldl -lpthread)
+    target_link_libraries(${PROJECT_NAME} PocoNet)
+    target_link_libraries(${PROJECT_NAME} PocoUtil)
+    target_link_libraries(${PROJECT_NAME} PocoFoundation)
+#endif()
 
 target_compile_options(${PROJECT_NAME} 
     PRIVATE 

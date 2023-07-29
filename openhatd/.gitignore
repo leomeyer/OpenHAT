@@ -4,4 +4,6 @@ build/
 build-rpi/
 .vs/
 *.so*
+openhatd
+*.swp
 /openhatd-docs*

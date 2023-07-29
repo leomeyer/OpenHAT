@@ -28,6 +28,10 @@
 // They are either misconfiguration errors or responses to master programming errors.
 // They should never be displayed to the user of a master if code and configuration are correct.
 
+#ifdef __GNUG__
+#define strcpy_s(dest, n, src)  strcpy(dest, src)
+#endif
+
 namespace opdi {
 
 //////////////////////////////////////////////////////////////////////////////////////////

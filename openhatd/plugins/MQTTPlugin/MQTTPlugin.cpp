@@ -39,6 +39,10 @@
 #define DEFAULT_QUERY_INTERVAL	30
 #define DEFAULT_TIMEOUT			(2 * DEFAULT_QUERY_INTERVAL)
 
+#ifdef __GNUG__
+#define isnan(x)  __builtin_isnan(x)
+#endif
+
 namespace {
 	
 class action_listener : public virtual mqtt::iaction_listener

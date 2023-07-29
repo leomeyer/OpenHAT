@@ -113,7 +113,7 @@ namespace {
 		Poco::Mutex mutex;
 		opdi::LogVerbosity logVerbosity;
 
-#if not defined(__CYGWIN__) && not defined(WIN32)
+#if !defined(__CYGWIN__) && !defined(WIN32)
 		int semkey;
 #endif
 		int8_t readCommand;
@@ -156,7 +156,7 @@ namespace {
 		};
 
 		virtual void configure(openhat::ConfigurationView::Ptr config) {
-#if not defined(__CYGWIN__) && not defined(WIN32)
+#if !defined(__CYGWIN__) && !defined(WIN32)
 			this->semkey = config->getInt("SemaphoreKey", 0);
 #endif
 
@@ -168,7 +168,7 @@ namespace {
 				try {
 					iRead = Poco::NumberParser::parse(sRead);
 				}
-				catch (Poco::Exception& e) {
+				catch (Poco::Exception&) {
 					throw Poco::InvalidArgumentException(this->pid + ": Value for 'ReadCommand' must be an integer; got: '" + sRead + "'");
 				}
 				if (iRead < 0 || iRead > 127)
@@ -203,7 +203,7 @@ namespace {
 				try {
 					this->readOffset = Poco::NumberParser::parse(sReadOffset);
 				}
-				catch (Poco::Exception& e) {
+				catch (Poco::Exception&) {
 					throw Poco::InvalidArgumentException(this->pid + ": Value for 'ReadOffset' must be an integer; got: '" + sReadOffset + "'");
 				}
 				if (this->readOffset > 63)
@@ -220,7 +220,7 @@ namespace {
 				try {
 					iWrite = Poco::NumberParser::parse(sWrite);
 				}
-				catch (Poco::Exception& e) {
+				catch (Poco::Exception&) {
 					throw Poco::InvalidArgumentException(this->pid + ": Value for 'WriteCommand' must be an integer; got: '" + sWrite + "'");
 				}
 				if (iWrite < 0 || iWrite > 127)
@@ -327,7 +327,7 @@ namespace {
 			if (!this->readParameters.empty())
 				Arducom::parsePayload(this->readParameters, this->readParameterFormat, this->readParameterSeparator, payload);
 
-			size = payload.size();
+			size = (uint8_t)payload.size();
 
 			this->plugin->openhat->logDebug(this->pid + ": executeRead with command "
 				+ this->plugin->openhat->to_string((int)this->readCommand) + "; payload size: " + this->plugin->openhat->to_string((int)size), this->logVerbosity);
@@ -340,7 +340,7 @@ namespace {
 
 		void checkRefresh() {
 			// time for refresh?
-			if ((this->queryInterval > 0) && (opdi_get_time_ms() - this->lastQueryTime > this->queryInterval * 1000)) {
+			if ((this->queryInterval > 0) && (opdi_get_time_ms() - this->lastQueryTime > this->queryInterval * 1000ul)) {
 				this->plugin->queue.enqueueNotification(new ActionNotification(ActionNotification::READ, this));
 				this->lastQueryTime = opdi_get_time_ms();
 			}
@@ -371,6 +371,7 @@ namespace {
 
 		int64_t executeWrite(double value) {
 			std::vector<uint8_t> payload;
+#define SHIFT_TO_BYTE(v, n)	(uint8_t)(v >> n)
 			uint8_t size;
 			uint8_t destBuffer[ARDUCOM_BUFFERSIZE];
 			uint8_t errorInfo;
@@ -388,28 +389,28 @@ namespace {
 				break;
 			}
 			case Arducom::FMT_INT16: {
-				if (value < INT16_MIN || value > INT16_MAX)
+				if (value < (double)INT16_MIN || value > (double)INT16_MAX)
 					throw Poco::InvalidArgumentException("Write value out of range for type 'Int16': " + this->plugin->openhat->to_string(value));
 				int16_t s = (uint16_t)value;
-				payload.push_back(s); payload.push_back(s >> 8);
+				payload.push_back((uint8_t)s); payload.push_back(SHIFT_TO_BYTE(s, 8));
 				break;
 			}
 			case Arducom::FMT_INT32: {
-				if (value < INT32_MIN || value > INT32_MAX)
+				if (value < (double)INT32_MIN || value >(double)INT32_MAX)
 					throw Poco::InvalidArgumentException("Write value out of range for type 'Int32': " + this->plugin->openhat->to_string(value));
 				int32_t i = (uint32_t)value;
-				payload.push_back(i); payload.push_back(i >> 8);
-				payload.push_back(i >> 16); payload.push_back(i >> 24);
+				payload.push_back(i); payload.push_back(SHIFT_TO_BYTE(i, 8));
+				payload.push_back(SHIFT_TO_BYTE(i, 16)); payload.push_back(SHIFT_TO_BYTE(i, 24));
 				break;
 			}
 			case Arducom::FMT_INT64: {
-				if (value < INT64_MIN || value > INT64_MAX)
+				if (value < (double)INT64_MIN || value >(double)INT64_MAX)
 					throw Poco::InvalidArgumentException("Write value out of range for type 'Int64': " + this->plugin->openhat->to_string(value));
 				int64_t l = (uint64_t)value;
-				payload.push_back(l); payload.push_back(l >> 8);
-				payload.push_back(l >> 16); payload.push_back(l >> 24);
-				payload.push_back(l >> 32); payload.push_back(l >> 40); 
-				payload.push_back(l >> 48); payload.push_back(l >> 56);
+				payload.push_back((uint8_t)l); payload.push_back(SHIFT_TO_BYTE(l, 8));
+				payload.push_back(SHIFT_TO_BYTE(l, 16)); payload.push_back(SHIFT_TO_BYTE(l, 24));
+				payload.push_back(SHIFT_TO_BYTE(l, 32)); payload.push_back(SHIFT_TO_BYTE(l, 40));
+				payload.push_back(SHIFT_TO_BYTE(l, 48)); payload.push_back(SHIFT_TO_BYTE(l, 56));
 				break;
 			}
 			case Arducom::FMT_FLOAT: {
@@ -425,7 +426,7 @@ namespace {
 				throw Poco::InvalidArgumentException(this->pid + ": WriteType must be one of: Byte, Int16, Int32, Int64, Float");
 			}
 
-			size = payload.size();
+			size = (uint8_t)payload.size();
 
 			this->plugin->openhat->logDebug(this->pid + ": executeWrite with command "
 				+ this->plugin->openhat->to_string((int)this->writeCommand) + "; payload size: " + this->plugin->openhat->to_string((int)size), this->logVerbosity);
@@ -716,7 +717,7 @@ namespace {
 					try {
 						orderID = Poco::NumberParser::parse(this->newValue);
 					}
-					catch (Poco::Exception& e) {
+					catch (Poco::Exception&) {
 						this->plugin->openhat->logWarning(this->pid + ": Received value must be an integer; got: '" + this->newValue + "'");
 						// set to error state
 						this->setError(Error::VALUE_NOT_AVAILABLE);

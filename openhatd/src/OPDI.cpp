@@ -226,7 +226,7 @@ opdi::Port* OPDI::findPortByID(const char* portID, bool caseInsensitive) {
 #ifdef linux
 			if (strcasecmp(oPort->id, portID) == 0)
 #else
-			if (strcmpi(oPort->id, portID) == 0)
+			if (_strcmpi(oPort->id, portID) == 0)
 #endif
 				return *it;
 		} else {
@@ -370,7 +370,7 @@ uint8_t OPDI::doWork(uint8_t canSend, uint8_t* sleepTimeMs) {
     
 	if (this->portSchedules.size() > 0)
 		// return suggested sleep time: time until the next port is to be executed
-		*sleepTimeMs = std::get<0>(this->portSchedules[0]) - opdi_get_time_ms();
+		*sleepTimeMs = (uint8_t)(std::get<0>(this->portSchedules[0]) - opdi_get_time_ms());
 
 	return OPDI_STATUS_OK;
 }

@@ -117,7 +117,7 @@ void WeatherGaugePort::configure(openhat::ConfigurationView::Ptr nodeConfig, opd
 	if (this->denominator == 0) 
 		throw Poco::InvalidArgumentException(this->ID() + ": The Denominator may not be 0");
 	// weather gauges start with an unavailable value
-	this->error = Error::VALUE_NOT_AVAILABLE;
+	this->setError(Error::VALUE_NOT_AVAILABLE);
 }
 
 void WeatherGaugePort::prepare(void) {
@@ -142,7 +142,7 @@ uint8_t WeatherGaugePort::doWork(uint8_t canSend) {
 	// no value to process?
 	if (rawValue == "") {
 		// expired?
-		if ((this->error == Error::VALUE_OK) && (this->expirySeconds > 0) && ((opdi_get_time_ms() - this->lastValidTime) / 1000 > this->expirySeconds)) {
+		if ((this->getError() == Error::VALUE_OK) && (this->expirySeconds > 0) && ((opdi_get_time_ms() - this->lastValidTime) / 1000 > this->expirySeconds)) {
 			this->logDebug("Value expired");
 			// set error, base method handles refresh
 			this->setError(Error::VALUE_EXPIRED);
@@ -175,7 +175,7 @@ uint8_t WeatherGaugePort::doWork(uint8_t canSend) {
 	try {
 		result = Poco::NumberParser::parseFloat(value);
 	} catch (Poco::Exception& e) {
-		this->logDebug("WeatherGaugePort for element " + this->dataElement + ": Warning: Unable to parse weather data: " + value);
+		this->logDebug("WeatherGaugePort for element " + this->dataElement + ": Warning: Unable to parse weather data: " + value + " (" + e.what() + ")");
 		// set error, base method handles refresh
 		this->setError(Error::VALUE_NOT_AVAILABLE);
 		return OPDI_STATUS_OK;

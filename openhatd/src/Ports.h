@@ -123,13 +123,13 @@ public:
 /// <a href="../../ports/selector_port">See the Selector port documentation.</a>
 class SelectorPort : public opdi::DigitalPort {
 protected:
-	openhat::AbstractOpenHAT* openhat;
+	openhat::AbstractOpenHAT* openhat = nullptr;
 	std::string selectPortStr;
-	opdi::SelectPort* selectPort;
+	opdi::SelectPort* selectPort = nullptr;
 	std::string outputPortStr;
 	opdi::DigitalPortList outputPorts;
 	int8_t errorState;
-	uint16_t position;
+	uint16_t position = 0;
 
 	/// This method checks the target Select port.
 	///
@@ -305,17 +305,17 @@ protected:
 		SET_TO_RIGHT
 	};
 
-	openhat::AbstractOpenHAT* openhat;
+	openhat::AbstractOpenHAT* openhat = nullptr;
 	FaderMode mode;
 	opdi::ValueResolver<double> leftValue;
 	opdi::ValueResolver<double> rightValue;
 	opdi::ValueResolver<int> durationMsValue;
-	double left;
-	double right;
-	int durationMs;
-	double expA;
-	double expB;
-	double expMax;
+	double left = 0;
+	double right = 0;
+	int durationMs = 0;
+	double expA = 0;
+	double expB = 0;
+	double expMax = 0;
 	bool invert;
 	SwitchOffAction switchOffAction;
 

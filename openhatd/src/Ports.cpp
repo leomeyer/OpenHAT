@@ -1555,7 +1555,7 @@ void AggregatorPort::Calculation::calculate(AggregatorPort* aggregator) {
 			bool interpolated = false;
 			if (values.size() < aggregator->totalValues) {
 				aggregator->logDebug(std::string(aggregator->getID()) + ": Value requires interpolation");
-				newValue = (double)newValue / values.size() * aggregator->totalValues;
+				newValue = (int64_t)((double)newValue / values.size() * (double)aggregator->totalValues);
 				interpolated = true;
 			}
 			aggregator->logDebug(std::string(aggregator->getID()) + ": New value according to Delta algorithm: " + this->to_string(newValue));
@@ -1607,7 +1607,7 @@ void AggregatorPort::Calculation::calculate(AggregatorPort* aggregator) {
 //			double val = sum * 1.0 / (60.0 * aggregator->totalValues / aggregator->queryInterval) * values.size();
 			aggregator->logDebug(std::string(aggregator->getID()) + ": New value according to Integrate algorithm: " + this->to_string(val));
 			if ((val >= this->getMin()) && (val <= this->getMax()))
-				this->setPosition(val);
+				this->setPosition((int64_t)val);
 			else
 				aggregator->logWarning(std::string(aggregator->getID()) + ": Cannot set new position: Calculated sum is out of range: " + this->to_string(sum));
 			break;

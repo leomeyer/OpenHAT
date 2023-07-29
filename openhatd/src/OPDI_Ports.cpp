@@ -59,7 +59,7 @@ Port::Port(const char* id, const char* type) {
 	this->setLabel(id);
 	this->type[0] = type[0];
 	this->type[1] = '\0';
-	this->valueAsDouble = NAN;
+	this->valueAsDouble = std::numeric_limits<double>::quiet_NaN();
 }
 
 Port::Port(const char* id, const char* type, const char* dircaps, int32_t flags, void* ptr) : Port(id, type) {
@@ -110,7 +110,7 @@ void Port::setID(const char* newID) {
 		free(this->id);
 	this->id = (char*)malloc(strlen(newID) + 1);
 	assert(this->id && "Unable to allocate memory");
-	strcpy(this->id, newID);
+	strcpy_s(this->id, strlen(newID) + 1, newID);
 }
 
 void Port::handleStateChange(ChangeSource changeSource) {
@@ -182,7 +182,7 @@ void Port::setLabel(const char* label) {
 		return;
 	this->label = (char*)malloc(strlen(label) + 1);
 	assert(this->label && "Unable to allocate memory");
-	strcpy(this->label, label);
+	strcpy_s(this->label, strlen(label) + 1, label);
 	// label changed; update internal data
 	if (this->opdi != nullptr)
 		this->opdi->updatePortData(this);
@@ -431,7 +431,7 @@ void Port::setError(Error error) {
 	if (this->error != error)
 		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
 	if (error != Error::VALUE_OK)
-		this->valueAsDouble = NAN;
+		this->valueAsDouble = std::numeric_limits<double>::quiet_NaN();
 	this->error = error;
 }
 
@@ -623,10 +623,10 @@ PortGroup::PortGroup(const char* id) {
 
 	this->id = (char*)malloc(strlen(id) + 1);
 	assert(this->id && "Unable to allocate memory");
-	strcpy(this->id, id);
+	strcpy_s(this->id, strlen(id) + 1, id);
 	this->label = (char*)malloc(strlen(id) + 1);
 	assert(this->label && "Unable to allocate memory");
-	strcpy(this->label, id);
+	strcpy_s(this->label, strlen(id) + 1, id);
 	this->parent = (char*)malloc(1);
 	assert(this->parent && "Unable to allocate memory");
 	this->parent[0] = '\0';
@@ -657,7 +657,7 @@ void PortGroup::updateExtendedInfo(void) {
 	}
 	this->extendedInfo = (char*)malloc(exInfo.size() + 1);
 	assert(this->extendedInfo && "Unable to allocate memory");
-	strcpy(this->extendedInfo, exInfo.c_str());
+	strcpy_s(this->extendedInfo, exInfo.size() + 1, exInfo.c_str());
 }
 
 void PortGroup::setLabel(const char* label) {
@@ -668,7 +668,7 @@ void PortGroup::setLabel(const char* label) {
 		return;
 	this->label = (char*)malloc(strlen(label) + 1);
 	assert(this->label && "Unable to allocate memory");
-	strcpy(this->label, label);
+	strcpy_s(this->label, strlen(label) + 1, label);
 	// label changed; update internal data
 	if (this->opdi != nullptr)
 		this->opdi->updatePortGroupData(this);
@@ -703,7 +703,7 @@ void PortGroup::setParent(const char* parent) {
 		throw Poco::InvalidArgumentException("Parent group ID must never be nullptr");
 	this->parent = (char*)malloc(strlen(parent) + 1);
 	assert(this->parent && "Unable to allocate memory");
-	strcpy(this->parent, parent);
+	strcpy_s(this->parent, strlen(parent) + 1, parent);
 	// label changed; update internal data
 	if (this->opdi != nullptr)
 		this->opdi->updatePortGroupData(this);
@@ -810,8 +810,8 @@ bool DigitalPort::setLine(uint8_t line, ChangeSource changeSource) {
 	if (line > 1)
 		throw PortError(this->ID() + ": Digital port line value not supported: " + this->to_string((int)line));
 	bool changed = (line != this->line);
-	if (this->error != Error::VALUE_OK) {
-		this->error = Error::VALUE_OK;
+	if (this->getError() != Error::VALUE_OK) {
+		this->setError(Error::VALUE_OK);
 		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
 		changed = true;
 	}
@@ -957,15 +957,15 @@ void AnalogPort::setAbsoluteValue(int32_t value, ChangeSource changeSource) {
 	// restrict value to possible range
 	int32_t newValue = this->validateValue(value);
 	bool changed = (newValue != this->value);
-	if (this->error != Error::VALUE_OK) {
-		this->error = Error::VALUE_OK;
+	if (this->getError() != Error::VALUE_OK) {
+		this->setError(Error::VALUE_OK);
 		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
 		changed = true;
 	}
 	if (changed) {
 		this->refreshRequired |= (this->refreshMode == RefreshMode::REFRESH_AUTO);
 		this->value = newValue;
-		this->valueAsDouble = newValue;
+		this->valueAsDouble = getRelativeValue();
 		this->logDebug("AnalogPort Value changed to: " + this->to_string((int)this->value) + " by: " + this->getChangeSourceText(changeSource));
 		if (persistent && (this->opdi != nullptr))
 			this->opdi->persist(this);
@@ -991,11 +991,11 @@ double AnalogPort::getRelativeValue(void) {
 	this->getState(&mode, &resolution, &reference, &value);
 	if (resolution == 0)
 		return 0;
-	return value * 1.0 / ((1 << resolution) - 1);
+	return value * 1.0 / (((int64_t)1 << resolution) - 1);
 }
 
 void AnalogPort::setRelativeValue(double value, ChangeSource changeSource) {
-	this->setAbsoluteValue(static_cast<int32_t>(value * ((1 << this->resolution) - 1)), changeSource);
+	this->setAbsoluteValue(static_cast<int32_t>(value * (((int64_t)1 << this->resolution) - 1)), changeSource);
 }
 
 uint8_t AnalogPort::getMode() const {
@@ -1150,7 +1150,7 @@ void SelectPort::setLabels(const char** labels) {
 		this->labels[itemCount] = (char*)malloc(strlen(labels[itemCount]) + 1);
 		assert(this->labels[itemCount] && "Unable to allocate memory");
 		// copy string
-		strcpy(this->labels[itemCount], labels[itemCount]);
+		strcpy_s(this->labels[itemCount], strlen(labels[itemCount]) + 1, labels[itemCount]);
 		itemCount++;
 		item = labels[itemCount];
 	}
@@ -1163,8 +1163,8 @@ bool SelectPort::setPosition(uint16_t position, ChangeSource changeSource) {
 	if (position > this->count)
 		throw PortError(this->ID() + ": Position must not exceed the number of items: " + to_string((int)this->count));
 	bool changed = (position != this->position);
-	if (this->error != Error::VALUE_OK) {
-		this->error = Error::VALUE_OK;
+	if (this->getError() != Error::VALUE_OK) {
+		this->setError(Error::VALUE_OK);
 		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
 		changed = true;
 	}
@@ -1240,7 +1240,7 @@ DialPort::DialPort(const char* id, int64_t minValue, int64_t maxValue, uint64_t 
 	this->maxValue = maxValue;
 	this->step = step;
 	this->position = minValue;
-	this->valueAsDouble = minValue;
+	this->valueAsDouble = (double)minValue;
 }
 
 DialPort::~DialPort() {
@@ -1298,15 +1298,15 @@ bool DialPort::setPosition(int64_t position, ChangeSource changeSource) {
 	// correct position to next possible step
 	int64_t newPosition = ((position - this->minValue) / this->step) * this->step + this->minValue;
 	bool changed = (newPosition != this->position);
-	if (this->error != Error::VALUE_OK) {
-		this->error = Error::VALUE_OK;
+	if (this->getError() != Error::VALUE_OK) {
+		this->setError(Error::VALUE_OK);
 		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
 		changed = true;
 	}
 	if (changed) {
 		this->refreshRequired |= (this->refreshMode == RefreshMode::REFRESH_AUTO);
 		this->position = position;
-		this->valueAsDouble = position;
+		this->valueAsDouble = (double)position;
 		this->logDebug("DialPort Position changed to: " + this->to_string(this->position) + " by: " + this->getChangeSourceText(changeSource));
 		if (persistent && (this->opdi != nullptr))
 			this->opdi->persist(this);
@@ -1376,8 +1376,8 @@ void CustomPort::configure(Poco::Util::AbstractConfiguration::Ptr portConfig) {
 
 bool CustomPort::setValue(const std::string& newValue, ChangeSource changeSource) {
 	bool changed = (newValue != this->value);
-	if (this->error != Error::VALUE_OK) {
-		this->error = Error::VALUE_OK;
+	if (this->getError() != Error::VALUE_OK) {
+		this->setError(Error::VALUE_OK);
 		this->refreshRequired = (this->refreshMode == RefreshMode::REFRESH_AUTO);
 		changed = true;
 	}

@@ -608,44 +608,18 @@ void WebServerPlugin::setupPlugin(openhat::AbstractOpenHAT* openhat, const std::
 		
 	this->s_http_server_opts.root_dir = this->documentRoot.c_str();
 
-	/*
-	this->enableDirListing = nodeConfig->getBool("EnableDirListing", false) ? "yes" : "";
-	this->s_http_server_opts. = this->enableDirListing.c_str();
-	this->indexFiles = nodeConfig->getString("IndexFiles", this->indexFiles);
-	this->s_http_server_opts.index_files = this->indexFiles.c_str();
-	this->perDirectoryAuthFile = nodeConfig->getString("PerDirectoryAuthFile", this->perDirectoryAuthFile);
-	if (this->perDirectoryAuthFile != "")
-		this->s_http_server_opts.per_directory_auth_file = this->perDirectoryAuthFile.c_str();
-	this->authDomain = nodeConfig->getString("AuthDomain", this->indexFiles);
-	if (this->authDomain != "")
-		this->s_http_server_opts.auth_domain = this->authDomain.c_str();
-	this->globalAuthFile = nodeConfig->getString("GlobalAuthFile", this->globalAuthFile);
-	if (this->globalAuthFile != "")
-		this->s_http_server_opts.global_auth_file = this->globalAuthFile.c_str();
-	this->ipACL = nodeConfig->getString("IP_ACL", this->ipACL);
-	if (this->ipACL != "")
-		this->s_http_server_opts.ip_acl = this->ipACL.c_str();
-*/
 	this->logVerbose("Setting up web server on port " + this->httpPort);
-/*
-	const char* errorString[256];
-	struct mg_bind_opts opts;
-	opts.user_data = nullptr;
-	opts.iface = nullptr;
-	opts.flags = 0;
-	opts.error_string = errorString;
-*/		
+
 	// setup web server
 	mg_mgr_init(&this->mgr);
 	
 	this->nc = mg_http_listen(&this->mgr, (std::string("0.0.0.0:") + this->httpPort).c_str(), ev_handler, NULL);
 	
-	if (this->nc == nullptr)
 #ifdef linux
+	if (this->nc == nullptr)
 		throw Poco::ApplicationException(this->ID() + ": Unable to setup web server: " + strerror(errno));
 #elif _WINDOWS
-		;
-		//throw Poco::ApplicationException(this->ID() + ": Unable to setup web server: " + *errorString);
+	//throw Poco::ApplicationException(this->ID() + ": Unable to setup web server: " + *errorString);
 #else
 #error Platform not defined
 #endif

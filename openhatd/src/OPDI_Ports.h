@@ -82,6 +82,12 @@ public:
 	// disable copy constructor
 	Port(const Port& that) = delete;
 
+private:
+
+	/// The error value of a port.
+	/// Subclasses must not access this value directly.
+	Error error;
+
 protected:
 	char* id;
 	char* label;
@@ -97,10 +103,6 @@ protected:
 	/// LogVerbosity setting. This setting usually overrides the main program's log verbosity.
 	///
 	LogVerbosity logVerbosity;
-
-	/// The error value of a port.
-	///
-	Error error;
 
 	/// Globally unique identifier for the port type. Necessary if another port needs to check
 	/// that a given port is indeed of a required type. Is sent to the master as part of the
@@ -1057,15 +1059,15 @@ public:
 template<typename T>
 class ValueResolver {
 
-	OPDI* opdi;
-	Port* origin;
+	OPDI* opdi = nullptr;
+	Port* origin = nullptr;
 	std::string paramName;
 	std::string portID;
 	bool useScaleValue;
 	double scaleValue;
 	bool useErrorDefault;
 	T errorDefault;
-	mutable opdi::Port* port;
+	mutable opdi::Port* port = nullptr;
 	bool isFixed;
 	T fixedValue;
 

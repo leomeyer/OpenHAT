@@ -62,11 +62,13 @@ friend class MQTTPlugin;
 protected:
 	MQTTPlugin *plugin;
 	std::string topic;
+	std::string getTopic;
+	std::string getPayload;
 	bool valueSet;
 	uint64_t lastQueryTime;
 	int32_t timeoutSeconds;
-	uint32_t queryInterval;
-	uint64_t timeoutCounter;
+	uint64_t queryInterval;
+	uint64_t lastReceiveTime;
 	Poco::Mutex mutex;
 	action_listener listener;
 
@@ -91,7 +93,7 @@ public:
 		this->valueSet = false;
 		this->lastQueryTime = 0;
 		this->queryInterval = DEFAULT_QUERY_INTERVAL;
-		this->timeoutCounter = 0;
+		this->lastReceiveTime = 0;
 		this->inputRegex = nullptr;
 		this->outputRegex = nullptr;
 	};
@@ -228,31 +230,31 @@ protected:
 	std::string nodeID;
 
 	std::string host;
-	int port;
+	int port = 1883;
 	std::string user;
 	std::string password;
-	uint32_t timeoutSeconds;
-	int QOS;
+	uint32_t timeoutSeconds = DEFAULT_TIMEOUT;
+	int QOS = 0;
 
 	std::string sid;
-	int errorCount;
+	int errorCount = 0;
 	std::string lastErrorMessage;
 
-	opdi::LogVerbosity logVerbosity;
+	opdi::LogVerbosity logVerbosity = opdi::LogVerbosity::NORMAL;
 
 	Poco::NotificationQueue queue;
 	Poco::Thread workThread;
 	
-	mqtt::async_client *client;
+	mqtt::async_client *client = nullptr;
 	
-	bool terminateRequested;
+	bool terminateRequested = false;
 	
 	void publish(const std::string& topic, const std::string& payload);
 
 	void errorOccurred(const std::string& message);
 
 public:
-	openhat::AbstractOpenHAT* openhat;
+	openhat::AbstractOpenHAT* openhat = nullptr;
 
 	virtual void masterConnected(void) override;
 	virtual void masterDisconnected(void) override;
@@ -545,6 +547,8 @@ void MQTTPort::tokenize(std::string const& str, const char delim,
 }
 
 void MQTTPort::configure(openhat::ConfigurationView::Ptr config) {
+	this->getTopic = config->getString("GetTopic", "");
+	this->getPayload = config->getString("GetPayload", "");
 	this->inputPattern = config->getString("InputPattern", "");
 	if (this->inputPattern.empty())
 		this->inputPattern = "(.*)";
@@ -555,8 +559,16 @@ void MQTTPort::configure(openhat::ConfigurationView::Ptr config) {
 	this->outputRegex = new Poco::RegularExpression("\\$value");
 }
 
-void MQTTPort::query(mqtt::async_client* client) {}
-
+void MQTTPort::query(mqtt::async_client* client) {
+	if (client->is_connected() && !this->getTopic.empty()) {
+		try {
+			client->publish(this->getTopic, this->getPayload);
+		}
+		catch (mqtt::exception& ex) {
+			this->plugin->openhat->logError(std::string("Error publishing MQTT topic: " + this->getTopic + " : " + ex.what()));
+		}
+	}
+}
 
 DigitalPort::DigitalPort(MQTTPlugin* plugin, const std::string& id, const std::string& topic) :
 	opdi::DigitalPort(id.c_str(), OPDI_PORTDIRCAP_BIDI, 0), MQTTPort(plugin, id, topic) {
@@ -589,6 +601,20 @@ uint8_t DigitalPort::doWork(uint8_t canSend) {
 	opdi::DigitalPort::doWork(canSend);
 
 	Poco::Mutex::ScopedLock lock(this->mutex);
+
+	// time for refresh?
+	if (!this->getTopic.empty() && (this->queryInterval > 0) && (opdi_get_time_ms() - this->lastQueryTime > this->queryInterval * 1000ul)) {
+		this->plugin->queue.enqueueNotification(new ActionNotification(ActionNotification::QUERY, this));
+	}
+
+	// no error?
+	if (this->getError() == Error::VALUE_OK) {
+		// error timeout reached without message?
+		if ((this->timeoutSeconds > 0) && (opdi_get_time_ms() - this->lastReceiveTime) / 1000 > this->timeoutSeconds) {
+			// change to error state
+			this->setError(Error::VALUE_EXPIRED);
+		}
+	}
 
 	// value received?
 	if (this->valueSet) {
@@ -634,7 +660,7 @@ void DigitalPort::configure(openhat::ConfigurationView::Ptr config) {
 bool DigitalPort::setLine(uint8_t line, ChangeSource changeSource) {
 	bool changed = opdi::DigitalPort::setLine(line, changeSource);
 
-	if (this->error != Error::VALUE_OK)
+	if (this->getError() != Error::VALUE_OK)
 		return changed;
 
 	if (changed) {
@@ -727,7 +753,7 @@ void DialPort::handle_payload(std::string payload) {
 	this->inputExpr->expressionStr = expr;
 	this->inputExpr->prepare();
 	double value = this->inputExpr->apply();
-	if (value == NAN) {
+	if (isnan(value)) {
 		this->plugin->openhat->logWarning(this->pid + ": Expression evaluated to NAN: '" + expr + "'");
 		// set to error state
 		this->newValue = this->getMin() - 1;
@@ -735,11 +761,10 @@ void DialPort::handle_payload(std::string payload) {
 		return;
 	}
 
-	this->newValue = value;
+	this->newValue = (int64_t)value;
 	this->valueSet = true;
 
-	// reset timeout counter
-	this->timeoutCounter = opdi_get_time_ms();
+	this->lastReceiveTime = opdi_get_time_ms();
 }
 
 uint8_t DialPort::doWork(uint8_t canSend) {
@@ -747,10 +772,24 @@ uint8_t DialPort::doWork(uint8_t canSend) {
 
 	Poco::Mutex::ScopedLock lock(this->mutex);
 
+	// time for refresh?
+	if (!this->getTopic.empty() && (this->queryInterval > 0) && (opdi_get_time_ms() - this->lastQueryTime > this->queryInterval * 1000)) {
+		this->plugin->queue.enqueueNotification(new ActionNotification(ActionNotification::QUERY, this));
+	}
+
+	// no error?
+	if (this->getError() == Error::VALUE_OK) {
+		// error timeout reached without message?
+		if ((this->timeoutSeconds > 0) && (opdi_get_time_ms() - this->lastReceiveTime) / 1000 > this->timeoutSeconds) {
+			// change to error state
+			this->setError(Error::VALUE_EXPIRED);
+		}
+	}
+
 	if (this->valueSet) {
 		try {
-			// values < minValue signify an error
-			if (this->newValue < this->getMin()) {
+			// values out of range cause an error
+			if (this->newValue < this->getMin() || this->newValue > this->getMax()) {
 				// change to error state
 				this->setError(Error::VALUE_NOT_AVAILABLE);
 			}
@@ -771,7 +810,7 @@ uint8_t DialPort::doWork(uint8_t canSend) {
 bool DialPort::setPosition(int64_t value, ChangeSource changeSource) {
 	bool changed = opdi::DialPort::setPosition(value, changeSource);
 
-	if (this->error != Error::VALUE_OK)
+	if (this->getError() != Error::VALUE_OK)
 		return changed;
 
 	if (!changed)
@@ -788,7 +827,7 @@ bool DialPort::setPosition(int64_t value, ChangeSource changeSource) {
 	this->outputExpr->expressionStr = expr;
 	this->outputExpr->prepare();
 	double dValue = this->outputExpr->apply();
-	if (dValue == NAN) {
+	if (isnan(dValue)) {
 		this->plugin->openhat->logWarning(this->pid + ": Expression evaluated to NAN: '" + expr + "'");
 		return true;
 	}
@@ -892,14 +931,28 @@ void SelectPort::handle_payload(std::string payload) {
 	this->newPosition = index;
 	this->valueSet = true;
 
-	// reset timeout counter
-	this->timeoutCounter = opdi_get_time_ms();
+	
+	this->lastReceiveTime = opdi_get_time_ms();
 }
 
 uint8_t SelectPort::doWork(uint8_t canSend) {
 	opdi::SelectPort::doWork(canSend);
 
 	Poco::Mutex::ScopedLock lock(this->mutex);
+
+    // time for refresh?
+    if (!this->getTopic.empty() && (this->queryInterval > 0) && (opdi_get_time_ms() - this->lastQueryTime > this->queryInterval * 1000)) {
+        this->plugin->queue.enqueueNotification(new ActionNotification(ActionNotification::QUERY, this));
+    }
+
+	// no error?
+	if (this->getError() == Error::VALUE_OK) {
+		// error timeout reached without message?
+		if ((this->timeoutSeconds > 0) && (opdi_get_time_ms() - this->lastReceiveTime) / 1000 > this->timeoutSeconds) {
+			// change to error state
+			this->setError(Error::VALUE_EXPIRED);
+		}
+	}
 
 	if (this->valueSet) {
 		try {
@@ -925,7 +978,7 @@ uint8_t SelectPort::doWork(uint8_t canSend) {
 bool SelectPort::setPosition(uint16_t value, ChangeSource changeSource) {
 	bool changed = opdi::SelectPort::setPosition(value, changeSource);
 
-	if (this->error != Error::VALUE_OK)
+	if (this->getError() != Error::VALUE_OK)
 		return changed;
 
 	if (!changed)
@@ -992,10 +1045,8 @@ void GenericPort::handle_payload(std::string payload) {
 	this->myValue = payload;
 	this->valueSet = true;
 
-	// reset query timer
-	this->lastQueryTime = opdi_get_time_ms();
-	// reset timeout counter
-	this->timeoutCounter = opdi_get_time_ms();
+	
+	this->lastReceiveTime = opdi_get_time_ms();
 }
 
 uint8_t GenericPort::doWork(uint8_t canSend) {
@@ -1006,17 +1057,16 @@ uint8_t GenericPort::doWork(uint8_t canSend) {
 	// time for refresh?
 	if ((this->queryInterval > 0) && (opdi_get_time_ms() - this->lastQueryTime > this->queryInterval * 1000)) {
 		this->plugin->queue.enqueueNotification(new ActionNotification(ActionNotification::QUERY, this));
-		this->lastQueryTime = opdi_get_time_ms();
 	}
 	
 	Poco::Mutex::ScopedLock lock(this->mutex);
 	// no error?
-	if (this->myValue != "") {
+	if (this->getError() == Error::VALUE_OK) {
 		// error timeout reached without message?
-		if ((opdi_get_time_ms() - this->timeoutCounter) / 1000 > this->timeoutSeconds) {
+		if ((this->timeoutSeconds > 0) && (opdi_get_time_ms() - this->lastReceiveTime) / 1000 > this->timeoutSeconds) {
 			// change to error state
 			this->myValue = "";
-			this->setError(Error::VALUE_NOT_AVAILABLE);
+			this->setError(Error::VALUE_EXPIRED);
 		}
 	}
 
@@ -1217,15 +1267,17 @@ void HG06337Switch::subscribe(mqtt::async_client *client) {
 		}
 }
 
-void HG06337Switch::query(mqtt::async_client *client) {
+void HG06337Switch::query(mqtt::async_client* client) {
 	this->plugin->openhat->logDebug(this->pid + ": Querying state", this->logVerbosity);
-	if (client->is_connected())
+	if (client->is_connected()) {
 		try {
 			client->publish(this->topic + "/get", "{\"state\":\"\"}");
-		}  catch (mqtt::exception& ex) {
+		}
+		catch (mqtt::exception& ex) {
 			this->plugin->openhat->logError(std::string(this->getID()) + ": Error querying state: " + this->topic + ": " + ex.what());
 		}
 	}
+}
 
 void HG06337Switch::handle_payload(std::string payload) {
 	this->plugin->openhat->logDebug(this->pid + ": Payload received: '" + payload + "'");
@@ -1241,10 +1293,8 @@ void HG06337Switch::handle_payload(std::string payload) {
 		this->setSwitchState(-1);
 		this->valueSet = true;
 	}
-	// reset query timer
-	this->lastQueryTime = opdi_get_time_ms();
-	// reset timeout counter
-	this->timeoutCounter = opdi_get_time_ms();
+	
+	this->lastReceiveTime = opdi_get_time_ms();
 }
 
 uint8_t HG06337Switch::doWork(uint8_t canSend) {
@@ -1253,17 +1303,16 @@ uint8_t HG06337Switch::doWork(uint8_t canSend) {
 	// time for refresh?
 	if ((this->queryInterval > 0) && (opdi_get_time_ms() - this->lastQueryTime > this->queryInterval * 1000)) {
 		this->plugin->queue.enqueueNotification(new ActionNotification(ActionNotification::QUERY, this));
-		this->lastQueryTime = opdi_get_time_ms();
 	}
 	
 	Poco::Mutex::ScopedLock lock(this->mutex);
 	// no error?
-	if (this->switchState > -1) {
+	if (this->getError() == Error::VALUE_OK) {
 		// error timeout reached without message?
-		if ((opdi_get_time_ms() - this->timeoutCounter) / 1000 > this->timeoutSeconds) {
+		if ((this->timeoutSeconds > 0) && (opdi_get_time_ms() - this->lastReceiveTime) / 1000 > this->timeoutSeconds) {
 			// change to error state
 			this->switchState = -1;
-			this->setError(Error::VALUE_NOT_AVAILABLE);
+			this->setError(Error::VALUE_EXPIRED);
 		}
 	}
 
@@ -1367,10 +1416,8 @@ void TasmotaSwitch::handle_payload(std::string payload) {
 		this->setSwitchState(-1);
 		this->valueSet = true;
 	}
-	// reset query timer
-	this->lastQueryTime = opdi_get_time_ms();
-	// reset timeout counter
-	this->timeoutCounter = opdi_get_time_ms();
+	
+	this->lastReceiveTime = opdi_get_time_ms();
 }
 
 uint8_t TasmotaSwitch::doWork(uint8_t canSend) {
@@ -1379,17 +1426,16 @@ uint8_t TasmotaSwitch::doWork(uint8_t canSend) {
 	// time for refresh?
 	if ((this->queryInterval > 0) && (opdi_get_time_ms() - this->lastQueryTime > this->queryInterval * 1000)) {
 		this->plugin->queue.enqueueNotification(new ActionNotification(ActionNotification::QUERY, this));
-		this->lastQueryTime = opdi_get_time_ms();
 	}
 	
 	Poco::Mutex::ScopedLock lock(this->mutex);
 	// no error?
-	if (this->switchState > -1) {
+	if (this->getError() == Error::VALUE_OK) {
 		// error timeout reached without message?
-		if ((opdi_get_time_ms() - this->timeoutCounter) / 1000 > this->timeoutSeconds) {
+		if ((this->timeoutSeconds > 0) && (this->timeoutSeconds > 0) && (opdi_get_time_ms() - this->lastReceiveTime) / 1000 > this->timeoutSeconds) {
 			// change to error state
 			this->switchState = -1;
-			this->setError(Error::VALUE_NOT_AVAILABLE);
+			this->setError(Error::VALUE_EXPIRED);
 		}
 	}
 
@@ -1497,16 +1543,14 @@ void TasmotaPower::handle_payload(std::string payload) {
             // parse value
             int power = -1;
             Poco::NumberParser::tryParse(value, power);
-            this->setValue(power * 1000);	// milliwatts
+            this->setValue(power * 1000ul);	// milliwatts
     } catch (Poco::Exception &e) {
             this->plugin->errorOccurred(this->ID() + ": Error parsing JSON: " + this->plugin->openhat->getExceptionMessage(e));
             this->setValue(-1);
     }
 
-    // reset query timer
-    this->lastQueryTime = opdi_get_time_ms();
-    // reset timeout counter
-    this->timeoutCounter = opdi_get_time_ms();
+
+    this->lastReceiveTime = opdi_get_time_ms();
 }
 
 uint8_t TasmotaPower::doWork(uint8_t canSend) {
@@ -1515,18 +1559,17 @@ uint8_t TasmotaPower::doWork(uint8_t canSend) {
     // time for refresh?
     if ((this->queryInterval > 0) && (opdi_get_time_ms() - this->lastQueryTime > this->queryInterval * 1000)) {
         this->plugin->queue.enqueueNotification(new ActionNotification(ActionNotification::QUERY, this));
-        this->lastQueryTime = opdi_get_time_ms();
     }
 
     Poco::Mutex::ScopedLock lock(this->mutex);
     // no error?
-    if (this->newValue > -1) {
-        // error timeout reached without message?
-        if ((opdi_get_time_ms() - this->timeoutCounter) / 1000 > this->timeoutSeconds) {
+	if (this->getError() == Error::VALUE_OK) {
+		// error timeout reached without message?
+        if ((this->timeoutSeconds > 0) && (opdi_get_time_ms() - this->lastReceiveTime) / 1000 > this->timeoutSeconds) {
             // change to error state
             this->newValue = -1;
-            this->setError(Error::VALUE_NOT_AVAILABLE);
-        }
+			this->setError(Error::VALUE_EXPIRED);
+		}
     }
 
     // has a value been returned?
@@ -1930,7 +1973,7 @@ void MQTTPlugin::run(void) {
 			} else {
 				// wait until connection established or timeout up
 				uint64_t aTime = opdi_get_time_ms();
-				while ((opdi_get_time_ms() - aTime < this->timeoutSeconds * 1000)
+				while ((opdi_get_time_ms() - aTime < this->timeoutSeconds * 1000ul)
 						&& !this->client->is_connected()) {
 					this->openhat->logExtreme(this->nodeID + ": Waiting for connection...", this->logVerbosity);
 #ifdef _WIN32
@@ -1999,8 +2042,10 @@ void MQTTPlugin::run(void) {
 							break;
 						}
 						case ActionNotification::QUERY:  {
-							if (this->client != nullptr && this->client->is_connected())
+							if (this->client != nullptr && this->client->is_connected()) {
+								workNf->port->lastQueryTime = opdi_get_time_ms();
 								workNf->port->query(this->client);
+							}
 							break;
 						}
 						case ActionNotification::RECONNECT:

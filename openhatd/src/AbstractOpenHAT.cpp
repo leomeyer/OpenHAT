@@ -1097,7 +1097,7 @@ void AbstractOpenHAT::configureCustomPort(ConfigurationView::Ptr portConfig, opd
 void AbstractOpenHAT::setupCustomPort(ConfigurationView::Ptr portConfig, const std::string& port) {
 	this->logDebug("Setting up Custom port: " + port);
 
-	opdi::CustomPort* customPort;
+	opdi::CustomPort* customPort = nullptr;
 	std::string kind = this->getConfigString(portConfig, port, "Kind", "<not specified>", false);
 	
 	if (kind == "Text") {

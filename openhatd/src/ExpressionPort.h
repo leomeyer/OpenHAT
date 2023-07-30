@@ -104,6 +104,7 @@ protected:
 	symbol_table_t symbol_table;
 	expression_t expression;
 	int64_t iterations;
+	std::vector<opdi::Port*> validationPorts;
 
 	virtual bool prepareSymbols(symbol_table_t& symTab, bool duringSetup);
 

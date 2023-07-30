@@ -1,6 +1,9 @@
 #include "ExpressionPort.h"
 
 #include "Poco/Timestamp.h"
+#include "Poco/String.h"
+
+using Poco::endsWith;
 
 #ifdef OPENHAT_USE_EXPRTK
 
@@ -85,6 +88,8 @@ bool ExpressionPort::prepareSymbols(symbol_table_t& symTab, bool /*duringSetup*/
 }
 
 bool ExpressionPort::prepareVariables(bool duringSetup) {
+	std::string validationMarker("._");	// special marker for ports that need to be validated
+
 	// go through dependent entities (variables) of the expression
 	for (std::size_t i = 0; i < this->symbol_list.size(); ++i)
 	{
@@ -93,26 +98,33 @@ bool ExpressionPort::prepareVariables(bool duringSetup) {
 		if (symbol.second != parser_t::e_st_variable)
 			continue;
 
+		std::string portname = symbol.first;
+		bool needsValidation = endsWith(portname, validationMarker);
+		if (needsValidation)
+			portname = portname.substr(0, portname.size() - 2);
+
 		// find port (variable name is the port ID)
-		opdi::Port* port = this->openhat->findPortByID(symbol.first.c_str(), true);
+		opdi::Port* port = this->openhat->findPortByID(portname.c_str(), true);
 
 		// port not found?
 		if (port == nullptr) {
-			throw PortError(this->ID() + ": Expression variable did not resolve to an available port ID: " + symbol.first);
+			throw PortError(this->ID() + ": Expression variable '" + symbol.first + "' did not resolve to an available port with ID '" + portname + "'");
 		}
 
 		// custom port?
 		if (port->getType()[0] == OPDI_PORTTYPE_CUSTOM[0])
-			throw PortError(this->ID() + ": Cannot use a custom port in an expression: " + symbol.first);
+			throw PortError(this->ID() + ": Cannot use a custom port in an expression: " + portname);
 		else
 		// streaming port?
 		if (port->getType()[0] == OPDI_PORTTYPE_STREAMING[0])
-			throw PortError(this->ID() + ": Cannot use a streaming port in an expression: " + symbol.first);
+			throw PortError(this->ID() + ": Cannot use a streaming port in an expression: " + portname);
 		else {
 			// numeric port value
-			// add reference to the port value (by port ID)
-			if (!this->symbol_table.add_variable(port->ID(), port->getValuePtr()))
+			// add reference to the port value (by symbol name)
+			if (!this->symbol_table.add_variable(symbol.first, port->getValuePtr()))
 				return false;
+			if (needsValidation)
+				this->validationPorts.push_back(port);
 		}
 	}
 
@@ -165,6 +177,10 @@ void ExpressionPort::setOutputPorts(double value) {
 	auto ite = this->outputPorts.end();
 	while (it != ite) {
 		try {
+			if (isnan(value)) {
+				(*it)->setError(Error::VALUE_NOT_AVAILABLE);
+			}
+			else
 			if ((*it)->getType()[0] == OPDI_PORTTYPE_DIGITAL[0]) {
 				if (value == 0)
 					((opdi::DigitalPort*)(*it))->setLine(0);
@@ -192,7 +208,7 @@ void ExpressionPort::setOutputPorts(double value) {
 				((opdi::CustomPort*)(*it))->setValue(this->openhat->to_string(value));
 			}
 			else
-				throw PortError("");
+				throw PortError("Unsupported port type");
 		}
 		catch (Poco::Exception &e) {
 			this->logNormal("Error setting output port value of port " + (*it)->ID() + ": " + this->openhat->getExceptionMessage(e));
@@ -203,41 +219,35 @@ void ExpressionPort::setOutputPorts(double value) {
 }
 
 double ExpressionPort::apply() {
-/*
-	// clear symbol table and values
-	this->symbol_table.clear();
-
-	this->prepareSymbols(false);
-
-	// prepareVariables will return false in case of errors
-	if (this->prepareVariables(false)) {
-*/
-		double value = expression.value();
-
-		this->logExtreme("Expression result: " + to_string(value));
-
-		this->setOutputPorts(value);
-
-		return value;
-/*
-	}
-	else {
-		// the variables could not be prepared, due to some error
-
-		// fallback value specified?
-		if (this->fallbackSpecified) {
-			double value = this->fallbackValue;
-
-			this->logExtreme("An error occurred, applying fallback value of: " + to_string(value));
-
-			this->setOutputPorts(value);
-
-			return value;
+	// check ports for errors
+	bool ok = false;
+	for (auto it = this->validationPorts.begin(); it != this->validationPorts.end(); it++)
+	{
+		if ((*it)->getError() == Error::VALUE_OK) {
+			ok = true;
+			break;
 		}
 	}
 
-	return NAN;
-*/
+	double value = std::numeric_limits<double>::quiet_NaN();
+
+	if (this->validationPorts.size() == 0 || ok) {
+		value = expression.value();
+
+		this->logExtreme("Expression result: " + to_string(value));
+	}
+	else {
+		if (this->fallbackSpecified) {
+			this->logExtreme("No port variables with valid values detected, using fallback value");
+
+			value = this->fallbackValue;
+		} else
+			this->logExtreme("No port variables with valid values detected");
+	}
+
+	this->setOutputPorts(value);
+
+	return value;
 }
 
 uint8_t ExpressionPort::doWork(uint8_t canSend)  {

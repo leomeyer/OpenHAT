@@ -38,6 +38,8 @@ void ExpressionPort::configure(ConfigurationView::Ptr config) {
 	if (this->expressionStr == "")
 		this->openhat->throwSettingException(this->ID() + ": You have to specify an Expression");
 
+	this->requiredPortStr = config->getString("RequiredPorts", "");
+
 	this->outputPortStr = config->getString("OutputPorts", "");
 	if (this->outputPortStr == "")
 		this->openhat->throwSettingException(this->ID() + ": You have to specify at least one output port in the OutputPorts setting");
@@ -136,6 +138,7 @@ void ExpressionPort::prepare() {
 
 	// find ports; throws errors if something required is missing
 	this->findPorts(this->getID(), "OutputPorts", this->outputPortStr, this->outputPorts);
+	this->findPorts(this->getID(), "RequiredPorts", this->requiredPortStr, this->requiredPorts);
 
 	symbol_table_t localSymtab;
 	expression_t localExpr;
@@ -219,19 +222,31 @@ void ExpressionPort::setOutputPorts(double value) {
 }
 
 double ExpressionPort::apply() {
-	// check ports for errors
-	bool ok = false;
-	for (auto it = this->validationPorts.begin(); it != this->validationPorts.end(); it++)
+	bool ok = true;
+	// check required ports for errors
+	for (auto it = this->requiredPorts.begin(); it != this->requiredPorts.end(); it++)
 	{
-		if ((*it)->getError() == Error::VALUE_OK) {
-			ok = true;
+		if ((*it)->getError() != Error::VALUE_OK) {
+			ok = false;
 			break;
+		}
+	}
+
+	if (ok && this->validationPorts.size() > 0) {
+		ok = false;
+		// check validation ports for errors; at least one of them must be ok
+		for (auto it = this->validationPorts.begin(); it != this->validationPorts.end(); it++)
+		{
+			if ((*it)->getError() == Error::VALUE_OK) {
+				ok = true;
+				break;
+			}
 		}
 	}
 
 	double value = std::numeric_limits<double>::quiet_NaN();
 
-	if (this->validationPorts.size() == 0 || ok) {
+	if (ok) {
 		value = expression.value();
 
 		this->logExtreme("Expression result: " + to_string(value));

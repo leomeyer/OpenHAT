@@ -30,10 +30,6 @@
 #include "opdi_protocol.h"
 #include "TypeGUIDs.h"
 
-#ifdef __GNUG__
-#define isnan(x)  __builtin_isnan(x)
-#endif
-
 #define DEFAULT_IDLETIMEOUT_MS	180000
 #define DEFAULT_TCP_PORT		13110
 

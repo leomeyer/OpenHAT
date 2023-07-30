@@ -177,7 +177,7 @@ void ExpressionPort::setOutputPorts(double value) {
 	auto ite = this->outputPorts.end();
 	while (it != ite) {
 		try {
-			if (isnan(value)) {
+			if (std::isnan(value)) {
 				(*it)->setError(Error::VALUE_NOT_AVAILABLE);
 			}
 			else

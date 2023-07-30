@@ -19,11 +19,6 @@
 
 #include "Configuration.h"
 
-// workaround for missing isnan() on GCC
-#ifdef __GNUG__
-#define isnan(x)  __builtin_isnan(x)
-#endif
-
 // protocol callback function for the OPDI slave implementation
 extern void protocol_callback(uint8_t state);
 

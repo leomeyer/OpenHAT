@@ -753,7 +753,7 @@ void DialPort::handle_payload(std::string payload) {
 	this->inputExpr->expressionStr = expr;
 	this->inputExpr->prepare();
 	double value = this->inputExpr->apply();
-	if (isnan(value)) {
+	if (std::isnan(value)) {
 		this->plugin->openhat->logWarning(this->pid + ": Expression evaluated to NAN: '" + expr + "'");
 		// set to error state
 		this->newValue = this->getMin() - 1;
@@ -827,7 +827,7 @@ bool DialPort::setPosition(int64_t value, ChangeSource changeSource) {
 	this->outputExpr->expressionStr = expr;
 	this->outputExpr->prepare();
 	double dValue = this->outputExpr->apply();
-	if (isnan(dValue)) {
+	if (std::isnan(dValue)) {
 		this->plugin->openhat->logWarning(this->pid + ": Expression evaluated to NAN: '" + expr + "'");
 		return true;
 	}

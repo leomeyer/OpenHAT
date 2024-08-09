@@ -1,8 +1,9 @@
-Debug/
-Release/
-build/
-build-rpi/
-.vs/
+/Debug
+/Release
+/x64
+/build
+/build-rpi
+/.vs
 *.so*
 openhatd
 *.swp

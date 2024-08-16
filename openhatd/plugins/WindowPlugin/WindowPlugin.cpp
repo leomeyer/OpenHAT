@@ -910,16 +910,9 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 			if (this->isSensorOpen()) {
 				this->logVerbose("Open sensor signal detected");
 
-				// enable delay specified?
-				if (this->enableDelay > 0) {
-					// need to disable first
-					this->delayTimer = opdi_get_time_ms();
-					this->setCurrentState(WAITING_BEFORE_DISABLE_OPEN);
-				}
-				else {
-					// the window is open now
-					this->setCurrentState(OPEN);
-				}
+				this->disableMotor();
+				// the window is open now
+				this->setCurrentState(OPEN);
 			} else
 			// opening time up?
 			if (opdi_get_time_ms() - this->openTimer > this->openingTime) {
@@ -956,11 +949,9 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 			if (opdi_get_time_ms() - this->openTimer > this->closingTime) {
 				// stop motor immediately
 				this->disableMotor();
-
 				// without detecting sensor? error condition
 				if (this->sensorClosedPort != nullptr) {
 					this->logNormal("Warning: Closed sensor signal not detected while closing");
-
 					this->setCurrentState(ERR);
 				} else {
 					// sensor not present - assume closed
@@ -1022,11 +1013,31 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 		this->setTargetState(OPEN);
 	} else if (forceClose) {
 		this->setTargetState(CLOSED);
-	} else {
+	} else 
+	// check for position changes only - not if the previous setting is still active
+	// this helps to recover from an error state - the user must manually change the position
+	if (this->positionNewlySet) {
+		if (this->positionNewlySet && (this->getPosition() == POSITION_OFF)) {
+			// setting the window "UNKNOWN" disables the motor and re-initializes
+			this->setCurrentState(UNKNOWN);
+		}
+		else
+		if (this->positionNewlySet && (this->getPosition() == POSITION_OPEN)) {
+			this->setTargetState(OPEN);
+		}
+		else
+		if (this->positionNewlySet && (this->getPosition() == POSITION_CLOSED)) {
+			this->setTargetState(CLOSED);
+		}
+		this->positionNewlySet = false;
+	} else
+	// remaining cases: automatic, open, close
+	// handles e. g. ceased force close conditions
+	// if the window has detected an error, do not automatically open or close
+	if (this->currentState != ERR)	{
 		WindowState target = UNKNOWN;
-		// if the window has detected an error, do not automatically open or close
 		// if the position is set to automatic, evaluate auto ports
-		if ((this->currentState != ERR) && (this->getPosition() >= POSITION_AUTO)) {
+		if (this->getPosition() >= POSITION_AUTO) {
 			// if one of the AutoClose ports is High, the window should be closed (takes precedence)
 			pi = this->autoClosePorts.begin();
 			auto pie = this->autoClosePorts.end();
@@ -1058,20 +1069,14 @@ uint8_t WindowPort::doWork(uint8_t canSend)  {
 				}
 			}
 		} else
-		// check for position changes only - not if the previous setting is still active
-		// this helps to recover from an error state - the user must manually change the position
-		if (this->positionNewlySet && (this->getPosition() == POSITION_OFF)) {
-			// setting the window "UNKNOWN" disables the motor and re-initializes
-			this->setCurrentState(UNKNOWN);
-		} else
-		if (this->positionNewlySet && (this->getPosition() == POSITION_OPEN)) {
+		if (this->getPosition() == POSITION_OPEN) {
 			target = OPEN;
 		} else
-		if (this->positionNewlySet && (this->getPosition() == POSITION_CLOSED)) {
+		if (this->getPosition() == POSITION_CLOSED) {
 			target = CLOSED;
 		}
-		this->positionNewlySet = false;
 
+		// apply
 		if (target != UNKNOWN) {
 			this->setTargetState(target);
 			// resetting from error state

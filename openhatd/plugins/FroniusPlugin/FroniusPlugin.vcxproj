@@ -90,8 +90,8 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;FRONIUSPLUGIN_EXPORTS;_WINDOWS;POCO_STATIC;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
       <AdditionalIncludeDirectories>../../../opdi_core/code/c/common;../../../opdi_core/code/c/platforms;../../../opdi_core/code/c/platforms/win32;../../../opdi_core/code/c/libraries/POCO/Foundation/include;../../../opdi_core/code/c/libraries/POCO/Net/include;../../../opdi_core/code/c/libraries/POCO/Util/include;../../../opdi_core/code/c/libraries/POCO/JSON/include;../../../libraries/Mongoose;../../../opdi_core/code/c/common/cppwrapper;../../src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
